@@ -4,8 +4,13 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_CXX
+  "/home/chen/HMAR/KINECT/src/Graph.cpp" "/home/chen/HMAR/KINECT/build/CMakeFiles/HMAR.dir/src/Graph.cpp.o"
+  "/home/chen/HMAR/KINECT/src/algo.cpp" "/home/chen/HMAR/KINECT/build/CMakeFiles/HMAR.dir/src/algo.cpp.o"
+  "/home/chen/HMAR/KINECT/src/dbscan.cpp" "/home/chen/HMAR/KINECT/build/CMakeFiles/HMAR.dir/src/dbscan.cpp.o"
   "/home/chen/HMAR/KINECT/src/main.cpp" "/home/chen/HMAR/KINECT/build/CMakeFiles/HMAR.dir/src/main.cpp.o"
+  "/home/chen/HMAR/KINECT/src/util.cpp" "/home/chen/HMAR/KINECT/build/CMakeFiles/HMAR.dir/src/util.cpp.o"
   "/home/chen/HMAR/KINECT/src/util2.cpp" "/home/chen/HMAR/KINECT/build/CMakeFiles/HMAR.dir/src/util2.cpp.o"
+  "/home/chen/HMAR/KINECT/src/vtkExtra.cpp" "/home/chen/HMAR/KINECT/build/CMakeFiles/HMAR.dir/src/vtkExtra.cpp.o"
   )
 set(CMAKE_CXX_COMPILER_ID "GNU")
 

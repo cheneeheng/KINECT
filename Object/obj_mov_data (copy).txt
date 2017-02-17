@@ -1,0 +1,3 @@
+0,move,slide
+1,move,clean
+2,move,slide

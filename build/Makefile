@@ -123,6 +123,87 @@ HMAR/fast:
 	$(MAKE) -f CMakeFiles/HMAR.dir/build.make CMakeFiles/HMAR.dir/build
 .PHONY : HMAR/fast
 
+src/Graph.o: src/Graph.cpp.o
+
+.PHONY : src/Graph.o
+
+# target to build an object file
+src/Graph.cpp.o:
+	$(MAKE) -f CMakeFiles/HMAR.dir/build.make CMakeFiles/HMAR.dir/src/Graph.cpp.o
+.PHONY : src/Graph.cpp.o
+
+src/Graph.i: src/Graph.cpp.i
+
+.PHONY : src/Graph.i
+
+# target to preprocess a source file
+src/Graph.cpp.i:
+	$(MAKE) -f CMakeFiles/HMAR.dir/build.make CMakeFiles/HMAR.dir/src/Graph.cpp.i
+.PHONY : src/Graph.cpp.i
+
+src/Graph.s: src/Graph.cpp.s
+
+.PHONY : src/Graph.s
+
+# target to generate assembly for a file
+src/Graph.cpp.s:
+	$(MAKE) -f CMakeFiles/HMAR.dir/build.make CMakeFiles/HMAR.dir/src/Graph.cpp.s
+.PHONY : src/Graph.cpp.s
+
+src/algo.o: src/algo.cpp.o
+
+.PHONY : src/algo.o
+
+# target to build an object file
+src/algo.cpp.o:
+	$(MAKE) -f CMakeFiles/HMAR.dir/build.make CMakeFiles/HMAR.dir/src/algo.cpp.o
+.PHONY : src/algo.cpp.o
+
+src/algo.i: src/algo.cpp.i
+
+.PHONY : src/algo.i
+
+# target to preprocess a source file
+src/algo.cpp.i:
+	$(MAKE) -f CMakeFiles/HMAR.dir/build.make CMakeFiles/HMAR.dir/src/algo.cpp.i
+.PHONY : src/algo.cpp.i
+
+src/algo.s: src/algo.cpp.s
+
+.PHONY : src/algo.s
+
+# target to generate assembly for a file
+src/algo.cpp.s:
+	$(MAKE) -f CMakeFiles/HMAR.dir/build.make CMakeFiles/HMAR.dir/src/algo.cpp.s
+.PHONY : src/algo.cpp.s
+
+src/dbscan.o: src/dbscan.cpp.o
+
+.PHONY : src/dbscan.o
+
+# target to build an object file
+src/dbscan.cpp.o:
+	$(MAKE) -f CMakeFiles/HMAR.dir/build.make CMakeFiles/HMAR.dir/src/dbscan.cpp.o
+.PHONY : src/dbscan.cpp.o
+
+src/dbscan.i: src/dbscan.cpp.i
+
+.PHONY : src/dbscan.i
+
+# target to preprocess a source file
+src/dbscan.cpp.i:
+	$(MAKE) -f CMakeFiles/HMAR.dir/build.make CMakeFiles/HMAR.dir/src/dbscan.cpp.i
+.PHONY : src/dbscan.cpp.i
+
+src/dbscan.s: src/dbscan.cpp.s
+
+.PHONY : src/dbscan.s
+
+# target to generate assembly for a file
+src/dbscan.cpp.s:
+	$(MAKE) -f CMakeFiles/HMAR.dir/build.make CMakeFiles/HMAR.dir/src/dbscan.cpp.s
+.PHONY : src/dbscan.cpp.s
+
 src/main.o: src/main.cpp.o
 
 .PHONY : src/main.o
@@ -149,6 +230,33 @@ src/main.s: src/main.cpp.s
 src/main.cpp.s:
 	$(MAKE) -f CMakeFiles/HMAR.dir/build.make CMakeFiles/HMAR.dir/src/main.cpp.s
 .PHONY : src/main.cpp.s
+
+src/util.o: src/util.cpp.o
+
+.PHONY : src/util.o
+
+# target to build an object file
+src/util.cpp.o:
+	$(MAKE) -f CMakeFiles/HMAR.dir/build.make CMakeFiles/HMAR.dir/src/util.cpp.o
+.PHONY : src/util.cpp.o
+
+src/util.i: src/util.cpp.i
+
+.PHONY : src/util.i
+
+# target to preprocess a source file
+src/util.cpp.i:
+	$(MAKE) -f CMakeFiles/HMAR.dir/build.make CMakeFiles/HMAR.dir/src/util.cpp.i
+.PHONY : src/util.cpp.i
+
+src/util.s: src/util.cpp.s
+
+.PHONY : src/util.s
+
+# target to generate assembly for a file
+src/util.cpp.s:
+	$(MAKE) -f CMakeFiles/HMAR.dir/build.make CMakeFiles/HMAR.dir/src/util.cpp.s
+.PHONY : src/util.cpp.s
 
 src/util2.o: src/util2.cpp.o
 
@@ -177,6 +285,33 @@ src/util2.cpp.s:
 	$(MAKE) -f CMakeFiles/HMAR.dir/build.make CMakeFiles/HMAR.dir/src/util2.cpp.s
 .PHONY : src/util2.cpp.s
 
+src/vtkExtra.o: src/vtkExtra.cpp.o
+
+.PHONY : src/vtkExtra.o
+
+# target to build an object file
+src/vtkExtra.cpp.o:
+	$(MAKE) -f CMakeFiles/HMAR.dir/build.make CMakeFiles/HMAR.dir/src/vtkExtra.cpp.o
+.PHONY : src/vtkExtra.cpp.o
+
+src/vtkExtra.i: src/vtkExtra.cpp.i
+
+.PHONY : src/vtkExtra.i
+
+# target to preprocess a source file
+src/vtkExtra.cpp.i:
+	$(MAKE) -f CMakeFiles/HMAR.dir/build.make CMakeFiles/HMAR.dir/src/vtkExtra.cpp.i
+.PHONY : src/vtkExtra.cpp.i
+
+src/vtkExtra.s: src/vtkExtra.cpp.s
+
+.PHONY : src/vtkExtra.s
+
+# target to generate assembly for a file
+src/vtkExtra.cpp.s:
+	$(MAKE) -f CMakeFiles/HMAR.dir/build.make CMakeFiles/HMAR.dir/src/vtkExtra.cpp.s
+.PHONY : src/vtkExtra.cpp.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -186,12 +321,27 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... HMAR"
+	@echo "... src/Graph.o"
+	@echo "... src/Graph.i"
+	@echo "... src/Graph.s"
+	@echo "... src/algo.o"
+	@echo "... src/algo.i"
+	@echo "... src/algo.s"
+	@echo "... src/dbscan.o"
+	@echo "... src/dbscan.i"
+	@echo "... src/dbscan.s"
 	@echo "... src/main.o"
 	@echo "... src/main.i"
 	@echo "... src/main.s"
+	@echo "... src/util.o"
+	@echo "... src/util.i"
+	@echo "... src/util.s"
 	@echo "... src/util2.o"
 	@echo "... src/util2.i"
 	@echo "... src/util2.s"
+	@echo "... src/vtkExtra.o"
+	@echo "... src/vtkExtra.i"
+	@echo "... src/vtkExtra.s"
 .PHONY : help
 
 

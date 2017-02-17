@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 2.8)
 
 project(HMAR)
 
+#add_compile_options(-std=c++11)
+
 set(OpenCV_LIBS_DIR "/usr/local/src/opencv-3.1/build/lib")
 set(OpenCV_INCLUDE_DIR "/usr/local/include/opencv2")
 
@@ -26,7 +28,12 @@ link_directories(
 	/usr/local/src/OpenNI2/Bin/x64-Release 
 	${OpenCV_LIBS_DIR})
 
-add_executable(HMAR 
+add_executable(HMAR
+	./src/Graph.cpp
+	./src/dbscan.cpp
+	./src/util.cpp
+	./src/vtkExtra.cpp
+	./src/algo.cpp
 	./src/util2.cpp 
 	./src/main.cpp)
 
