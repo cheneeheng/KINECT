@@ -5,409 +5,494 @@
  *      Author: chen
  */
 
+//#define DBSCAN
+
 #include "util.h"
 #include "vtkExtra.h"
 
-// For backward compatibility with new VTK generic data arrays
-//#define InsertNextTypedTuple InsertNextTupleValue
+//string SCN = "./Scene/";
+string SCN = "../Scene/";
 
-//---------------------------------------------------------------------------------------------------------------------
-double surfaceRange(
-	point_t pos_,
-	point_t pos_surface_,
-	vector<double> surface_)
+// ============================================================================
+// Labels
+// ============================================================================
+
+void labelMovement(
+	Graph Graph_)
 {
-	vector<double> surface_tmp(3);
-	vector<double> surface_parallel_tmp;
-	vector<double> p_tmp;
-	double norm_tmp = 0.0;
+	vector<string> label; label.clear();
 
-	surface_tmp[0] = surface_[0];
-	surface_tmp[1] = surface_[1];
-	surface_tmp[2] = surface_[2];
+	vector<vector<string> > data;
+	string path;
+	path = SCN + Graph_.getScene()  + "/"
+	           + Graph_.getObject() + "/mov_data.txt";
+	readFile(path.c_str(), data , ',');
 
-	p_tmp = point2vector(minusPoint(pos_, pos_surface_));
-
-	// surface_parallel_tmp can be obtained at the beginning by just taking the normalized vector between 2 points on the surface
+	if(data.empty())
 	{
-		surface_parallel_tmp = crossProduct(surface_tmp, p_tmp);
-
-		for(int i=0;i<3;i++)
-			norm_tmp += Sqr(surface_parallel_tmp[i]);
-		norm_tmp = sqrt(norm_tmp);
-
-		for(int i=0;i<3;i++)
-			surface_parallel_tmp[i] /= norm_tmp;
+		label.push_back("MOVE");
+		label.push_back("SLIDE");
+		writeMovLabelFile(path, label);
 	}
-
-	return dotProduct(p_tmp, surface_parallel_tmp);
-}
-
-double surfaceDistance(
-	point_t pos_,
-	vector<double> surface_)
-{
-	return surface_[0]*pos_.x +
-		   surface_[1]*pos_.y +
-		   surface_[2]*pos_.z -
-		   surface_[3];
-}
-
-double surfaceAngle(
-	point_t vel_,
-	vector<double> surface_)
-{
-	vector<double> tmp(3);
-	tmp[0] = surface_[0];
-	tmp[1] = surface_[1];
-	tmp[2] = surface_[2];
-	return 	l2Norm(crossProduct(tmp,point2vector(vel_)))/
-			(l2Norm(tmp) * l2Norm(point2vector(vel_)));
-}
-
-
-//---------------------------------------------------------------------------------------------------------------------
-// General Functions
-
-void generateSector(
-	vector<vector<vector<sector_t> > > 	&sector_,
-	vector<point_t> pos_,
-	vector<point_t> locations_,
-	vector<point_t> tmp_dir_,
-	vector<point_t> tmp_dir_normal_,
-	vector<double> tmp_norm_,
-	int num_location_intervals_,
-	int num_sector_intervals_,
-	vector<int>file_eof_,
-	vector<vector<double> > kernel_)
-{
-	int tmp_id1, tmp_id2, file_num;
-	tmp_id1 = tmp_id2 = file_num = 0;
-	bool flag_next = true;
-
-	for(int i=0;i<pos_.size();i++)
+	else
 	{
-		if(i==file_eof_[file_num]-1)
-		{
-			flag_next = true;
-			tmp_id1  = 0;
-			tmp_id2 = 0;
-			continue;
-		}
-
-		if (pos_[i].cluster_id >= 0)
-		{
-			flag_next = true;
-			tmp_id1 = pos_[i].cluster_id;
-			continue;
-		}
-
-		if(flag_next)
-		{
-			flag_next = false;
-			for(int ii=i;ii<pos_.size();ii++)
-			{
-				tmp_id2 = pos_[ii].cluster_id;
-				if(pos_[ii].cluster_id >= 0)
-					break;
-			}
-		}
-
-		if(tmp_id1 != tmp_id2)
-			updateSector(sector_, pos_[i], locations_,
-						 tmp_dir_, tmp_dir_normal_, tmp_norm_,
-						 num_location_intervals_, num_sector_intervals_,
-						 tmp_id1, tmp_id2, kernel_);
+		for(int ii=0;ii<data[0].size();ii++)
+			label.push_back(data[0][ii]);
 	}
-}
+	printf("Reviewing movement labels for OBJ...\n");
+	for(int i=0;i<label.size();i++)
+		printf("MLabel %d : %s\n", i, label[i].c_str());
 
-void prepareSector(
-	vector<point_t> &tmp_dir,
-	vector<point_t> &tmp_dir_normal,
-	vector<double> &tmp_norm,
-	vector<point_t> location)
-{
-	int c = 0;
-	int num_locations = location.size();
-	for(int i=0;i<num_locations;i++)
+	printf("Replace default labels? [Y/N]\n");
+	while(0)
 	{
-		for(int ii=0;ii<num_locations;ii++)
+		string mystr2; getline (cin, mystr2);
+		if(!strcmp(mystr2.c_str(),"Y"))
 		{
-			if(i == ii)
+			for(int i=0;i<label.size();i++)
 			{
-				tmp_dir[c].x =
-				tmp_dir[c].y =
-				tmp_dir[c].z = 0.0;
-				tmp_norm[c] = 0.0;
-				tmp_dir_normal[c].x =
-				tmp_dir_normal[c].y =
-				tmp_dir_normal[c].z = 0.0;
-				++c;
-				continue;
-			}
-
-			tmp_dir[c] = minusPoint(location[ii],location[i]);
-			tmp_norm[c] = l2Norm(tmp_dir[c]);
-			tmp_dir[c].x /= tmp_norm[c];
-			tmp_dir[c].y /= tmp_norm[c];
-			tmp_dir[c].z /= tmp_norm[c];
-			vector<double> B(3);
-			B[0] = 0.0; B[1] = 1.0; B[2] = 0.0;
-			tmp_dir_normal[c] = vector2point(
-									crossProduct(
-										point2vector(tmp_dir[c]), B));
-			++c;
-		}
-	}
-}
-
-void checkSectorConstraint(
-	vector<vector<vector<sector_t> > > 	sector,
-	vector<vector<vector<double> > > &sector_constraint,
-	int num_locations,
-	int num_location_intervals,
-	int num_sector_intervals)
-{
-
-	for(int i=0;i<Sqr(num_locations);i++)
-		for(int ii=0;ii<num_location_intervals;ii++)
-			for(int iii=0;iii<num_sector_intervals;iii++)
-			{
-				sector_constraint[i][ii][iii] =
-					(sector[i][ii][iii].max - sector[i][ii][iii].min > 0) &&
-					(0.06 - (sector[i][ii][iii].max - sector[i][ii][iii].min) > 0) ?
-						sector[i][ii][iii].max - sector[i][ii][iii].min : 0;
-				for(int iv=0;iv<5;iv++)
-					for(int v=0;v<5;v++)
-						if (sector[i]
-						          [(iv-(int)(5/2)+ii+num_location_intervals)%num_location_intervals]
-						          [(v-(int)(5/2)+iii+num_sector_intervals)%num_sector_intervals].max <= 0)
-							sector_constraint[i][ii][iii] = 0;
-//
-//						if ((sector[i][ii][(iii+(int)(5/2)+num_sector_intervals)%num_sector_intervals].max <= 0) ||
-//							(sector[i][ii][(iii-(int)(5/2)+num_sector_intervals)%num_sector_intervals].max <= 0))
-//							sector_constraint[i][ii][iii] = 0;
-			}
-}
-
-void updateSector(
-	vector<vector<vector<sector_t> > > 	&sector_,
-	point_t pos_,
-	vector<point_t> locations_,
-	vector<point_t> tmp_dir_,
-	vector<point_t> tmp_dir_normal_,
-	vector<double> tmp_norm_,
-	int num_location_intervals_,
-	int num_sector_intervals_,
-	int tmp_id1_,
-	int tmp_id2_,
-	vector<vector<double> > kernel_)
-{
-	double angle_tmp = 0.0, p_ = 0.0;
-	int xx = 0, yy = 0, zz = 0;
-	point_t tmp_diff, p_dir, t_;
-
-	xx       = tmp_id1_*locations_.size()+tmp_id2_;
-
-	tmp_diff = minusPoint(pos_, locations_[tmp_id1_]);
-
-	p_       = dotProduct(point2vector(tmp_diff), point2vector(tmp_dir_[xx]));
-
-	p_dir    = tmp_dir_[xx]; // along the direction vector
-	p_dir.x *= p_;
-	p_dir.y *= p_;
-	p_dir.z *= p_;
-	t_       = minusPoint(tmp_diff,p_dir);
-
-	angle_tmp = atan2(l2Norm(crossProduct(point2vector(t_),
-											  point2vector(tmp_dir_normal_[xx]))),
-							   dotProduct(point2vector(t_),
-										  point2vector(tmp_dir_normal_[xx])));
-	//angle_tmp[ii] = angle_tmp[ii] / M_PI * 180;
-
-	// the value of yy can be > or <  "num_location_intervals"
-	// > object moved further away from the location area
-	// < object is moving initially away from the intended goal location
-	yy 		 = ceil(p_*num_location_intervals_/tmp_norm_[xx])  -1;
-	zz 		 = ceil(angle_tmp*num_sector_intervals_/M_PI) -1;
-
-	if(yy<num_location_intervals_ &&
-	   zz<num_sector_intervals_ &&
-	   yy>=0 &&
-	   zz>=0)
-	{
-		sector_[xx][yy][zz].max = max(l2Norm(t_), sector_[xx][yy][zz].max);
-		sector_[xx][yy][zz].min = min(l2Norm(t_), sector_[xx][yy][zz].min);
-		double mid = (sector_[xx][yy][zz].max + sector_[xx][yy][zz].min)/2;
-		double tmp_ratio1 = (sector_[xx][yy][zz].max-mid) /
-				             kernel_[(kernel_.size()-1)/2]
-				                    [(kernel_[0].size()-1)/2];
-
-		for(int i=0;i<kernel_.size();i++)
-		{
-			for(int ii=0;ii<kernel_[0].size();ii++)
-			{
-				int tmp1 = i -(kernel_.size()/2)+zz;
-				int tmp2 = ii-(kernel_[0].size()/2)+yy;
-				if (tmp1<0)
-					tmp1 += num_sector_intervals_;
-				else if (tmp1>=num_sector_intervals_)
-					tmp1 %= num_sector_intervals_;
-				if (tmp2<0)
-					continue;
-				else if (tmp2>=num_location_intervals_)
-					continue;
-				sector_[xx][tmp2][tmp1].max =
-						max((kernel_[i][ii]*tmp_ratio1)+mid ,
-							sector_[xx][tmp2][tmp1].max);
-				sector_[xx][tmp2][tmp1].min =
-						min(mid-(kernel_[i][ii]*tmp_ratio1) ,
-							sector_[xx][tmp2][tmp1].min);
-			}
-		}
-	}
-}
-
-void checkSector(
-	vector<double> &prediction,
-	vector<double> &t_val,
-	vector<vector<vector<sector_t> > > 	&sector,
-	point_t pos_,
-	vector<point_t> location,
-	vector<point_t> tmp_dir,
-	vector<point_t> tmp_dir_normal,
-	vector<double> tmp_norm,
-	int num_location_intervals,
-	int num_sector_intervals,
-	int tmp_id,
-	bool learn)
-{
-	int num_locations = location.size();
-	double angle_tmp = 0.0, p_ = 0.0;
-	int xx, yy, zz;
-	xx = yy = zz = 0;
-	point_t tmp_diff, p_dir, t_;
-
-	for(int i=0;i<num_locations;i++)
-	{
-		prediction[i] = 0;
-		t_val[i]      = 0;
-
-		if(tmp_id == i) continue;
-
-		xx       = tmp_id*num_locations+i;
-
-		tmp_diff = minusPoint(pos_, location[tmp_id]);
-		p_       = dotProduct(point2vector(tmp_diff),
-				              point2vector(tmp_dir[xx]));
-		p_dir    = tmp_dir[xx]; // along the direction vector
-		p_dir.x *= p_;
-		p_dir.y *= p_;
-		p_dir.z *= p_;
-		t_       = minusPoint(tmp_diff,p_dir);
-
-		angle_tmp = atan2(l2Norm(crossProduct(point2vector(t_),
-											  point2vector(tmp_dir_normal[xx]))),
-						  dotProduct(point2vector(t_),
-									 point2vector(tmp_dir_normal[xx])));
-		//angle_tmp[ii] = angle_tmp[ii] / M_PI * 180;
-
-		yy 		 = ceil(p_*num_location_intervals/tmp_norm[xx])  -1;
-		zz 		 = ceil(angle_tmp*num_sector_intervals/M_PI)     -1;
-
-		//cout << yy << " " << zz << " "; 
-
-		if(yy<num_location_intervals && yy>=0 &&
-		   zz<num_sector_intervals   && zz>=0)
-		{
-			if (l2Norm(t_)<=sector[xx][yy][zz].max &&
-				l2Norm(t_)>=sector[xx][yy][zz].min)
-			{
-				prediction[i] = 1;
-				t_val[i]      = l2Norm(t_);
-			}
-			else
-			{
-				if(learn)
-				{
-					prediction[i] = 3;
-					if(l2Norm(t_) - sector[xx][yy][zz].max > 0)
-						t_val[i] = l2Norm(t_) - sector[xx][yy][zz].max;
-					else
-						t_val[i] = sector[xx][yy][zz].min - l2Norm(t_);
-					//printf(" %.4f %.4f %.4f %.4f   ", l2Norm(t_), t_val[i], sector[xx][yy][zz].max, sector[xx][yy][zz].min);
-					sector[xx][yy][zz].max = max(l2Norm(t_),sector[xx][yy][zz].max);
-					sector[xx][yy][zz].min = min(l2Norm(t_),sector[xx][yy][zz].min);
-				}
+				printf("Enter new label for MLabel %d : ",i);
+				string mystr;
+				getline (cin, mystr);
+				if(!strcmp(mystr.c_str(),""))
+					cout << "[WARNING] : Label has not been overwritten."<< endl;
 				else
 				{
-					prediction[i] = 2;
-					if(sector[xx][yy][zz].max != 0)
-					{
-						if(l2Norm(t_) - sector[xx][yy][zz].max > 0)
-							t_val[i] = l2Norm(t_) - sector[xx][yy][zz].max;
-						else
-							t_val[i] = sector[xx][yy][zz].min - l2Norm(t_);
-					}
-					else
-						t_val[i] = l2Norm(t_);
+					cout << "[WARNING] : Label has been overwritten. New label : " << mystr << endl;
+					label[i] = mystr;
 				}
 			}
+			remove(path.c_str());
+			writeMovLabelFile(path,label);
+			break;
+		}
+		if(!strcmp(mystr2.c_str(),"N"))
+		{
+			cout << "[WARNING] : Label has not been overwritten." << endl;
+			break;
+		}
+	}
+
+	Graph_.updateMovLabel(label);
+}
+
+void labelLocation(
+	string path_,
+	vector<point_t> &points_,
+	vector<point_t> &locations_,
+	vector<double>  &location_boundary_,
+	vector<string>  &label_,
+	vector<int>     &surface_num_,
+	double epsilon_,
+	int    minpts_)
+{
+	int num_points = points_.size();
+	int num_locations;
+
+	vector<unsigned char*> color_code(12);
+	for(int j=0;j<12;j++) color_code[j] = Calloc(unsigned char,3);
+	colorCode(color_code);
+
+	point_t *points_array = Calloc(point_t,points_.size());
+	vector2array(points_, points_array);
+
+	vector<vector<string> > data;
+	readFile(path_.c_str(), data , ',');
+
+	if(data.empty())
+	{
+		locations_.clear();
+		location_boundary_.clear();
+		//[CLUSTERING]*********************************************************
+		dbscanCluster(epsilon_, (unsigned int)minpts_, num_points, points_array);
+		printf("Clustering training data......Complete\n");
+		reshapeVector(points_, num_points);
+		array2vector(points_array, num_points, points_);
+		combineNearCluster(points_, locations_);
+		printf("Combining nearby clusters......Complete\n");
+		num_locations = locations_.size();
+		reshapeVector(location_boundary_, num_locations);
+		contactBoundary(points_, locations_, location_boundary_, true);
+		contactBoundary(points_, locations_, location_boundary_, false);
+		//*********************************************************[CLUSTERING]
+		reshapeVector(label_, num_locations + 1);
+		label_[0] = {"CONNECTION"};
+		showData(points_, label_, color_code, true, true);
+	}
+	else
+	{
+		int data_tmp  = 6;
+		num_locations = data[0].size()/data_tmp;
+		reshapeVector(locations_,		  num_locations);
+		reshapeVector(location_boundary_, num_locations);
+		reshapeVector(label_,		  	  num_locations+1);
+		reshapeVector(surface_num_,	  	  num_locations);
+		label_[0]  = {"CONNECTION"};
+		for(int ii=0;ii<num_locations;ii++)
+		{
+			label_[ii+1] 		      =      data[0][ii*data_tmp+0];
+			locations_[ii].x 		  = atof(data[0][ii*data_tmp+1].c_str());
+			locations_[ii].y 		  = atof(data[0][ii*data_tmp+2].c_str());
+			locations_[ii].z 		  = atof(data[0][ii*data_tmp+3].c_str());
+			locations_[ii].cluster_id = UNCLASSIFIED;
+			location_boundary_[ii] 	  = atof(data[0][ii*data_tmp+4].c_str());
+			surface_num_[ii] 	      = atof(data[0][ii*data_tmp+5].c_str());
+		}
+		contactBoundary(points_, locations_, location_boundary_, false);
+		showData(points_, label_, color_code, true, false);
+	}
+
+	printf("Reviewing location labels...\n");
+	for(int i=0;i<num_locations;i++)
+		printf("LLabel %d : %s\n", i+1, label_[i+1].c_str());
+
+	printf("Replace default labels? [Y/N]\n");
+	while(0)
+	{
+		string mystr2; getline (cin, mystr2);
+		if(!strcmp(mystr2.c_str(),"Y"))
+		{
+			for(int i=0;i<num_locations;i++)
+			{
+				printf("Enter new label for LLabel %d : ",i);
+				string mystr;
+				getline (cin, mystr);
+				if(!strcmp(mystr.c_str(),""))
+					cout << "[WARNING] : Label has not been overwritten."<< endl;
+				else
+				{
+					cout << "[WARNING] : Label has been overwritten. New label : " << mystr << endl;
+					label_[i+1] = mystr;
+				}
+			}
+			break;
+		}
+		if(!strcmp(mystr2.c_str(),"N"))
+		{
+			cout << "[WARNING] : Label has not been overwritten." << endl;
+			break;
 		}
 	}
 }
 
-void writePointFile(
-	point_t *p,
-	unsigned int num_points)
+void labelLocation_(
+	Graph &Graph_,
+	vector<vector<point_t> > &pos_vel_acc_,
+	double epsilon_,
+	int minpts_)
 {
-	remove("data.txt");
-	for(unsigned int i=0;i<num_points;i++)
+	vector<string>  label;
+	vector<point_t> locations;
+	vector<double> 	location_boundary;
+	vector<int> 	surface_num1;
+	label.clear();
+	locations.clear();
+	location_boundary.clear();
+	surface_num1.clear();
+
+	vector<vector<double> > surface = Graph_.getSurface();
+
+	int num_points = pos_vel_acc_.size();
+	int num_surfaces = surface.size();
+
+	// [LABELLING LOCATION]****************************************************
+	vector<point_t> points_avg;
+	for(int i=0;i<pos_vel_acc_.size();i++)
+		points_avg.push_back(pos_vel_acc_[i][0]);
+
+	string path;
+	path = SCN + Graph_.getScene() + "/" + Graph_.getObject() + "/loc_data.txt";
+
+	labelLocation(path, points_avg,
+				  locations, location_boundary, label, surface_num1,
+				  epsilon_, minpts_);
+
+	int num_locations = locations.size();
+
+	for(int i=0;i<pos_vel_acc_.size();i++)
+		pos_vel_acc_[i][0].cluster_id = points_avg[i].cluster_id;
+	printf("Labeling of clusters (action locations)......Complete\n");
+	// ****************************************************[LABELLING LOCATION]
+
+	// [NODES]*****************************************************************
+	vector<vector<data_t> > node_data;
+	vector<vector<double> > node_data_tmp;
+	reshapeVector(node_data,num_locations);
+
+	data_t motion_data;
+
+	for(int i=0;i<num_points;i++)
 	{
-		// write values into data.txt
-		std::ofstream write_file("data.txt", std::ios::app);
-		write_file << p[i].x << ","
-				   << p[i].y << ","
-				   << p[i].z << ","
-				   << p[i].cluster_id
-				   << "\n";
+		if (pos_vel_acc_[i][0].cluster_id >= 0)
+		{
+			motion_data.pos = pos_vel_acc_[i][0];
+			motion_data.vel = pos_vel_acc_[i][1];
+			motion_data.acc = pos_vel_acc_[i][2];
+			node_data[pos_vel_acc_[i][0].cluster_id].push_back(motion_data);
+		}
+	}
+
+	if(surface_num1.empty())
+	{
+		for(int i=0;i<num_locations;i++)
+		{
+			vector<double> tmp_vec(3);
+			int surface_num  =  -1;
+			double dist_tmp  = 0.0;
+			double dist_tmp2 = 0.0; //### need improvement
+			double tmp_spd 	 = 0.0;
+			double tmp_dir 	 = 0.0;
+
+			for(int ii=0;ii<node_data[i].size();ii++)
+			{
+				for(int iii=0;iii<num_surfaces;iii++)
+				{
+					dist_tmp = surfaceDistance(node_data[i][ii].pos,surface[iii]);
+					if (dist_tmp < 0.1 && min_(dist_tmp,dist_tmp2))
+						surface_num = iii;
+					dist_tmp2 = dist_tmp;
+
+					tmp_vec[0] = surface[iii][0];
+					tmp_vec[1] = surface[iii][1];
+					tmp_vec[2] = surface[iii][2];
+				}
+				tmp_spd += l2Norm(node_data[i][ii].vel);
+				tmp_dir += l2Norm(crossProduct(tmp_vec,point2vector(node_data[i][ii].vel)))/
+						   (l2Norm(tmp_vec) * l2Norm(point2vector(node_data[i][ii].vel)));
+			}
+
+			if (Graph_.checkNode(i))
+				Graph_.extendNode(i, node_data[i]);
+			else
+				Graph_.addNode(label[i], i, -1,
+							   locations[i], location_boundary[i],
+							   surface_num, node_data[i]);
+
+			surface_num1.push_back(surface_num);
+
+	//		if (surface_num >= 0 &&
+	//			tmp_spd/node_data[i].size() > vel_limit &&
+	//			tmp_dir/node_data[i].size() > 0.96) // sind(75)
+	//		{
+	//			if (Graph[0].checkNode(i))
+	//				Graph[0].extendNode(node_data[i],i);
+	//			else
+	//				Graph[0].addNode(LABEL_LOC[i],1,surface_num,location_boundary[i],node_data[i]);
+	//		}
+	//		else
+	//		{
+	//			if (Graph[0].checkNode(i))
+	//				Graph[0].extendNode(node_data[i],i);
+	//			else
+	//				Graph[0].addNode(LABEL_LOC[i],0,surface_num,location_boundary[i],node_data[i]);
+	//		}
+		}
+	}
+	else
+	{
+		for(int i=0;i<num_locations;i++)
+		{
+			if (Graph_.checkNode(i))
+				Graph_.extendNode(i, node_data[i]);
+			else
+				Graph_.addNode(label[i], i, -1,
+							   locations[i], location_boundary[i],
+							   surface_num1[i], node_data[i]);
+		}
+	}
+	// *****************************************************************[NODES]
+
+	remove(path.c_str());
+	writeLocLabelFile(path, label, locations, location_boundary, surface_num1);
+
+}
+
+void labelSector(
+	Graph &Graph_,
+	vector<vector<point_t> > pos_vel_acc_avg_,
+	double max_range_,
+	int kernel_size_x_,
+	int kernel_size_y_,
+	vector<int> file_eof_,
+	vector<unsigned char*> color_code_)
+{
+	// THE use of gaussian kernel helps to smoothen can create a tube like structure.
+	// However it is still possible to have like bumps because the sampling is just not enough.
+	vector<vector<double> > kernel(kernel_size_x_);
+	for(int i=0;i<kernel_size_x_;i++) kernel[i].resize(kernel_size_y_);
+	gaussKernel(kernel, kernel_size_x_, kernel_size_y_, 1.0);
+
+	// Graph_.getEdgeList() = [#loc*#loc -> #edges -> #loc*#sec]
+
+	prepareSector(Graph_);
+	printf("Preparing sectors......Complete\n");
+
+	generateSector(Graph_, pos_vel_acc_avg_, file_eof_, kernel);
+	printf("Generating sectors......Complete\n");
+
+	checkSectorConstraint(Graph_, max_range_, kernel_size_x_, kernel_size_y_);
+	printf("Checking sector constraints......Complete\n");
+
+	vector<point_t> point_zero; vector<string> label_zero;
+	for(int i = 0;i<pos_vel_acc_avg_.size();i++) point_zero.push_back(pos_vel_acc_avg_[i][0]);
+	showConnection(point_zero, label_zero, Graph_, color_code_, false);
+	printf("Viewing sector......Complete\n");
+
+	string path;
+	path = 	SCN + Graph_.getScene() + "/" + Graph_.getObject() + "/sec_data_max.txt";
+	writeSectorFile(Graph_, path, 0);
+
+	path = 	SCN + Graph_.getScene() + "/" + Graph_.getObject() + "/sec_data_min.txt";
+	writeSectorFile(Graph_, path, 1);
+
+	path = 	SCN + Graph_.getScene() + "/" + Graph_.getObject() + "/sec_data_const.txt";
+	writeSectorFile(Graph_, path, 2);
+}
+
+// ============================================================================
+// Files
+// ============================================================================
+
+void writeSurfaceFile(
+	Graph Graph_)
+{
+	string path = SCN + Graph_.getScene() + "/surface.txt";
+
+	vector<vector<double> > surface = Graph_.getSurface();
+
+	if (!ifstream(path))
+	{
+		ofstream write_file(path, std::ios::app);
+		for(int i=0;i<surface.size();i++)
+		{
+			write_file << i;
+			for(int ii=0;ii<4;ii++)
+			{
+				write_file << ",";
+				write_file << surface[i][ii];
+			}
+		}
+		write_file << "\n";
 	}
 }
 
 void writeLocLabelFile(
+	string path_,
 	vector<string> label_,
-	unsigned int obj_,
-	vector<point_t> locations_)
+	vector<point_t> locations_,
+	vector<double> boundary_,
+	vector<int> surface_num_container_)
 {
-	std::ofstream write_file("../Location/loc_data.txt", std::ios::app);
-	write_file << obj_;
-	for(int i=0;i<locations_.size();i++)
+	if (!ifstream(path_))
 	{
-		write_file << ",";
-		write_file << label_[i+1]    << ","
-				   << locations_[i].x << ","
-				   << locations_[i].y << ","
-				   << locations_[i].z ;
+		ofstream write_file(path_, ios::app);
+		for(int i=0;i<locations_.size();i++)
+		{
+			write_file << label_[i+1]     << ","
+					   << locations_[i].x << ","
+					   << locations_[i].y << ","
+					   << locations_[i].z << ","
+					   << boundary_[i]    << ","
+					   << surface_num_container_[i];
+			if (i<locations_.size()-1)
+				write_file << ",";
+		}
+		write_file << "\n";
 	}
-	write_file << "\n";
 }
 
-void writeObjLabelFile(
-	vector<string> label_,
-	unsigned int obj_)
+void writeMovLabelFile(
+	string path_,
+	vector<string> label_)
 {
-	std::ofstream write_file("../Object/obj_mov_data.txt", std::ios::app);
-	write_file << obj_;
-	for(int i=0;i<label_.size();i++)
+	if (!ifstream(path_))
 	{
-		write_file << ",";
-		write_file << label_[i];
+		ofstream write_file(path_, ios::app);
+		for(int i=0;i<label_.size();i++)
+		{
+			write_file << label_[i];
+			if (i<label_.size()-1)
+				write_file << ",";
+		}
+		write_file << "\n";
 	}
-	write_file << "\n";
+}
+
+void writeSectorFile(
+	Graph Graph_,
+	string path_,
+	int maxminconst_)
+{
+	vector<node_tt> nodes = Graph_.getNodeList();
+	int num_locations = nodes.size();
+	vector<vector<edge_tt> > edges = Graph_.getEdgeList();
+
+	sector_para_t para = Graph_.getSectorPara();
+
+	if (!ifstream(path_))
+	{
+		ofstream write_file(path_, ios::app);
+		write_file << "Locations," 			<< num_locations 	<< "\n";
+		write_file << "Location Intervals," << para.loc_int 	<< "\n";
+		write_file << "Sector Intervals," 	<< para.sec_int 	<< "\n";
+		for(int i=0;i<edges.size();i++)
+		{
+			for(int ii=0;ii<edges[i].size();ii++)
+			{
+				vector<sector_t> sector     = edges[i][ii].sector_map;
+				vector<double> sector_const = edges[i][ii].sector_const;
+				write_file << "Edge,"    << i
+						   << ",Number," << ii << "\n";
+				for(int iii=0;iii<sector.size();iii++)
+				{
+					if (maxminconst_ == 0)
+						write_file << sector[iii].max;
+					else if(maxminconst_ == 1)
+						write_file << sector[iii].min;
+					else
+						write_file << sector_const[iii];
+
+					if (iii<sector.size()-1)
+						write_file << ",";
+					else
+						write_file << "\n";
+				}
+			}
+		}
+	}
+}
+
+void writeSectorConstraintFile(
+	string path_,
+	vector<vector<vector<double> > > sector_,
+	int num_locations_,
+	int num_location_intervals_,
+	int num_sector_intervals_)
+{
+	if (!ifstream(path_))
+	{
+		ofstream write_file(path_, ios::app);
+		write_file << num_locations_ 		  << "\n";
+		write_file << num_location_intervals_ << "\n";
+		write_file << num_sector_intervals_   << "\n";
+		for(int i=0;i<sector_.size();i++)
+		{
+			for(int ii=0;ii<sector_[i].size();ii++)
+			{
+				for(int iii=0;iii<sector_[i][ii].size();iii++)
+				{
+					write_file << sector_[i][ii][iii];
+					if (i<sector_[i][ii].size()-1)
+						write_file << ",";
+				}
+				write_file << "\n";
+			}
+		}
+	}
 }
 
 void readFile(
-	char *name,
+	const char *name,
 	vector<vector<string> > &data_full,
 	char delimiter)
 {
@@ -431,103 +516,308 @@ void readFile(
 		cerr << "FILE ERROR!!!\n";
 }
 
-void rewriteFileObj(
-	char *name_,
-	int line_,
-	vector<string> new_,
-	char delimiter_)
+void readSurfaceFile(
+	Graph &Graph_)
 {
-	char name_2[] = "./Object/obj_data2.txt";
-	fstream src_file( name_ );
-	ofstream out_file( name_2 );
-	while (src_file)
+	string path;
+	vector<vector<string> > data;
+
+	path = SCN + Graph_.getScene() + "/surface.txt";
+	readFile(path.c_str(), data, ',');
+
+	vector<vector<double> > surface_;
+	reshapeVector(surface_, data.size());
+
+	for(int i=0;i<data.size();i++)
 	{
-		string file_line;
-		if (!getline( src_file, file_line )) break;
-		istringstream lines_( file_line );
-		vector <string> data_line_;
-		int w = 0;
-		int tmp = file_line[0]-'0';
-		while (lines_)
-		{
-			string word;
-			if (!getline( lines_, word, delimiter_)) break;
-			if (w == 0)
-				if(tmp == line_)
-					out_file << line_;
-				else
-					out_file << word;
-			else
-			{
-				out_file << ",";
-				if(tmp == line_)
-					out_file << new_[w-1];
-				else
-					out_file << word;
-			}
-			w++;
-		}
-		out_file << "\n";
+		int tmp = atoi(data[i][0].c_str());
+		for(int ii=0;ii<4;ii++)
+			surface_[tmp].push_back(atof(data[i][ii+1].c_str()));
 	}
 
-	if (!src_file.eof())
-		cerr << "FILE ERROR!!!\n";
-
-	remove(name_);
-	rename(name_2, name_);
+	Graph_.addSurface(surface_);
 }
 
-void rewriteFileLoc(
-	char *name_,
-	int line_,
-	vector<string> new_,
-	char delimiter_)
+void readLocation(
+	string path_,
+	vector<string> &label_,
+	vector<point_t> &locations_,
+	vector<double> &location_boundary_,
+	vector<int> &surface_num_)
 {
-	char name_2[] = "./Location/loc_data2.txt";
-	fstream src_file( name_ );
-	ofstream out_file( name_2 );
-	while (src_file)
+	int num_locations = locations_.size();
+
+	vector<vector<string> > data;
+	readFile(path_.c_str(), data , ',');
+
+	if(data.empty())
 	{
-		string file_line;
-		if (!getline( src_file, file_line )) break;
-		istringstream lines_( file_line );
-		vector <string> data_line_;
-		int c = 1;
-		int j = 0;
-		int k = 0;
-		int tmp = file_line[0]-'0';
-		while (lines_)
+		printf("[WARNING] : Location data is empty.");
+	}
+	else
+	{
+		int data_tmp  = 6;
+		num_locations = data[0].size()/data_tmp;
+		reshapeVector(surface_num_,		  num_locations);
+		reshapeVector(locations_,		  num_locations);
+		reshapeVector(location_boundary_, num_locations);
+		reshapeVector(label_,		      num_locations+1);
+		label_[0]  = {"CONNECTION"};
+		for(int ii=0;ii<num_locations;ii++)
 		{
-			string word;
-			if (!getline( lines_, word, delimiter_)) break;
-			if (j == 0)
-				if(tmp == line_)
-					out_file << line_;
-				else
-					out_file << word;
-			else
+			label_[ii+1] 		  =      data[0][ii*data_tmp+0];
+			locations_[ii].x 		  = atof(data[0][ii*data_tmp+1].c_str());
+			locations_[ii].y 		  = atof(data[0][ii*data_tmp+2].c_str());
+			locations_[ii].z 		  = atof(data[0][ii*data_tmp+3].c_str());
+			locations_[ii].cluster_id = UNCLASSIFIED;
+			location_boundary_[ii] 	  = atof(data[0][ii*data_tmp+4].c_str());
+			surface_num_[ii] 	  	  = atof(data[0][ii*data_tmp+5].c_str());
+		}
+	}
+
+	printf("Reviewing location labels...\n");
+	for(int i=0;i<num_locations;i++)
+		printf("LLabel %d : %s\n", i+1, label_[i+1].c_str());
+
+	printf("Replace default labels? [Y/N]\n");
+	while(0)
+	{
+		string mystr2; getline (cin, mystr2);
+		if(!strcmp(mystr2.c_str(),"Y"))
+		{
+			for(int i=0;i<num_locations;i++)
 			{
-				out_file << ",";
-				if(tmp == line_ && j==c)
+				printf("Enter new label for LLabel %d : ",i);
+				string mystr;
+				getline (cin, mystr);
+				if(!strcmp(mystr.c_str(),""))
+					cout << "[WARNING] : Label has not been overwritten."<< endl;
+				else
 				{
-					out_file << new_[k+1];
-					k++;
-					c+=4;
+					cout << "[WARNING] : Label has been overwritten. New label : " << mystr << endl;
+					label_[i+1] = mystr;
 				}
-				else
-					out_file << word;
 			}
-			j++;
+			break;
 		}
-		out_file << "\n";
+		if(!strcmp(mystr2.c_str(),"N"))
+		{
+			cout << "[WARNING] : Label has not been overwritten." << endl;
+			break;
+		}
+	}
+}
+
+void readLocation_(
+	Graph &Graph_)
+{
+	string path;
+	path =  SCN + Graph_.getScene() + "/" + Graph_.getObject() + "/loc_data.txt";
+
+	vector<string> 	label;
+	vector<point_t> locations;
+	vector<double> 	location_boundary;
+	vector<int> 	surface_num;
+	vector<data_t> 	data_;
+
+	readLocation(path, label, locations, location_boundary, surface_num);
+
+	for(int i=0;i<locations.size();i++)
+		Graph_.addNode(label[i+1], i, -1,
+					   locations[i], location_boundary[i],
+					   surface_num[i], data_);
+
+	remove(path.c_str());
+	writeLocLabelFile(path, label, locations, location_boundary, surface_num);
+}
+
+void readMovement(
+	Graph &Graph_)
+{
+	vector<string> label;
+
+	string path;
+	path =  SCN + Graph_.getScene() + "/" + Graph_.getObject() + "/mov_data.txt";
+
+	vector<vector<string> > data;
+	readFile(path.c_str(), data , ',');
+
+	if(data.empty())
+	{
+		printf("[WARNING] : Movement data is empty.");
+	}
+	else
+	{
+		reshapeVector(label, data[0].size());
+		for(int ii=0;ii<data[0].size();ii++)
+			label[ii] = data[0][ii];
+	}
+	printf("Reviewing movement labels for OBJ...\n");
+	for(int i=0;i<data[0].size();i++)
+		printf("MLabel %d : %s\n", i, label[i].c_str());
+
+	printf("Replace default labels? [Y/N]\n");
+	while(0)
+	{
+		string mystr2; getline (cin, mystr2);
+		if(!strcmp(mystr2.c_str(),"Y"))
+		{
+			for(int i=0;i<data[0].size();i++)
+			{
+				printf("Enter new label for MLabel %d : ",i);
+				string mystr;
+				getline (cin, mystr);
+				if(!strcmp(mystr.c_str(),""))
+					cout << "[WARNING] : Label has not been overwritten."<< endl;
+				else
+				{
+					cout << "[WARNING] : Label has been overwritten. New label : " << mystr << endl;
+					label[i] = mystr;
+				}
+			}
+			break;
+		}
+		if(!strcmp(mystr2.c_str(),"N"))
+		{
+			cout << "[WARNING] : Label has not been overwritten." << endl;
+			break;
+		}
 	}
 
-	if (!src_file.eof())
-		cerr << "FILE ERROR!!!\n";
+	Graph_.updateMovLabel(label);
 
-	remove(name_);
-	rename(name_2, name_);
+	remove(path.c_str());
+	writeMovLabelFile(path,label);
 }
+
+void readSectorFile(
+	Graph &Graph_,
+	int maxminconst_)
+{
+	vector<data_t> data_zero;
+
+	string path;
+	switch(maxminconst_)
+	{
+		case 0:
+			path =  SCN + Graph_.getScene() + "/" + Graph_.getObject() + "/sec_data_max.txt";
+			break;
+		case 1:
+			path =  SCN + Graph_.getScene() + "/" + Graph_.getObject() + "/sec_data_min.txt";
+			break;
+		case 2:
+			path =  SCN + Graph_.getScene() + "/" + Graph_.getObject() + "/sec_data_const.txt";
+			break;
+	}
+
+	vector<vector<string> > data;
+	readFile(path.c_str(), data , ',');
+
+	if(data.empty())
+	{
+		printf("[WARNING] : Sector data is empty.");
+	}
+	else
+	{
+		int num_locations, num_location_intervals, num_sector_intervals;
+		num_locations 			= atoi(data[0][1].c_str());
+		num_location_intervals 	= atoi(data[1][1].c_str());
+		num_sector_intervals 	= atoi(data[2][1].c_str());
+
+		if (Graph_.getEdgeList().empty())
+			Graph_.initEdge(num_location_intervals,num_sector_intervals);
+
+		vector<vector<edge_tt> > edges = Graph_.getEdgeList();
+
+		for(int i=0;i<Sqr(num_locations);i++)
+		{
+			for(int ii=0;ii<edges[i].size();ii++)
+			{
+				vector<sector_t> sector_map = edges[i][ii].sector_map;
+				vector<double> sector_const = edges[i][ii].sector_const;
+				for(int iii=0;iii<num_location_intervals*num_sector_intervals;iii++)
+				{
+					int tmp = 3 + (2*i) + 1;
+					switch(maxminconst_)
+					{
+						case 0:
+							sector_map[iii].max = atof(data[tmp][iii].c_str());
+							break;
+						case 1:
+							sector_map[iii].min = atof(data[tmp][iii].c_str());
+							break;
+						case 2:
+							sector_const[iii]   = atof(data[tmp][iii].c_str());
+							break;
+					}
+				}
+				switch(maxminconst_)
+				{
+					case 0:
+						Graph_.addEdge(data_zero, sector_map, i/num_locations, i%num_locations, ii);
+						break;
+					case 1:
+						Graph_.addEdge(data_zero, sector_map, i/num_locations, i%num_locations, ii);
+						break;
+					case 2:
+						Graph_.updateEdgeConst(sector_const, i/num_locations, i%num_locations, ii);
+						break;
+				}
+			}
+		}
+	}
+	// Should we add the option to edit the data?
+}
+
+void readSectorConstraintFile(
+	string path_,
+	vector<vector<vector<double> > > &sector_)
+{
+	vector<vector<string> > data;
+	readFile(path_.c_str(), data , ',');
+
+	if(data.empty())
+	{
+		printf("[WARNING] : Sector data is empty.");
+	}
+	else
+	{
+		int num_locations, num_location_intervals, num_sector_intervals;
+		num_locations 			= atoi(data[0][0].c_str());
+		num_location_intervals 	= atoi(data[1][0].c_str());
+		num_sector_intervals 	= atoi(data[2][0].c_str());
+
+	    reshapeVector(sector_,Sqr(num_locations));
+	    vector<vector<double> > sector1(num_location_intervals);
+		       vector<double> 	sector2(num_sector_intervals);
+
+		for(int i=0;i<Sqr(num_locations);i++)
+		{
+			sector_[i] = sector1;
+			for(int ii=0;ii<num_location_intervals;ii++)
+			{
+				sector_[i][ii] = sector2;
+			}
+		}
+
+		for(int i=0;i<num_locations;i++)
+		{
+			for(int ii=0;ii<num_location_intervals;ii++)
+			{
+				int tmp = i*num_location_intervals+ii+3;
+				for(int iii=0;iii<num_sector_intervals;iii++)
+				{
+					sector_[i][ii][iii] = atof(data[tmp][iii].c_str());
+				}
+			}
+		}
+	}
+	// Should we add the option to edit the data?
+}
+
+// ============================================================================
+// Data
+// ============================================================================
 
 void parseData2Point(
 	vector<vector<string> > data_full,
@@ -542,178 +832,50 @@ void parseData2Point(
 	}
 }
 
-/*
-void preprocessData(
-	point_t point,
-	point_t **pos_vel_acc,
-	vector<int> file_eof,
-	unsigned int window)
+void preprocessDataLive(
+	point_t pos_,
+	vector< vector< point_t > > &pos_vel_acc_mem_, // motion -> length(empty at beginning)
+	vector<point_t> &pos_vel_acc_avg_, //motion
+	unsigned int window_)
 {
-	int data_boundary = 0, cluster_ = 0, tmp_id = 0, file_num = 0;
-	point_t pos, vel, acc;
-	point_t pos_avg, pos_avg_, vel_avg, vel_avg_, acc_avg;
-	vector<vector<double> > pos_tmp(3), vel_tmp(3), acc_tmp(3);
+	point_t vel = minusPoint(pos_, pos_vel_acc_avg_[0]);
+	point_t acc = minusPoint(vel , pos_vel_acc_avg_[1]);
 
-	int c1 = 0, c2 = -1, c3 = -2;
-	for(int i=0;i<num_points;i++)
+	vector<point_t> tmp(3);
+	tmp[0] = pos_; tmp[1] = vel; tmp[2] = acc;
+
+	for(int i=0;i<3;i++)
 	{
-		if(i==file_eof[file_num])
+		if(pos_vel_acc_mem_[i].size() == window_)
 		{
-			pos_tmp.clear();
-			vel_tmp.clear();
-			acc_tmp.clear();
-			pos_tmp.resize(3);
-			vel_tmp.resize(3);
-			acc_tmp.resize(3);
-			data_boundary = 0;
-			c1 = 0, c2 = -1, c3 = -2;
-			file_num++;
+			pos_vel_acc_avg_[i] =
+					movingAverage(tmp[i], pos_vel_acc_mem_[i]);
 		}
-
-		if(data_boundary != window+2)
+		else if (pos_vel_acc_mem_[i].size()>0)
 		{
-			data_boundary+=1;
-
-			if(c1<window)
-			{
-				averagePointIncrement( p1[i], pos_tmp, pos_avg);
-				memcpy(&pos_vel_acc[0][i], &pos_avg, sizeof(pos_avg));
-			}
-			else
-			{
-				averagePoint( p1[i], pos_tmp, pos_avg);
-				memcpy(&pos_vel_acc[0][i], &pos_avg, sizeof(pos_avg));
-			}
-
-			if(c2<0)
-			{
-				pos_vel_acc[1][i].x
-				= pos_vel_acc[1][i].y
-				= pos_vel_acc[1][i].z
-				= 0;
-			}
-			else if (c2<window)
-			{
-				vel = minusPoint( pos_avg, pos_avg_ );
-				averagePointIncrement( vel, vel_tmp, vel_avg);
-				memcpy(&pos_vel_acc[1][i], &vel_avg, sizeof(vel_avg));
-			}
-			else
-			{
-				vel = minusPoint( pos_avg, pos_avg_ );
-				averagePoint( vel, vel_tmp, vel_avg );
-				memcpy(&pos_vel_acc[1][i], &vel_avg, sizeof(vel_avg));
-			}
-
-			if(c3<0)
-			{
-				pos_vel_acc[2][i].x
-				= pos_vel_acc[2][i].y
-				= pos_vel_acc[2][i].z
-				= 0;
-			}
-			else if(c3<window)
-			{
-				acc = minusPoint( pos_avg, pos_avg_ );
-				averagePointIncrement( acc, acc_tmp, acc_avg);
-				memcpy(&pos_vel_acc[2][i], &acc_avg, sizeof(acc_avg));
-			}
-			else
-			{
-				acc = minusPoint( pos_avg, pos_avg_ );
-				averagePoint( acc, acc_tmp, acc_avg );
-				memcpy(&pos_vel_acc[2][i], &acc_avg, sizeof(acc_avg));
-			}
-
-			c1+=1; c2+=1; c3+=1;
+			pos_vel_acc_avg_[i] =
+					averagePointIncrement(tmp[i], pos_vel_acc_mem_[i]);
 		}
 		else
 		{
-			pos = p1[i];
-			averagePoint( pos, pos_tmp, pos_avg );
-			vel = minusPoint( pos_avg, pos_avg_ );
-			averagePoint( vel, vel_tmp, vel_avg );
-			acc = minusPoint( pos_avg, pos_avg_ );
-			averagePoint( acc, acc_tmp, acc_avg );
-			memcpy(&pos_vel_acc[0][i], &pos_avg, sizeof(pos_avg));
-			memcpy(&pos_vel_acc[1][i], &vel_avg, sizeof(vel_avg));
-			memcpy(&pos_vel_acc[2][i], &acc_avg, sizeof(acc_avg));
+			pos_vel_acc_mem_[i].push_back(tmp[i]);
+			pos_vel_acc_avg_[i] = tmp[i];
+			for(int ii=i+1;ii<3;ii++)
+			{
+				pos_vel_acc_avg_[ii].cluster_id = UNCLASSIFIED;
+				pos_vel_acc_avg_[ii].x =
+				pos_vel_acc_avg_[ii].y =
+				pos_vel_acc_avg_[ii].z = 0;
+			}
+			break;
 		}
-
-		pos_vel_acc[0][i].cluster_id = p1[i].cluster_id;
-		pos_vel_acc[1][i].cluster_id = p1[i].cluster_id;
-		pos_vel_acc[2][i].cluster_id = p1[i].cluster_id;
-		cluster_ = p1[i].cluster_id;
-		pos_avg_ = pos_avg;
-		vel_avg_ = vel_avg;
+		pos_vel_acc_avg_[i].cluster_id = UNCLASSIFIED;
 	}
 }
-*/
-void preprocessDataLive(
-	point_t pos,
-	vector< vector< vector<double> > > &pos_vel_acc_mem, // motion,xyz,length
-	vector<point_t> &pos_vel_acc_avg,
-	unsigned int window)
-{
-	point_t vel = minusPoint(pos,pos_vel_acc_avg[0]);
-	point_t acc = minusPoint(vel,pos_vel_acc_avg[1]);
 
-	if (pos_vel_acc_mem[2][0].size() == window)
-	{
-		averagePoint(pos, pos_vel_acc_mem[0], pos_vel_acc_avg[0]);
-		averagePoint(vel, pos_vel_acc_mem[1], pos_vel_acc_avg[1]);
-		averagePoint(acc, pos_vel_acc_mem[2], pos_vel_acc_avg[2]);
-	}
-	else if (pos_vel_acc_mem[1][0].size() == window)
-	{
-		averagePoint         (pos, pos_vel_acc_mem[0], pos_vel_acc_avg[0]);
-		averagePoint         (vel, pos_vel_acc_mem[1], pos_vel_acc_avg[1]);
-		averagePointIncrement(acc, pos_vel_acc_mem[2], pos_vel_acc_avg[2]);
-	}
-	else if (pos_vel_acc_mem[0][0].size() == window)
-	{
-		averagePoint         (pos, pos_vel_acc_mem[0], pos_vel_acc_avg[0]);
-		averagePointIncrement(vel, pos_vel_acc_mem[1], pos_vel_acc_avg[1]);
-		averagePointIncrement(acc, pos_vel_acc_mem[2], pos_vel_acc_avg[2]);
-	}
-	else if (pos_vel_acc_mem[0][0].size() >= 3)
-	{
-		averagePointIncrement(pos, pos_vel_acc_mem[0], pos_vel_acc_avg[0]);
-		averagePointIncrement(vel, pos_vel_acc_mem[1], pos_vel_acc_avg[1]);
-		averagePointIncrement(acc, pos_vel_acc_mem[2], pos_vel_acc_avg[2]);
-	}
-	else if (pos_vel_acc_mem[0][0].size() == 2)
-	{
-		averagePointIncrement(pos, pos_vel_acc_mem[0], pos_vel_acc_avg[0]);
-		averagePointIncrement(vel, pos_vel_acc_mem[1], pos_vel_acc_avg[1]);
-		pos_vel_acc_mem[2][0].push_back(acc.x);
-		pos_vel_acc_mem[2][1].push_back(acc.y);
-		pos_vel_acc_mem[2][2].push_back(acc.z);
-		pos_vel_acc_avg[2] = acc;
-	}
-	else if (pos_vel_acc_mem[0][0].size() == 1)
-	{
-		averagePointIncrement(pos, pos_vel_acc_mem[0], pos_vel_acc_avg[0]);
-		pos_vel_acc_mem[1][0].push_back(vel.x);
-		pos_vel_acc_mem[1][1].push_back(vel.y);
-		pos_vel_acc_mem[1][2].push_back(vel.z);
-		pos_vel_acc_avg[1] = vel;
-		pos_vel_acc_avg[2].x = pos_vel_acc_avg[2].y = pos_vel_acc_avg[2].z = 0;
-	}
-	else
-	{
-		pos_vel_acc_mem[0][0].push_back(pos.x);
-		pos_vel_acc_mem[0][1].push_back(pos.y);
-		pos_vel_acc_mem[0][2].push_back(pos.z);
-		pos_vel_acc_avg[0] = pos;
-		pos_vel_acc_avg[1].x = pos_vel_acc_avg[1].y = pos_vel_acc_avg[1].z = 0;
-		pos_vel_acc_avg[2].x = pos_vel_acc_avg[2].y = pos_vel_acc_avg[2].z = 0;
-	}
-
-	pos_vel_acc_avg[0].cluster_id = UNCLASSIFIED;
-	pos_vel_acc_avg[1].cluster_id = UNCLASSIFIED;
-	pos_vel_acc_avg[2].cluster_id = UNCLASSIFIED;
-}
+// ============================================================================
+// dbscan
+// ============================================================================
 
 void dbscanCluster(
 	double epsilon,
@@ -933,6 +1095,608 @@ void contactBoundary(
 	}
 }
 
+// ============================================================================
+// Sector
+// ============================================================================
+
+void generateSector(
+	Graph &Graph_,
+	vector<vector<point_t> > pos_vel_acc_avg_,
+	vector<int> file_eof_,
+	vector<vector<double> > kernel_)
+{
+	vector<node_tt> nodes = Graph_.getNodeList();
+	int num_locations = nodes.size();
+	vector<point_t> locations(num_locations);
+	for(int i=0;i<num_locations;i++) {locations[i] = nodes[i].location;}
+
+	int tmp_id1 = -1, tmp_id2 = -1, tmp_id3 = -1, file_num = 0;
+	bool flag_next = false, flag_motion_start = true;
+	data_t motion_data;
+	vector<data_t> edge_data;
+	edge_data.clear();
+
+	for(int i=0;i<pos_vel_acc_avg_.size();i++)
+	{
+		if(i==file_eof_[file_num]-1)
+		{
+			file_num++;
+			flag_next = false;
+			tmp_id1 = -1;
+			tmp_id2 = -1;
+			tmp_id3 = -1;
+			continue;
+		}
+
+		if (pos_vel_acc_avg_[i][0].cluster_id >= 0)
+		{
+			if (tmp_id1 < 0)
+			{
+				tmp_id1 = pos_vel_acc_avg_[i][0].cluster_id;
+				continue;
+			}
+			else
+			{
+				if (flag_next)
+				{
+					tmp_id2 = pos_vel_acc_avg_[i][0].cluster_id;
+
+					vector<sector_t> sector_map =
+							Graph_.getEdgeList()[tmp_id1*num_locations+tmp_id2][0].sector_map;
+					vector<data_t> data_old =
+							Graph_.getEdgeList()[tmp_id1*num_locations+tmp_id2][0].data;
+
+					for(int ii=tmp_id3;ii<i;ii++)
+					{
+						updateSector(sector_map, pos_vel_acc_avg_[ii][0], locations,
+									 Graph_.getSectorPara(), tmp_id1, tmp_id2, kernel_);
+						motion_data.pos = pos_vel_acc_avg_[ii][0];
+						motion_data.vel = pos_vel_acc_avg_[ii][1];
+						motion_data.acc = pos_vel_acc_avg_[ii][2];
+						edge_data.push_back(motion_data);
+					}
+					if (!data_old.empty())
+					{
+						if(edge_data.size()==0)
+							cout << "[WARNING] : Data to extend edge is empty." << endl;
+						else if(edge_data.size()==1)
+							data_old.push_back(edge_data[0]);
+						else
+							data_old.insert(data_old.end(), edge_data.begin(), edge_data.end());
+					}
+
+					Graph_.addEdge(edge_data,sector_map,tmp_id1,tmp_id2,0);
+
+					edge_data.clear();
+					flag_next = false;
+					tmp_id1 = tmp_id2;
+					tmp_id2 = -1;
+					tmp_id3 = -1;
+				}
+			}
+		}
+		else
+		{
+			if (tmp_id1 >=0 && tmp_id3 < 0)
+			{
+				tmp_id3 = i;
+				flag_next = true;
+			}
+		}
+	}
+}
+
+void prepareSector(
+	Graph &Graph_)
+{
+	sector_para_t sector_para = Graph_.getSectorPara();
+	vector<node_tt> nodes = Graph_.getNodeList();
+	int num_locations = nodes.size();
+	vector<point_t> locations(num_locations);
+	for(int i=0;i<num_locations;i++) {locations[i] = nodes[i].location;}
+
+	int c = 0;
+	for(int i=0;i<num_locations;i++)
+	{
+		for(int ii=0;ii<num_locations;ii++)
+		{
+			if(i == ii)
+			{
+				sector_para.dir [c].x =
+				sector_para.dir [c].y =
+				sector_para.dir [c].z = 0.0;
+				sector_para.dist[c] = 0.0;
+				sector_para.dir_n[c].x =
+				sector_para.dir_n[c].y =
+				sector_para.dir_n[c].z = 0.0;
+				++c;
+				continue;
+			}
+			sector_para.dir[c] = minusPoint(locations[ii],locations[i]);
+			sector_para.dist[c] = l2Norm(sector_para.dir[c]);
+			sector_para.dir[c].x /= sector_para.dist[c];
+			sector_para.dir[c].y /= sector_para.dist[c];
+			sector_para.dir[c].z /= sector_para.dist[c];
+			vector<double> B(3);
+			B[0] = 0.0; B[1] = 1.0; B[2] = 0.0;
+
+			sector_para.dir_n[c] =
+					vector2point(
+							crossProduct(
+									point2vector(sector_para.dir[c]), B));
+			++c;
+		}
+	}
+
+	Graph_.updateSectorPara(sector_para);
+}
+
+void updateSector(
+	vector<sector_t> &sector_,
+	point_t pos_,
+	vector<point_t> locations_,
+	sector_para_t sector_para_,
+	int tmp_id1_,
+	int tmp_id2_,
+	vector<vector<double> > kernel_)
+{
+	double angle_tmp = 0.0, proj = 0.0;
+	int xx = 0, yy = 0, zz = 0, yz = 0;
+	point_t proj_dir, delta_t;
+
+	xx   = tmp_id1_*locations_.size() + tmp_id2_;
+
+	proj = dotProduct(point2vector(minusPoint(pos_,
+								   locations_[tmp_id1_])),
+					  point2vector(sector_para_.dir[xx]));
+
+	proj_dir    = sector_para_.dir[xx]; // along the direction vector
+	proj_dir.x *= proj;
+	proj_dir.y *= proj;
+	proj_dir.z *= proj;
+	delta_t     = minusPoint(minusPoint(pos_,
+							 locations_[tmp_id1_]),proj_dir);
+
+	angle_tmp = atan2(l2Norm(crossProduct(point2vector(delta_t),
+										  point2vector(sector_para_.dir_n[xx]))),
+					  dotProduct(point2vector(delta_t),
+								 point2vector(sector_para_.dir_n[xx])));
+	angle_tmp = fmod((2*M_PI + angle_tmp),(2*M_PI));
+
+	//angle_tmp[ii] = angle_tmp[ii] / M_PI * 180;
+
+	// the value of yy can be > or <  "num_location_intervals"
+	// > object moved further away from the location area
+	// < object is moving initially away from the intended goal location
+	yy = ceil(proj*sector_para_.loc_int/sector_para_.dist[xx]) - 1;
+	zz = ceil(angle_tmp*(sector_para_.sec_int/2)/M_PI) - 1;
+	yz = yy*sector_para_.sec_int + zz;
+
+//	if(xx==11)
+//	{
+//	cout << angle_tmp / M_PI * 180 << endl;
+//	cout << ceil(angle_tmp*sector_para_.sec_int/M_PI) << endl;
+//	}
+
+	//int tmp = sector_[xx].size()-1;
+
+	if (yy < sector_para_.loc_int &&
+	    zz < sector_para_.sec_int &&
+	    yy >= 0 &&
+	    zz >= 0)
+	{
+		sector_[yz].max =
+				max(l2Norm(delta_t), sector_[yz].max);
+		sector_[yz].min =
+				min(l2Norm(delta_t), sector_[yz].min);
+		double mid = (sector_[yz].max + sector_[yz].min)/2;
+		double tmp_ratio1 = (sector_[yz].max - mid) /
+				             kernel_[(kernel_.size()-1)/2]
+				                    [(kernel_[0].size()-1)/2];
+
+		for(int i=0;i<kernel_.size();i++)
+		{
+			for(int ii=0;ii<kernel_[0].size();ii++)
+			{
+				// extra calculation due to roundness of sector
+				// ignoring kernel elements that go out of location area range
+
+				int tmpl = ii - (kernel_[0].size()/2) + yy;
+
+				int tmps = ((i - (kernel_.size()/2) + zz) +
+							sector_para_.sec_int) % sector_para_.sec_int;
+
+				int tmp3 = tmpl*sector_para_.sec_int + tmps;
+
+				if (tmpl < 0 || tmpl >= sector_para_.loc_int)
+					continue;
+
+				sector_[tmp3].max =
+						max((kernel_[i][ii]*tmp_ratio1) + mid ,
+							sector_[tmp3].max);
+				sector_[tmp3].min =
+						min(mid-(kernel_[i][ii]*tmp_ratio1) ,
+							sector_[tmp3].min);
+			}
+		}
+	}
+}
+
+void checkSectorConstraint(
+	Graph &Graph_,
+	double max_range_,
+	int kernel_size_x_,
+	int kernel_size_y_)
+{
+	vector<vector<edge_tt> > sector = Graph_.getEdgeList();
+	sector_para_t sector_para = Graph_.getSectorPara();
+
+	int num_locations = Graph_.getNodeList().size();
+
+	for(int i=0;i<Sqr(num_locations);i++)
+	{
+		for(int ii=0;ii<sector[i].size();ii++)
+		{
+			vector<sector_t> sector_tmp = sector[i][ii].sector_map;
+			vector<double> sector_const = sector[i][ii].sector_const;
+			for(int iii=0;iii<sector_para.loc_int*sector_para.sec_int;iii++)
+			{
+				double range = sector_tmp[iii].max - sector_tmp[iii].min;
+				sector_const[iii] =
+						(range > 0) && (range - max_range_ > 0) ? range : 0;
+
+				int loc_tmp = iii / sector_para.sec_int;
+				int sec_tmp = iii % sector_para.sec_int;
+
+				for(int l=0;l<kernel_size_x_;l++)
+				{
+					for(int s=0;s<kernel_size_y_;s++)
+					{
+						int tmpl =   l - (kernel_size_x_/2) + loc_tmp;
+						int tmps = ((s - (kernel_size_y_/2) + sec_tmp) +
+									sector_para.sec_int) % sector_para.sec_int;
+
+						int tmp1 = tmpl*sector_para.sec_int + tmps;
+
+						if (tmpl < 0 || tmpl >= sector_para.loc_int)
+							continue;
+
+						if (sector_tmp[tmp1].max <= 0)
+							sector_const[iii] = 0;
+					}
+				}
+			}
+			Graph_.updateEdgeConst(sector_const, i/num_locations, i%num_locations,ii);
+		}
+	}
+
+
+
+//
+//						if ((sector[i][ii][(iii+(int)(5/2)+num_sector_intervals)%num_sector_intervals].max <= 0) ||
+//							(sector[i][ii][(iii-(int)(5/2)+num_sector_intervals)%num_sector_intervals].max <= 0))
+//							sector_constraint[i][ii][iii] = 0;
+
+}
+
+// ============================================================================
+// Prediction
+// ============================================================================
+
+void triggerContact(
+	point_t &p_,
+	Graph Graph_)
+{
+	vector<node_tt> nodes = Graph_.getNodeList();
+	int num_locations = nodes.size();
+
+	vector<point_t> locations(num_locations);
+	vector<double>  location_boundary(num_locations);
+
+	for(int i=0;i<num_locations;i++)
+	{
+		locations[i]         = nodes[i].location;
+		location_boundary[i] = nodes[i].boundary;
+	}
+
+	decideBoundary(p_, locations, location_boundary);
+}
+
+void checkMotion(
+	point_t pos_,
+	point_t vel_,
+	vector<string> label_,
+	vector<vector<double> > surface_,
+	double surface_limit_,
+	double angle_limit_,
+	double vel_limit_)
+{
+	bool slide = false;
+	int surface_num_tmp = 0;
+
+	if (l2Norm(vel_) < vel_limit_)
+	{
+		if(VERBOSE == 0 || VERBOSE == 2)
+			printf("LABEL: NULL\n");
+	}
+	else
+	{
+		for(int ii=0;ii<surface_.size();ii++)
+		{
+			if (!slide)
+			{
+				slide =	checkMoveSlide(pos_, vel_, surface_[ii],
+									   surface_limit_, angle_limit_); //####need to add
+				surface_num_tmp = ii;
+			}
+		}
+		if(VERBOSE == 0 || VERBOSE == 2)
+		{
+			if (slide)
+				printf("LABEL: %s on surface %d  " , label_[1].c_str(), surface_num_tmp);
+			else
+				printf("LABEL: %s  ", label_[0].c_str());
+		}
+	}
+}
+
+void checkSector(
+	vector<int> &prediction_,
+	vector<double> &t_val_,
+	point_t pos_,
+	Graph &Graph_,
+	Graph Graph_mem_,
+	int tmp_id_,
+	bool learn_)
+{
+	vector<node_tt> nodes = Graph_.getNodeList();
+	int num_locations = nodes.size();
+	vector<point_t> locations(num_locations);
+	for(int i=0;i<num_locations;i++) {locations[i] = nodes[i].location;}
+
+	double angle_tmp = 0.0, proj = 0.0;
+	int xx, yy, zz, yz;
+	xx = yy = zz = yz = 0;
+	point_t tmp_diff, proj_dir, delta_t;
+
+	for(int i=0;i<num_locations;i++)
+	{
+		prediction_[i] = EXCEED_RANGE;
+		t_val_[i]	   = 0;
+
+		if(tmp_id_ == i) continue;
+
+		xx       = tmp_id_*num_locations+i;
+
+		tmp_diff = minusPoint(pos_, locations[tmp_id_]);
+		proj     = dotProduct(point2vector(tmp_diff),
+				              point2vector(Graph_.getSectorPara().dir[xx]));
+		proj_dir    = Graph_.getSectorPara().dir[xx]; // along the direction vector
+		proj_dir.x *= proj;
+		proj_dir.y *= proj;
+		proj_dir.z *= proj;
+		delta_t     = minusPoint(tmp_diff,proj_dir);
+
+		angle_tmp = atan2(l2Norm(crossProduct(point2vector(delta_t),
+											  point2vector(Graph_.getSectorPara().dir_n[xx]))),
+						  dotProduct(point2vector(delta_t),
+									 point2vector(Graph_.getSectorPara().dir_n[xx])));
+		angle_tmp = fmod((2*M_PI + angle_tmp),(2*M_PI));
+
+		yy = ceil(proj*Graph_.getSectorPara().loc_int/Graph_.getSectorPara().dist[xx]) - 1;
+		zz = ceil(angle_tmp*(Graph_.getSectorPara().sec_int/2)/M_PI) - 1;
+		yz = yy*Graph_.getSectorPara().sec_int + zz;
+
+		vector<edge_tt> tmp_edge  = Graph_mem_.getEdgeList()[xx];
+		vector<edge_tt> tmp_edge2 = Graph_.getEdgeList()[xx];
+
+		for(int ii=0;ii<tmp_edge.size();ii++)
+		{
+			if(yy<Graph_.getSectorPara().loc_int && yy>=0 &&
+			   zz<Graph_.getSectorPara().sec_int && zz>=0)
+			{
+				if (l2Norm(delta_t) <= tmp_edge[ii].sector_map[yz].max &&
+					l2Norm(delta_t) >= tmp_edge[ii].sector_map[yz].min)
+				{
+					prediction_[i] = WITHIN_RANGE;
+					t_val_[i]      = l2Norm(delta_t);
+				}
+				else
+				{
+					if(learn_ && i==3)
+					{
+						prediction_[i] = OUT_OF_RANGE;
+						if(l2Norm(delta_t) - tmp_edge[ii].sector_map[yz].max > 0)
+							t_val_[i] = l2Norm(delta_t) - tmp_edge[ii].sector_map[yz].max;
+						else
+							t_val_[i] = tmp_edge[ii].sector_map[yz].min - l2Norm(delta_t);
+						tmp_edge2[ii].sector_map[yz].max = max(l2Norm(delta_t),tmp_edge2[ii].sector_map[yz].max);
+						tmp_edge2[ii].sector_map[yz].min = min(l2Norm(delta_t),tmp_edge2[ii].sector_map[yz].min);
+					}
+					else
+					{
+						prediction_[i] = OUT_OF_RANGE;
+						if(l2Norm(delta_t) - tmp_edge[ii].sector_map[yz].max > 0)
+							t_val_[i] = l2Norm(delta_t) - tmp_edge[ii].sector_map[yz].max;
+						else
+							t_val_[i] = tmp_edge[ii].sector_map[yz].min - l2Norm(delta_t);
+					}
+				}
+			}
+			Graph_.updateEdgeSector(tmp_edge2[ii].sector_map, tmp_id_, i, ii);
+		}
+	}
+}
+
+void motionPrediction(
+	vector<int> &prediction_,
+	vector<double> &t_val_,
+	bool &flag_predict_,
+	bool &flag_predict_last_,
+	vector<double> &predict_in_,
+	vector<double> &predict_err_,
+	vector<double> &predict_in_last_,
+	double &pow_dec_,
+	Graph Graph_)
+{
+	vector<node_tt> nodes = Graph_.getNodeList();
+	int num_locations = nodes.size();
+
+	reshapeVector(predict_in_,num_locations);
+	for(int ii=0;ii<num_locations;ii++)
+	{
+		if ((int)prediction_[ii] == WITHIN_RANGE)
+		{
+			flag_predict_      = false;
+			flag_predict_last_ = true;
+			predict_in_[ii]	   = 1.0;
+			predict_err_[ii]   = 0.0;
+		}
+		else if ((int)prediction_[ii] == OUT_OF_RANGE)
+		{
+			predict_in_[ii]  = 0.0;
+			predict_err_[ii] = pdfExp(0.03, 0.0, t_val_[ii]); // NEED TO CHANGE ######
+		}
+		else
+		{
+			predict_in_[ii]  = 0.0;
+			predict_err_[ii] = 0.0;
+		}
+	}
+
+	normalizeData(predict_in_);
+	normalizeData(predict_err_);
+
+	if (flag_predict_)
+	{
+		for(int ii=0;ii<num_locations;ii++)
+		{
+			if (predict_in_last_[ii] > 0 && prediction_[ii] > WITHIN_RANGE)
+				predict_err_[ii] = predict_err_[ii] * (1-pow(0.5,pow_dec_)) + pow(0.5,pow_dec_);
+			else if (predict_err_[ii] != 1.0) // prevent only 1 valid location prediction case
+				predict_err_[ii] = predict_err_[ii] * (1-pow(0.5,pow_dec_));
+		}
+		pow_dec_ += 0.5;
+	}
+	else
+	{
+		for(int ii=0;ii<num_locations;ii++)
+			predict_in_last_[ii] = predict_in_[ii];
+		pow_dec_ = 1;
+	}
+
+	flag_predict_ = flag_predict_last_;
+
+	if(VERBOSE == 0 || VERBOSE == 2)
+	{
+		for(int ii=0;ii<num_locations;ii++)
+			printf(" %.4f ", predict_err_[ii]);
+		for(int ii=0;ii<num_locations;ii++)
+			if((int)prediction_[ii]==WITHIN_RANGE)
+				printf(" %s %.4f ", Graph_.getNode(ii).name.c_str(), predict_in_[ii]);
+	}
+}
+
+void locationPrediction(
+	int location_num_,
+	point_t pos_,
+	point_t vel_,
+	Graph Graph_,
+	double surface_limit_,
+	double angle_limit_,
+	double vel_limit_)
+{
+	// check if label is empty
+	if (!strcmp(Graph_.getNode(location_num_).name.c_str(),""))
+	{
+		if(VERBOSE == 1 || VERBOSE == 2)
+			printf("LABEL: Empty location Label.  ");
+		checkMotion(pos_, vel_, Graph_.getMovLabel(), Graph_.getSurface(),
+				    surface_limit_, angle_limit_, vel_limit_);
+	}
+	else
+		if(VERBOSE == 1 || VERBOSE == 2)
+			printf("LABEL: %s  ", Graph_.getNode(location_num_).name.c_str());
+}
+
+
+//---------------------------------------------------------------------------------------------------------------------
+double surfaceRange(
+	point_t pos_,
+	point_t pos_surface_,
+	vector<double> surface_)
+{
+	vector<double> surface_tmp(3);
+	vector<double> surface_parallel_tmp;
+	vector<double> p_tmp;
+	double norm_tmp = 0.0;
+
+	surface_tmp[0] = surface_[0];
+	surface_tmp[1] = surface_[1];
+	surface_tmp[2] = surface_[2];
+
+	p_tmp = point2vector(minusPoint(pos_, pos_surface_));
+
+	// surface_parallel_tmp can be obtained at the beginning by just taking the normalized vector between 2 points on the surface
+	{
+		surface_parallel_tmp = crossProduct(surface_tmp, p_tmp);
+
+		for(int i=0;i<3;i++)
+			norm_tmp += Sqr(surface_parallel_tmp[i]);
+		norm_tmp = sqrt(norm_tmp);
+
+		for(int i=0;i<3;i++)
+			surface_parallel_tmp[i] /= norm_tmp;
+	}
+
+	return dotProduct(p_tmp, surface_parallel_tmp);
+}
+
+double surfaceDistance(
+	point_t pos_,
+	vector<double> surface_)
+{
+	return surface_[0]*pos_.x +
+		   surface_[1]*pos_.y +
+		   surface_[2]*pos_.z -
+		   surface_[3];
+}
+
+double surfaceAngle(
+	point_t vel_,
+	vector<double> surface_)
+{
+	vector<double> tmp(3);
+	tmp[0] = surface_[0];
+	tmp[1] = surface_[1];
+	tmp[2] = surface_[2];
+	return 	l2Norm(crossProduct(tmp,point2vector(vel_)))/
+			(l2Norm(tmp) * l2Norm(point2vector(vel_)));
+}
+
+
+//---------------------------------------------------------------------------------------------------------------------
+// General Functions
+
+void writePointFile(
+	point_t *p,
+	unsigned int num_points)
+{
+	remove("data.txt");
+	for(unsigned int i=0;i<num_points;i++)
+	{
+		// write values into data.txt
+		std::ofstream write_file("data.txt", std::ios::app);
+		write_file << p[i].x << ","
+				   << p[i].y << ","
+				   << p[i].z << ","
+				   << p[i].cluster_id
+				   << "\n";
+	}
+}
+
+
+
 
 bool checkSurfaceRange(
 	point_t pos_,
@@ -998,224 +1762,6 @@ double checkMoveSlideOutside(
 
 
 
-
-
-
-
-
-
-
-
-void labelingMovement(
-	vector<string> &LABEL_MOV,
-	int num_mov,
-	int obj,
-	int num_objs)
-{
-	LABEL_MOV.clear();
-	LABEL_MOV.resize(num_mov);
-
-	vector<vector<string> > obj_data;
-	char name[256];
-	sprintf(name, "../Object/obj_mov_data.txt");
-	readFile(name, obj_data , ',');
-
-	if(obj_data.empty())
-	{
-		LABEL_MOV[0] = {"MOVE"};
-		LABEL_MOV[1] = {"SLIDE"};
-		writeObjLabelFile(LABEL_MOV, obj);
-	}
-	else
-	{
-		bool flag = false;
-		for(int i=0;i<num_objs;i++)
-		{
-			if(obj_data.size() < num_objs) continue;
-			if(atoi(obj_data[i][0].c_str())==obj)
-			{
-				for(int ii=0;ii<obj_data[i].size()-1;ii++)
-					LABEL_MOV[ii] = obj_data[i][ii+1];
-				flag = true;
-			}
-		}
-		if(!flag)
-		{
-			LABEL_MOV[0] = {"MOVE"};
-			LABEL_MOV[1] = {"SLIDE"};
-			writeObjLabelFile(LABEL_MOV, obj);
-		}
-	}
-	printf("Reviewing movement labels for OBJ...\n");
-	for(int i=0;i<num_mov;i++) printf("MLabel %d : %s\n", i, LABEL_MOV[i].c_str());
-	printf("Replace default labels? [Y/N]\n");
-	while(0)
-	{
-		string mystr2; getline (cin, mystr2);
-		if(!strcmp(mystr2.c_str(),"Y"))
-		{
-			for(int i=0;i<num_mov;i++)
-			{
-				printf("Enter new label for MLabel %d : ",i);
-				string mystr;
-				getline (cin, mystr);
-				if(!strcmp(mystr.c_str(),""))
-					cout << "[WARNING] : Label has not been overwritten."<< endl;
-				else
-				{
-					cout << "[WARNING] : Label has been overwritten. New label : " << mystr << endl;
-					LABEL_MOV[i] = mystr;
-				}
-			}
-			rewriteFileObj(name, obj, LABEL_MOV, ',');
-			break;
-		}
-		if(!strcmp(mystr2.c_str(),"N"))
-		{
-			cout << "[WARNING] : Label has not been overwritten." << endl;
-			break;
-		}
-	}
-}
-
-
-
-void labelingLocation(
-	vector<point_t> &points,
-	vector<point_t> &locations,
-	vector<double> &location_boundary,
-	vector<string> &LABEL_LOC,
-	int obj,
-	double epsilon,
-	int minpts)
-{
-
-	int num_points = points.size();
-	int num_locations = locations.size();
-
-	vector<unsigned char*> color_code(12);
-	for(int j=0;j<12;j++) color_code[j] = Calloc(unsigned char,3);
-	colorCode(color_code);
-
-	point_t *points_array = Calloc(point_t,points.size());
-	vector2array(points, points_array);
-
-	vector<vector<string> > loc_data;
-	char name[256];
-	sprintf(name, "../Location/loc_data.txt");
-	readFile(name, loc_data , ',');
-
-	//cout << location_boundary[0] << endl;
-	if(loc_data.empty())
-	{
-		//[CLUSTERING]*********************************************************
-		dbscanCluster(epsilon, (unsigned int)minpts, num_points, points_array);
-		printf("Clustering training data......Complete\n");
-		points.clear();
-		points.resize(num_points);
-		array2vector(points_array, num_points, points);
-		combineNearCluster(points, locations);
-		printf("Combining nearby clusters......Complete\n");
-
-		num_locations = locations.size();
-		location_boundary.clear();
-		location_boundary.resize(num_locations);
-		contactBoundary(points, locations, location_boundary, true);
-		contactBoundary(points, locations, location_boundary, false);
-		//*********************************************************[CLUSTERING]
-		LABEL_LOC.clear();
-		LABEL_LOC.resize(num_locations + 1);
-		LABEL_LOC[0] = {"CONNECTION"};
-		//showData(points, LABEL_LOC, color_code, true, true);
-		writeLocLabelFile(LABEL_LOC, obj, locations);
-	}
-	else
-	{
-		bool flag = false;
-		for(int i=0;i<loc_data.size();i++)
-		{
-			if (atoi(loc_data[i][0].c_str())==obj)
-			{
-				num_locations = (loc_data[i].size()-1)/4;
-				locations.clear();
-				locations.resize(num_locations);
-				location_boundary.clear();
-				location_boundary.resize(num_locations);
-				LABEL_LOC.clear();
-				LABEL_LOC.resize(num_locations + 1);
-				LABEL_LOC[0] = {"CONNECTION"};
-				for(int ii=0;ii<num_locations;ii++)
-				{
-					LABEL_LOC[ii+1] = loc_data[i][ii*4+1];
-					locations[ii].x = atof(loc_data[i][ii*4+2].c_str());
-					locations[ii].y = atof(loc_data[i][ii*4+3].c_str());
-					locations[ii].z = atof(loc_data[i][ii*4+4].c_str());
-					locations[ii].cluster_id = UNCLASSIFIED;
-				}
-				flag = true;
-				contactBoundary(points, locations, location_boundary, false);
-				//showData(points, LABEL_LOC, color_code, true, false);
-			}
-		}
-		if(!flag)
-		{
-			//[CLUSTERING]*****************************************************
-			dbscanCluster(epsilon, (unsigned int)minpts, num_points, points_array);
-			printf("Clustering training data......Complete\n");
-			points.clear();
-			points.resize(num_points);
-			array2vector(points_array, num_points, points);
-			combineNearCluster(points, locations);
-			printf("Combining nearby clusters......Complete\n");
-
-			num_locations = locations.size();
-			location_boundary.clear();
-			location_boundary.resize(num_locations);
-			contactBoundary(points, locations, location_boundary, true);
-			contactBoundary(points, locations, location_boundary, false);
-			//*****************************************************[CLUSTERING]
-			LABEL_LOC.clear();
-			LABEL_LOC.resize(num_locations + 1);
-			LABEL_LOC[0] = {"CONNECTION"};
-			//showData(points, LABEL_LOC, color_code, true, true);
-			writeLocLabelFile(LABEL_LOC, obj, locations);
-		}
-	}
-
-	printf("Reviewing location labels...\n");
-	for(int i=0;i<num_locations;i++)
-	{
-		printf("LLabel %d : %s\n", i+1, LABEL_LOC[i+1].c_str());
-	}
-	printf("Replace default labels? [Y/N]\n");
-	while(0)
-	{
-		string mystr2; getline (cin, mystr2);
-		if(!strcmp(mystr2.c_str(),"Y"))
-		{
-			for(int i=0;i<num_locations;i++)
-			{
-				printf("Enter new label for LLabel %d : ",i);
-				string mystr;
-				getline (cin, mystr);
-				if(!strcmp(mystr.c_str(),""))
-					cout << "[WARNING] : Label has not been overwritten."<< endl;
-				else
-				{
-					cout << "[WARNING] : Label has been overwritten. New label : " << mystr << endl;
-					LABEL_LOC[i+1] = mystr;
-				}
-			}
-			rewriteFileLoc(name, obj, LABEL_LOC, ',');
-			break;
-		}
-		if(!strcmp(mystr2.c_str(),"N"))
-		{
-			cout << "[WARNING] : Label has not been overwritten." << endl;
-			break;
-		}
-	}
-}
 
 
 

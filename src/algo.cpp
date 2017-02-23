@@ -116,14 +116,17 @@ double dotProduct(
 	return ans;
 }
 
-void normalization(vector<double> &data_)
-{
-	double tmp = 0.0;
-	for(int i=0;i<data_.size();i++)
-		tmp += data_[i];
-	for(int i=0;i<data_.size();i++)
-		data_[i]/=tmp;
-}
+//template<typename T> void normalizeData(vector<T> &data_)
+//{
+//	T tmp;
+//	for(int i=0;i<data_.size();i++)
+//		tmp += data_[i];
+//	if (tmp>0)
+//		for(int i=0;i<data_.size();i++)
+//			data_[i]/=tmp;
+//	else
+//		printf("[WARNING] : Data is empty.\n");
+//}
 
 double average(vector<double> &A)
 {
@@ -134,50 +137,42 @@ double average(vector<double> &A)
 	return avg;
 }
 
-double movingAverage(
-	double a,
-	vector<double> &A)
+point_t movingAverage(
+	point_t a,
+	vector<point_t> &A)
 {
 	for(int i=0;i<A.size()-1;i++)
 		A[i] = A[i+1];
 	A[A.size()-1] = a;
-	double avg = average(A);
+	point_t avg = averagePoint(A);
 	return avg;
 }
 
-void averagePoint(
-	point_t X,
-	vector<vector<double> > &X_tmp, // xyz, win length
-	point_t &Xavg)
+point_t averagePoint(vector<point_t> A)
 {
-	Xavg.x =  movingAverage(X.x, X_tmp[0]);
-	Xavg.y =  movingAverage(X.y, X_tmp[1]);
-	Xavg.z =  movingAverage(X.z, X_tmp[2]);
+	point_t avg;
+	avg.x = avg.y = avg.z = 0;
+	for (int i=0;i<A.size();i++)
+	{
+		avg.x += A[i].x;
+		avg.y += A[i].y;
+		avg.z += A[i].z;
+	}
+	avg.x /= A.size();
+	avg.y /= A.size();
+	avg.z /= A.size();
+	return avg;
 }
 
-void averagePointIncrement(
-	point_t X,
-	vector<vector<double> > &X_tmp,
-	point_t &Xavg)
+point_t averagePointIncrement(
+	point_t A,
+	vector< point_t > &A_mem)
 {
-	if(X_tmp[0].empty())
-	{
-		X_tmp[0].push_back(X.x);
-		X_tmp[1].push_back(X.y);
-		X_tmp[2].push_back(X.z);
-		Xavg.x =  X.x;
-		Xavg.y =  X.y;
-		Xavg.z =  X.z;
-	}
-	else
-	{
-		X_tmp[0].push_back(X.x);
-		X_tmp[1].push_back(X.y);
-		X_tmp[2].push_back(X.z);
-		Xavg.x =  average(X_tmp[0]);
-		Xavg.y =  average(X_tmp[1]);
-		Xavg.z =  average(X_tmp[2]);
-	}
+	vector< point_t > tmp = A_mem;
+	tmp.push_back(A);
+	point_t avg = averagePoint(tmp);
+	A_mem.push_back(avg);
+	return avg;
 }
 
 

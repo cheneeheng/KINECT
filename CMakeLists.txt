@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8)
 
 project(HMAR)
 
-#add_compile_options(-std=c++11)
+add_compile_options(-std=c++11)
 
 set(OpenCV_LIBS_DIR "/usr/local/src/opencv-3.1/build/lib")
 set(OpenCV_INCLUDE_DIR "/usr/local/include/opencv2")

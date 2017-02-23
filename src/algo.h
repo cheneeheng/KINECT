@@ -51,23 +51,30 @@ double dotProduct(
 	vector<double> A,
 	vector<double> B);
 
-void normalization(vector<double> &data_);
+// DATA IS ASSUMED TO BE POSITIVE ONLY
+template<typename T> void normalizeData(vector<T> &data_)
+{
+	T tmp = 0;
+	for(int i=0;i<data_.size();i++)
+		tmp += data_[i];
+	if (tmp>0)
+		for(int i=0;i<data_.size();i++)
+			data_[i]/=tmp;
+//	else
+//		printf("[WARNING] : Data is empty.\n");
+}
 
 double average(vector<double> &A);
 
-double movingAverage(
-	double a,
-	vector<double> &A);
+point_t movingAverage(
+	point_t a,
+	vector<point_t> &A);
 
-void averagePoint(
-	point_t X,
-	vector<vector<double> > &X_tmp,
-	point_t &Xavg);
+point_t averagePoint(vector<point_t> A);
 
-void averagePointIncrement(
-	point_t X,
-	vector<vector<double> > &X_tmp,
-	point_t &Xavg);
+point_t averagePointIncrement(
+	point_t A,
+	vector< point_t > &A_mem);
 
 void gaussKernel(
 	vector<vector<double> > &kernel_,
@@ -110,18 +117,27 @@ static inline point_t vector2point(vector<double> A)
 	B.x=A[0];
 	B.y=A[1];
 	B.z=A[2];
-	B.z=UNCLASSIFIED;
+	B.cluster_id=UNCLASSIFIED;
 	return B;
 }
 
-template<typename T> void vector2array(vector<T> A, T *B)
+template<typename T>
+void vector2array(vector<T> A, T *B)
 {
 	for(int i=0;i<A.size();i++) B[i] = A[i];
 }
 
-template<typename T> void array2vector(T *A, int size, vector<T> B)
+template<typename T>
+void array2vector(T *A, int size, vector<T> &B)
 {
 	for(int i=0;i<size;i++) B[i] = A[i];
+}
+
+template<typename T>
+void reshapeVector(vector<T> &A, int size)
+{
+	A.clear();
+	A.resize(size);
 }
 
 #endif /* ALGO_H_ */
