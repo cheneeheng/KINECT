@@ -8,6 +8,9 @@
 #ifndef DATADECLARATION_H_
 #define DATADECLARATION_H_
 
+// For backward compatibility with new VTK generic data arrays
+#define InsertNextTypedTuple InsertNextTupleValue
+
 #include <iostream>
 #include <pthread.h>
 #include <signal.h>
@@ -30,7 +33,6 @@
 #include <sys/stat.h>
 #include <stack>
 #include <ctime>
-#include <iostream>
 
 #include <opencv2/opencv.hpp>
 
@@ -76,7 +78,7 @@ using namespace std;
 using namespace cv;
 
 
-#define VERBOSE 2
+#define VERBOSE 3
 
 
 #define Sqr(x) ((x)*(x))
@@ -150,6 +152,14 @@ struct edge_ss
 	vector<data_t> 	 data;
 	vector<sector_t> sector_map; // locations * sectors
 	vector<double> 	 sector_const;
+};
+
+typedef struct label_s label_t;
+struct label_s
+{
+	int 		mov;
+	vector<int> loc;
+	vector<int> surface;
 };
 
 #endif /* DATADECLARATION_H_ */

@@ -308,6 +308,8 @@ Vec4f RANSAC3DPlane(
 
 	counter_max = 0;
 	srand(time(NULL));
+
+	int stop_num = 100;
 	while (counter_max == 0)
 	{
 		for (int i=0;i<iter;i++)
@@ -328,7 +330,7 @@ Vec4f RANSAC3DPlane(
 			p1 = cloud.at<Vec3f>(y1,x1);  
 			p2 = cloud.at<Vec3f>(y2,x2); 
 			p3 = cloud.at<Vec3f>(y3,x3); 
-			p_check = crossProd(p1-p2,p2-p3); // prevent degenerate case
+			p_check = (p1 - p2).cross((p2 - p3)); // prevent degenerate case
 			if (p_check[0]!=0 &&
 				p_check[1]!=0 &&
 				p_check[2]!=0 && 
@@ -336,17 +338,18 @@ Vec4f RANSAC3DPlane(
 				p1[2]<2 && p2[2]<2 && p3[2]<2 )
 			{
 				counter = 0; 
+
 				// hypothesis
-				plane_norm = computePlane(p1, p2, p3);
+  				plane_norm = (p1 - p2).cross((p2 - p3));
+  				plane_norm = plane_norm / norm(plane_norm);
+
 				d_def = plane_norm[0]*p1[0]+plane_norm[1]*p1[1]+plane_norm[2]*p1[2];
 				for(y=0;y<480;y++)
 				{
 					for(x=0;x<640;x++)
 					{
 						p4 = cloud.at<Vec3f>(y,x); 
-						d_tmp = plane_norm[0]*p4[0]+
-								plane_norm[1]*p4[1]+
-								plane_norm[2]*p4[2];   //offset plane from origin            
+						d_tmp = plane_norm.dot(p4);   //offset plane from origin            
 						if(abs(d_tmp-d_def)<threshold) counter +=1;              
 					}
 				}   
@@ -356,8 +359,59 @@ Vec4f RANSAC3DPlane(
 				{counter_max = counter; plane_best = plane_norm; d_def_best = d_def;}
 			}
 		}
+
+		// using the best points to build the mask
+		for(y=0;y<480;y++)
+		{
+			for(x=0;x<640;x++)
+			{
+				p4 = cloud.at<Vec3f>(y,x);               
+				d_tmp = plane_best.dot(p4);   //offset plane from origin    
+				if(abs(d_tmp-d_def_best)<threshold && p4[2]<2 && p4[2]>0)
+				{
+					plane.data[(y*640)+x] = 1;         
+				}     
+				else
+				{
+					plane.data[(y*640)+x] = 0;         
+				}  
+			}
+		}
+
+		//denoising
+		vector<vector<Point> > contours;
+		vector<Vec4i> hierarchy;
+		findContours(plane, contours, hierarchy,
+			CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, Point(0, 0));
+
+		vector<vector<Point> > contours_poly(contours.size());
+		vector<Rect> box(contours.size());
+		double biggest_box = 0;
+		int big = 0;
+		for (int j=0;j<(int)contours.size();j++)
+		{
+			approxPolyDP(Mat(contours[j]), contours_poly[j], 3, true);
+			if (biggest_box < contourArea(contours[j]))
+			{
+				biggest_box = contourArea(contours[j]);
+				box[0] = boundingRect(Mat(contours_poly[j]));
+				big = j;
+			}
+		}
+		
+		if(biggest_box>2000)
+		{	
+			Mat tmp_img = Mat::zeros(plane.size(), CV_8UC1);
+			drawContours(tmp_img, contours, big, 1, -1);
+			plane = tmp_img;
+		}
+		else if (stop_num > 0)
+		{
+			stop_num--;
+			counter_max = 0;
+		}
 	}
-  
+  /*
 	// using the best points to build the mask
 	counter = 0;
 	for(y=0;y<480;y++){
@@ -373,6 +427,10 @@ Vec4f RANSAC3DPlane(
 			}             
 		}
 	}
+
+*/
+
+
 	Vec4f plane_constants;
 	plane_constants[0] = plane_best[0];
 	plane_constants[1] = plane_best[1];
@@ -382,7 +440,7 @@ Vec4f RANSAC3DPlane(
 
 	return plane_constants;
 }
-
+/*
 Vec3f crossProd(Vec3f A, Vec3f B){
   Vec3f C;
   C[0] = A[1]*B[2] - A[2]*B[1]; 
@@ -427,7 +485,7 @@ Vec3f computePlane(Vec3f A, Vec3f B, Vec3f C){
   N_norm = normalization3D(N);
   return N_norm;
 }
-
+*/
 void normalPlaneCheck(Vec4f &plane_equation){
   Vec3f p1(0,0,1); 
   if (plane_equation[0]*p1[0]+

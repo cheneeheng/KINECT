@@ -10,9 +10,6 @@
 #include "util.h"
 #include "vtkExtra.h"
 
-//string SCN = "./Scene/";
-string SCN = "../Scene/";
-
 // ============================================================================
 // Labels
 // ============================================================================
@@ -24,8 +21,8 @@ void labelMovement(
 
 	vector<vector<string> > data;
 	string path;
-	path = SCN + Graph_.getScene()  + "/"
-	           + Graph_.getObject() + "/mov_data.txt";
+	path =  "../Scene/" + Graph_.getScene()  + "/"
+			           + Graph_.getObject() + "/mov_data.txt";
 	readFile(path.c_str(), data , ',');
 
 	if(data.empty())
@@ -201,7 +198,7 @@ void labelLocation_(
 		points_avg.push_back(pos_vel_acc_[i][0]);
 
 	string path;
-	path = SCN + Graph_.getScene() + "/" + Graph_.getObject() + "/loc_data.txt";
+	path =  "../Scene/" + Graph_.getScene() + "/" + Graph_.getObject() + "/loc_data.txt";
 
 	labelLocation(path, points_avg,
 				  locations, location_boundary, label, surface_num1,
@@ -339,13 +336,13 @@ void labelSector(
 	printf("Viewing sector......Complete\n");
 
 	string path;
-	path = 	SCN + Graph_.getScene() + "/" + Graph_.getObject() + "/sec_data_max.txt";
+	path = 	"../Scene/" + Graph_.getScene() + "/" + Graph_.getObject() + "/sec_data_max.txt";
 	writeSectorFile(Graph_, path, 0);
 
-	path = 	SCN + Graph_.getScene() + "/" + Graph_.getObject() + "/sec_data_min.txt";
+	path = 	"../Scene/" + Graph_.getScene() + "/" + Graph_.getObject() + "/sec_data_min.txt";
 	writeSectorFile(Graph_, path, 1);
 
-	path = 	SCN + Graph_.getScene() + "/" + Graph_.getObject() + "/sec_data_const.txt";
+	path = 	"../Scene/" + Graph_.getScene() + "/" + Graph_.getObject() + "/sec_data_const.txt";
 	writeSectorFile(Graph_, path, 2);
 }
 
@@ -356,7 +353,7 @@ void labelSector(
 void writeSurfaceFile(
 	Graph Graph_)
 {
-	string path = SCN + Graph_.getScene() + "/surface.txt";
+	string path = "../Scene/" + Graph_.getScene() + "/surface.txt";
 
 	vector<vector<double> > surface = Graph_.getSurface();
 
@@ -522,7 +519,7 @@ void readSurfaceFile(
 	string path;
 	vector<vector<string> > data;
 
-	path = SCN + Graph_.getScene() + "/surface.txt";
+	path = "../Scene/" + Graph_.getScene() + "/surface.txt";
 	readFile(path.c_str(), data, ',');
 
 	vector<vector<double> > surface_;
@@ -612,7 +609,7 @@ void readLocation_(
 	Graph &Graph_)
 {
 	string path;
-	path =  SCN + Graph_.getScene() + "/" + Graph_.getObject() + "/loc_data.txt";
+	path =  "../Scene/" + Graph_.getScene() + "/" + Graph_.getObject() + "/loc_data.txt";
 
 	vector<string> 	label;
 	vector<point_t> locations;
@@ -637,7 +634,7 @@ void readMovement(
 	vector<string> label;
 
 	string path;
-	path =  SCN + Graph_.getScene() + "/" + Graph_.getObject() + "/mov_data.txt";
+	path =  "../Scene/" + Graph_.getScene() + "/" + Graph_.getObject() + "/mov_data.txt";
 
 	vector<vector<string> > data;
 	readFile(path.c_str(), data , ',');
@@ -700,13 +697,13 @@ void readSectorFile(
 	switch(maxminconst_)
 	{
 		case 0:
-			path =  SCN + Graph_.getScene() + "/" + Graph_.getObject() + "/sec_data_max.txt";
+			path =  "../Scene/" + Graph_.getScene() + "/" + Graph_.getObject() + "/sec_data_max.txt";
 			break;
 		case 1:
-			path =  SCN + Graph_.getScene() + "/" + Graph_.getObject() + "/sec_data_min.txt";
+			path =  "../Scene/" + Graph_.getScene() + "/" + Graph_.getObject() + "/sec_data_min.txt";
 			break;
 		case 2:
-			path =  SCN + Graph_.getScene() + "/" + Graph_.getObject() + "/sec_data_const.txt";
+			path =  "../Scene/" + Graph_.getScene() + "/" + Graph_.getObject() + "/sec_data_const.txt";
 			break;
 	}
 
@@ -1409,15 +1406,15 @@ void checkMotion(
 	vector<vector<double> > surface_,
 	double surface_limit_,
 	double angle_limit_,
-	double vel_limit_)
+	double vel_limit_,
+	label_t &LABEL_)
 {
 	bool slide = false;
 	int surface_num_tmp = 0;
 
 	if (l2Norm(vel_) < vel_limit_)
 	{
-		if(VERBOSE == 0 || VERBOSE == 2)
-			printf("LABEL: NULL\n");
+		LABEL_.mov = -1;
 	}
 	else
 	{
@@ -1430,12 +1427,15 @@ void checkMotion(
 				surface_num_tmp = ii;
 			}
 		}
-		if(VERBOSE == 0 || VERBOSE == 2)
+
+		if (slide)
 		{
-			if (slide)
-				printf("LABEL: %s on surface %d  " , label_[1].c_str(), surface_num_tmp);
-			else
-				printf("LABEL: %s  ", label_[0].c_str());
+			LABEL_.mov = 1;
+			LABEL_.surface[surface_num_tmp] = 1;
+		}
+		else
+		{
+			LABEL_.mov = 0;
 		}
 	}
 }
@@ -1587,14 +1587,6 @@ void motionPrediction(
 
 	flag_predict_ = flag_predict_last_;
 
-	if(VERBOSE == 0 || VERBOSE == 2)
-	{
-		for(int ii=0;ii<num_locations;ii++)
-			printf(" %.4f ", predict_err_[ii]);
-		for(int ii=0;ii<num_locations;ii++)
-			if((int)prediction_[ii]==WITHIN_RANGE)
-				printf(" %s %.4f ", Graph_.getNode(ii).name.c_str(), predict_in_[ii]);
-	}
 }
 
 void locationPrediction(
@@ -1604,19 +1596,18 @@ void locationPrediction(
 	Graph Graph_,
 	double surface_limit_,
 	double angle_limit_,
-	double vel_limit_)
+	double vel_limit_,
+	label_t &LABEL_)
 {
 	// check if label is empty
 	if (!strcmp(Graph_.getNode(location_num_).name.c_str(),""))
 	{
-		if(VERBOSE == 1 || VERBOSE == 2)
-			printf("LABEL: Empty location Label.  ");
+		LABEL_.loc[location_num_] = -1;
 		checkMotion(pos_, vel_, Graph_.getMovLabel(), Graph_.getSurface(),
-				    surface_limit_, angle_limit_, vel_limit_);
+				    surface_limit_, angle_limit_, vel_limit_, LABEL_);
 	}
 	else
-		if(VERBOSE == 1 || VERBOSE == 2)
-			printf("LABEL: %s  ", Graph_.getNode(location_num_).name.c_str());
+		LABEL_.loc[location_num_] = 1;
 }
 
 

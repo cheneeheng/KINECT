@@ -204,17 +204,11 @@ void colorCode(
 
 vtkSmartPointer<vtkPolyDataMapper> dataPoints(
 	vector<point_t> points_,
+	int num_locations_,
 	vector<unsigned char*> color_,
 	bool cluster_)
 {
-	int line_ = 0;
-	int num_locations = 0;
-	while(line_ < points_.size())
-	{
-		num_locations = max(points_[line_].cluster_id,num_locations);
-		++line_;
-	}
-	++num_locations;
+	int num_locations = num_locations_;
 
 	// Create the geometry of a point (the coordinate)
 	// add point to polydata to create the vertices for glyph
@@ -291,14 +285,7 @@ void showData(
 	bool cluster_,
 	bool labeling_)
 {
-	int line_ = 0;
-	int num_locations = 0;
-	while(line_<points_.size())
-	{
-		num_locations = max(points_[line_].cluster_id,num_locations);
-		++line_;
-	}
-	++num_locations;
+	int num_locations = labels_.size() - 1;
 
 	vtkSmartPointer<vtkPolyDataMapper>			mapper;
 	vtkSmartPointer<vtkActor> 					actor;
@@ -316,7 +303,7 @@ void showData(
 	style 					= vtkSmartPointer<customMouseInteractorStyle>::New();
 //	textActor 				= vtkSmartPointer<vtkTextActor>::New();
 
-	mapper =  dataPoints(points_, color_, cluster_);
+	mapper =  dataPoints(points_, num_locations, color_, cluster_);
 
 	actor->SetMapper(mapper);
 	actor->GetProperty()->SetPointSize(3);
@@ -802,7 +789,7 @@ void showConnection(
 			tubeActor[i][ii]->GetProperty()->SetOpacity(0.50); //Make the tube have some transparency.
 			tubeActor[i][ii]->SetMapper(tubeMapper[i][ii]);
 			tubeActor2[i][ii] = vtkSmartPointer<vtkActor>::New();
-			tubeActor2[i][ii]->GetProperty()->SetOpacity(1.00); //Make the tube have some transparency.
+			tubeActor2[i][ii]->GetProperty()->SetOpacity(0.75); //Make the tube have some transparency.
 			tubeActor2[i][ii]->SetMapper(tubeMapper2[i][ii]);
 		}
 	}
@@ -852,7 +839,7 @@ void showConnection(
 		vtkSmartPointer<vtkActor> 			actor;
 		mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
 		actor  = vtkSmartPointer<vtkActor>::New();
-		mapper =  dataPoints(points_, color_, true);
+		mapper =  dataPoints(points_, num_locations, color_, true);
 		actor->SetMapper(mapper);
 		actor->GetProperty()->SetPointSize(5);
 		renderer->AddActor(actor);

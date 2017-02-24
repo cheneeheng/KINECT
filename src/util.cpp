@@ -354,6 +354,27 @@ void labelSector(
 // ============================================================================
 
 void writeSurfaceFile(
+	vector<vector<double> > surface_)
+{
+	string path = SCN + "Kitchen/surface.txt";
+
+	if (!ifstream(path))
+	{
+		ofstream write_file(path, std::ios::app);
+		for(int i=0;i<surface_.size();i++)
+		{
+			write_file << i;
+			for(int ii=0;ii<4;ii++)
+			{
+				write_file << ",";
+				write_file << surface_[i][ii];
+			}
+			write_file << "\n";
+		}
+	}
+}
+
+void writeSurfaceFile(
 	Graph Graph_)
 {
 	string path = SCN + Graph_.getScene() + "/surface.txt";
@@ -1409,15 +1430,15 @@ void checkMotion(
 	vector<vector<double> > surface_,
 	double surface_limit_,
 	double angle_limit_,
-	double vel_limit_)
+	double vel_limit_,
+	label_t &LABEL_)
 {
 	bool slide = false;
 	int surface_num_tmp = 0;
 
 	if (l2Norm(vel_) < vel_limit_)
 	{
-		if(VERBOSE == 0 || VERBOSE == 2)
-			printf("LABEL: NULL\n");
+		LABEL_.mov = -1;
 	}
 	else
 	{
@@ -1430,12 +1451,15 @@ void checkMotion(
 				surface_num_tmp = ii;
 			}
 		}
-		if(VERBOSE == 0 || VERBOSE == 2)
+
+		if (slide)
 		{
-			if (slide)
-				printf("LABEL: %s on surface %d  " , label_[1].c_str(), surface_num_tmp);
-			else
-				printf("LABEL: %s  ", label_[0].c_str());
+			LABEL_.mov = 1;
+			LABEL_.surface[surface_num_tmp] = 1;
+		}
+		else
+		{
+			LABEL_.mov = 0;
 		}
 	}
 }
@@ -1587,14 +1611,6 @@ void motionPrediction(
 
 	flag_predict_ = flag_predict_last_;
 
-	if(VERBOSE == 0 || VERBOSE == 2)
-	{
-		for(int ii=0;ii<num_locations;ii++)
-			printf(" %.4f ", predict_err_[ii]);
-		for(int ii=0;ii<num_locations;ii++)
-			if((int)prediction_[ii]==WITHIN_RANGE)
-				printf(" %s %.4f ", Graph_.getNode(ii).name.c_str(), predict_in_[ii]);
-	}
 }
 
 void locationPrediction(
@@ -1604,19 +1620,18 @@ void locationPrediction(
 	Graph Graph_,
 	double surface_limit_,
 	double angle_limit_,
-	double vel_limit_)
+	double vel_limit_,
+	label_t &LABEL_)
 {
 	// check if label is empty
 	if (!strcmp(Graph_.getNode(location_num_).name.c_str(),""))
 	{
-		if(VERBOSE == 1 || VERBOSE == 2)
-			printf("LABEL: Empty location Label.  ");
+		LABEL_.loc[location_num_] = -1;
 		checkMotion(pos_, vel_, Graph_.getMovLabel(), Graph_.getSurface(),
-				    surface_limit_, angle_limit_, vel_limit_);
+				    surface_limit_, angle_limit_, vel_limit_, LABEL_);
 	}
 	else
-		if(VERBOSE == 1 || VERBOSE == 2)
-			printf("LABEL: %s  ", Graph_.getNode(location_num_).name.c_str());
+		LABEL_.loc[location_num_] = 1;
 }
 
 

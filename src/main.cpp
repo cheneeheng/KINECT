@@ -29,7 +29,7 @@ Vec3f single_point_obj_global;
 
 float frame_number_global = 0.0;
 
-Vec4f plane_global;
+vector<Vec4f> plane_global;
 
 // threads
 int MAX = 4;
@@ -65,6 +65,8 @@ vector<string> LABEL_MOV;
 vector<string> LABEL_LOC_MOV;
 vector<string> LABEL_LOC;
 
+int rate = 30;
+
 //====================================================================================================================================
 // [THREAD 1 : KINECT]*********************************************************
 void* kinectGrab(void* v_kinect)
@@ -76,17 +78,18 @@ void* kinectGrab(void* v_kinect)
 
 	bool flag_plane = false;
 
-	float ratio[2]; ratio[0] = 0.005; ratio[1] = 0.5;
+	float ratio[2]; ratio[0] = 0.00005; ratio[1] = 0.5;
 	char keypress;
     
 	Mat plane_tmp = Mat::zeros(480,640,CV_8UC1);
+	Mat plane_tmp2 = Mat::zeros(480,640,CV_8UC1);
 	Mat tmp_cloud,tmp_cloud2;
 
 	while(true)
 	{
 
 #ifdef FREQ
-if(c==0) gettimeofday(&start_time, NULL);
+if(c%rate==0) gettimeofday(&start_time, NULL);
 #endif
 
 		sem_wait(&lock_t1);
@@ -123,14 +126,26 @@ imshow("rgb",rgb_global1); cvWaitKey(1);
 		while(!flag_plane)
 		{       
 			plane_tmp = Mat::zeros(480,640,CV_8UC1);
-			plane_global = RANSAC3DPlane(tmp_cloud, plane_tmp, 500, ratio, 0.005);
-			imshow("plane",(plane_tmp==0));
+			plane_tmp2 = Mat::zeros(480,640,CV_8UC1);
+			Vec4f plane_eq = RANSAC3DPlane(tmp_cloud, plane_tmp, 500, ratio, 0.003);
+			imshow("plane", plane_tmp*255);
+
+			for(int y=0;y<480;y++)
+				for(int x=0;x<640;x++)
+					if (norm(tmp_cloud.at<Vec3f>(y,x))!=0) 
+						plane_tmp2.data[(y*640)+x] = 1;  
+			imshow("plane_reduced", plane_tmp2*255);
+
 			printf("SAVE NORMAL VECTOR OF PLANE : [Y/N] \n\n");
 			keypress = waitKey(0); 
 			if (keypress == 'y') 
 			{
-				flag_plane = true; 
-				destroyWindow("plane");
+				plane_global.push_back(plane_eq);
+
+				for(int y=0;y<480;y++)
+					for(int x=0;x<640;x++)
+						tmp_cloud.at<Vec3f>(y,x) *= (int)(plane_tmp.data[(y*640)+x]==0);  
+
 			} 
 			/*else if(keypress == 'a') TODO need to change the ransac algo to check for connected area
 			{
@@ -139,8 +154,14 @@ imshow("rgb",rgb_global1); cvWaitKey(1);
 				tmp_cloud.release();
 				tmp_cloud2.copyTo(tmp_cloud);
 			}*/ 
-			else waitKey(1);
-			waitKey(30);
+			else if (keypress == 'q')
+			{
+				vector<vector<double> > tmptmp;
+				for(int i=0;i<plane_global.size();i++)
+					tmptmp.push_back(cvVector2vector(plane_global[i]));
+				writeSurfaceFile(tmptmp);
+				flag_plane = true;
+			}
 		}
 #endif
 
@@ -152,11 +173,11 @@ imshow("rgb",rgb_global1); cvWaitKey(1);
 
 #ifdef FREQ
 c++;
-if(c>=20)
+if(c%rate==0)
 {
 	c = 0;
 	gettimeofday(&end_time, NULL);
-	cout << 20/ ((end_time.tv_sec - start_time.tv_sec) + 
+	cout << rate/ ((end_time.tv_sec - start_time.tv_sec) + 
 			(end_time.tv_usec- start_time.tv_usec) * 1e-6) 
 		 << " [Hz]"<< endl;
 }
@@ -258,10 +279,17 @@ void* faceDetector(void* arg)
 	printf("--(!)Error loading face cascade\n");
 
 	Mat img_tmp;
-
+	int c = 0;
 	while(true)
 	{
 		sem_wait(&mutex4);
+
+		bool testing1 = rgb_global4.empty();
+		bool testing2 = img_tmp.empty();
+		//if(c%rate==0)
+		//	cout << testing1 << testing2 ;
+		//c++;
+
 		bool eq = countNonZero(rgb_global4!=img_tmp) == 0;
 		if (!eq)
 		{
@@ -352,10 +380,9 @@ void* contactDetector(void* arg)
 		//*******************************************************[OBJECT CONTACT]
 
 		c++;
-		if(c>=30)
+		if(c%rate==0)
 		{
 			printf("CONTACT : %d     CONTACTVAL : %f\n", contact_obj, contact_sub);
-			c = 0;
 		}
 
 		sem_post(&mutex5);
@@ -370,22 +397,8 @@ void* contactDetector(void* arg)
 void* writeData(void* arg)
 {
 	//[VARIABLES]**************************************************************
-	vector<unsigned char*> color_code(12);
-	for(int j=0;j<12;j++) color_code[j] = Calloc(unsigned char,3);
-	colorCode(color_code);
-
-	int num_surfaces 	= 1;
 	int num_scene 		= 1;
 	int num_object 		= 1;
-
-	int num_points 		= 0;
-	int num_locations	= 0;
-	int file_num 		= 0;
-
-	int minpts 			= 10;
-	double epsilon 		= 0.015; 	// if datasets are merged these 2 values can be increased.
-
-	double vel_limit 	= 0.005; //##### still need to validate
 
 	string scene  = "Kitchen";
 	string object = "Cup";
@@ -395,18 +408,37 @@ void* writeData(void* arg)
 	//	for(int i=0;i<num_scene;i++) reshapeVector(Graph[i], num_object);
 
 	Graph Graph_(scene, object);
+
+	int num_points 		= 0;
+	int num_locations	= 0;
+	int num_surface		= 0;
+	int file_num 		= 0;
+
+	int minpts 			= 10;
+	double epsilon 		= 0.015; 	// if datasets are merged these 2 values can be increased.
+	double vel_limit 	= 0.005; //##### still need to validate
+
+	vector<int> 				file_eof;
+	vector<point_t> 			points_test;
+	vector<vector<string> > 	data_test;
+
+	vector<unsigned char*> color_code(12);
+	for(int j=0;j<12;j++) color_code[j] = Calloc(unsigned char,3);
+	colorCode(color_code);
 	//**************************************************************[VARIABLES]
 
-	//[PREDICTION]*************************************************************
-	readSurfaceFile(Graph_);
-	readLocation_(Graph_);
-	readMovement(Graph_);
-	readSectorFile(Graph_, 0);
-	readSectorFile(Graph_, 1);
-	readSectorFile(Graph_, 2);
-
+	// [LEARNED DATA]**********************************************************
+	readSurfaceFile(Graph_	 );
+	readLocation_  (Graph_   );
+	readMovement   (Graph_   );
+	readSectorFile (Graph_, 0);
+	readSectorFile (Graph_, 1);
+	readSectorFile (Graph_, 2);
 	num_locations = Graph_.getNodeList().size();
+	num_surface	  = Graph_.getSurface().size();
+	// **********************************************************[LEARNED DATA]
 
+	// [PREDICTION VARIABLES]**************************************************
 	bool flag_motion      	= false;
 	bool flag_predict      	= false;
 	bool flag_predict_last 	= false;
@@ -418,16 +450,14 @@ void* writeData(void* arg)
 
 	vector<int> prediction;
 	vector<double> t_val;
-	vector<data_t> tmp_data;
-	reshapeVector(prediction, num_locations);
-	reshapeVector(t_val,      num_locations);
-
 	vector<double> predict_in;
 	vector<double> predict_err;
 	vector<double> predict_in_last;
-	reshapeVector(predict_in,      num_locations);
-	reshapeVector(predict_err,     num_locations);
-	reshapeVector(predict_in_last, num_locations);
+	reshapeVector(prediction, 		num_locations);
+	reshapeVector(t_val,      		num_locations);
+	reshapeVector(predict_in,		num_locations);
+	reshapeVector(predict_err,		num_locations);
+	reshapeVector(predict_in_last,	num_locations);
 
 	prepareSector(Graph_);
 	printf("Preparing sectors......Complete\n");
@@ -438,6 +468,12 @@ void* writeData(void* arg)
 	vector<point_t>	pos_vel_acc_avg(3);	
 	vector<vector< point_t > > 	pos_vel_acc_mem; // motion->length
 	reshapeVector(pos_vel_acc_mem, 3);
+
+	label_t LABEL;
+	LABEL.mov = -1;
+	reshapeVector(LABEL.loc, 		num_locations);
+	reshapeVector(LABEL.surface, 	num_surface);
+	// **************************************************[PREDICTION VARIABLES]
 
 	int i = -1;
 	while(true)
@@ -462,18 +498,18 @@ void* writeData(void* arg)
 // ============================================================================
 // PREDICTION STARTS
 // ============================================================================
+slide 	  = false;
+LABEL.mov = -1;
+reshapeVector(LABEL.loc, 		num_locations);
+reshapeVector(LABEL.surface, 	num_surface);
 
 // 1. Contact trigger
 // 1.1 Check if the object is within a sphere volume of the location areas
 triggerContact(pos_vel_acc_avg[0], Graph_);
 
-slide = false;
-
 // 2. Prediction during motion
 if (pos_vel_acc_avg[0].cluster_id < 0)
 {
-	if(VERBOSE == 0 || VERBOSE == 2) printf("Nr:%04d,  ", i);
-
 	flag_motion = true;
 
 	// 2.1. Set flag to allow online learning/updates of the knowledge base
@@ -487,7 +523,7 @@ if (pos_vel_acc_avg[0].cluster_id < 0)
 	// 2.3. Check for motion (moving/null)
 	checkMotion(pos_vel_acc_avg[0], pos_vel_acc_avg[1],
 				Graph_.getMovLabel(), Graph_.getSurface(),
-				0.1, 0.97, vel_limit);
+				0.1, 0.97, vel_limit, LABEL);
 
 	// 2.4. Prediction based on the trajectory error from sector map
 	motionPrediction(prediction, t_val,
@@ -495,12 +531,52 @@ if (pos_vel_acc_avg[0].cluster_id < 0)
 					 predict_in, predict_err, predict_in_last,
 					 pow_dec, Graph_);
 
-	cout << endl;
+	if ((VERBOSE == 0 || VERBOSE == 1) && (i%rate==0))
+	{
+		printf("Nr:%04d,  ", i);
+
+		if (LABEL.mov < 0)
+		{
+			printf("LABEL: NULL");
+		}
+		else if (LABEL.mov == 1)
+		{
+			for(int ii=0;ii<num_surface;ii++)
+			{
+				if (LABEL.surface[ii] > 0)
+				{
+					printf("LABEL: %s on surface %d  ",
+							Graph_.getMovLabel()[LABEL.mov].c_str(), ii);
+					break;
+				}
+			}
+		}
+		else
+		{
+			printf("LABEL: %s  ", Graph_.getMovLabel()[LABEL.mov].c_str());
+		}
+
+		for(int ii=0;ii<num_locations;ii++)
+		{
+			printf(" %.4f ", predict_err[ii]);
+		}
+
+		for(int ii=0;ii<num_locations;ii++)
+		{
+			if (prediction[ii] == WITHIN_RANGE)
+			{
+				printf(" %s %.4f ", Graph_.getNode(ii).name.c_str(), predict_in[ii]);
+			}
+		}
+
+		printf("\n");
+	}
+
 }
+
 // 3. Prediction within location area
 else
 {
-	if(VERBOSE == 1 || VERBOSE == 2) printf("Nr:%04d,  ", i);
 
 	flag_predict      = false;
 	flag_predict_last = false;
@@ -508,7 +584,7 @@ else
 	// 3.1. Location area prediction based on contact trigger
 	locationPrediction(pos_vel_acc_avg[0].cluster_id,
 					   pos_vel_acc_avg[0], pos_vel_acc_avg[1],
-					   Graph_, 0.1, 0.97, vel_limit);
+					   Graph_, 0.1, 0.97, vel_limit, LABEL);
 
 	// 3.2. Check if it is moved back to the same location or not
 	if (last_location == pos_vel_acc_avg[0].cluster_id && flag_motion)
@@ -581,9 +657,140 @@ else
 	last_location = pos_vel_acc_avg[0].cluster_id;
 	flag_motion = false;
 
-	if(VERBOSE == 1 || VERBOSE == 2) cout << endl;
+	if ((VERBOSE == 0 || VERBOSE == 2) && (i%rate==0))
+	{
+		printf("Nr:%04d,  ", i);
+
+		for(int ii=0;ii<num_locations;ii++)
+		{
+			if (LABEL.loc[ii] > 0)
+			{
+				printf("LABEL: %s  ", Graph_.getNode(ii).name.c_str());
+				break;
+			}
+			else if (LABEL.loc[ii] < 0)
+			{
+				printf("LABEL: Empty location Label.  ");
+				if (LABEL.mov < 0)
+				{
+					printf("LABEL: NULL");
+				}
+				else if (LABEL.mov < 0)
+				{
+					for(int ii=0;ii<num_surface;ii++)
+					{
+						if (LABEL.surface[ii] > 0)
+						{
+							printf("LABEL: %s on surface %d  ",
+									Graph_.getMovLabel()[LABEL.mov].c_str(), ii);
+							break;
+						}
+					}
+				}
+				else
+				{
+					printf("LABEL: %s  ", Graph_.getMovLabel()[LABEL.mov].c_str());
+				}
+				break;
+			}
+		}
+
+		printf("\n");
+	}
 
 }
+
+
+// LABEL ONLY
+if ((VERBOSE == 3) && (i%rate==0))
+{
+	if (pos_vel_acc_avg[0].cluster_id < 0)
+	{
+		printf("Nr:%04d,  ", i);
+
+		if (LABEL.mov < 0)
+		{
+			printf("LABEL: NULL  ");
+		}
+		else if (LABEL.mov == 1)
+		{
+			for(int ii=0;ii<num_surface;ii++)
+			{
+				if (LABEL.surface[ii] > 0)
+				{
+					printf("LABEL: %s on surface %d  ",
+							Graph_.getMovLabel()[LABEL.mov].c_str(), ii);
+					break;
+				}
+			}
+		}
+		else
+		{
+			printf("LABEL: %s  ", Graph_.getMovLabel()[LABEL.mov].c_str());
+		}
+
+		if (*max_element(predict_in.begin(), predict_in.end()) > 0)
+		{
+			unsigned int tmptmp = distance(predict_in.begin(), max_element(predict_in.begin(), predict_in.end()));
+			printf("%s  %.4f  ", Graph_.getNode(tmptmp).name.c_str(), *max_element(predict_in.begin(), predict_in.end()));
+		}
+		else if (*max_element(prediction.begin(), prediction.end()) < 0)
+		{
+			printf("OUT OF BOUNDS  ");
+		}
+		else
+		{
+			unsigned int tmptmp = distance(predict_err.begin(), max_element(predict_err.begin(), predict_err.end()));
+			printf("%s  %.4f  ", Graph_.getNode(tmptmp).name.c_str(), *max_element(predict_err.begin(), predict_err.end()));
+		}
+
+		printf("\n");
+
+	}
+	else
+	{
+		printf("Nr:%04d,  ", i);
+
+		for(int ii=0;ii<num_locations;ii++)
+		{
+			if (LABEL.loc[ii] > 0)
+			{
+				printf("LABEL: %s  ", Graph_.getNode(ii).name.c_str());
+				break;
+			}
+			else if (LABEL.loc[ii] < 0)
+			{
+				printf("LABEL: Empty location Label.  ");
+				if (LABEL.mov < 0)
+				{
+					printf("LABEL: NULL  ");
+				}
+				else if (LABEL.mov < 0)
+				{
+					for(int ii=0;ii<num_surface;ii++)
+					{
+						if (LABEL.surface[ii] > 0)
+						{
+							printf("LABEL: %s on surface %d  ",
+									Graph_.getMovLabel()[LABEL.mov].c_str(), ii);
+							break;
+						}
+					}
+				}
+				else
+				{
+					printf("LABEL: %s  ", Graph_.getMovLabel()[LABEL.mov].c_str());
+				}
+				break;
+			}
+		}
+
+		printf("\n");
+
+	}
+
+}
+
 
 // ============================================================================
 // PREDICTION ENDS
@@ -693,6 +900,7 @@ int main(int argc, char *argv[])
 #endif
 #ifdef FLAG_PLANE
   namedWindow("plane");
+  namedWindow("plane_reduced");
 #endif
 #ifdef FLAG_MARKER
   namedWindow("rgb_m");

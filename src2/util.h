@@ -230,7 +230,8 @@ void checkMotion(
 	vector<vector<double> > surface_,
 	double surface_limit_,
 	double angle_limit_,
-	double vel_limit_);
+	double vel_limit_,
+	label_t &LABEL_);
 
 void checkSector(
 	vector<int> &prediction_,
@@ -259,7 +260,8 @@ void locationPrediction(
 	Graph Graph_,
 	double surface_limit_,
 	double angle_limit_,
-	double vel_limit_);
+	double vel_limit_,
+	label_t &LABEL_);
 
 
 

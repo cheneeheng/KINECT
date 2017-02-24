@@ -12,9 +12,6 @@
 #include "Graph.h"
 #include "algo.h"
 
-// For backward compatibility with new VTK generic data arrays
-#define InsertNextTypedTuple InsertNextTupleValue
-
 //=============================================================================
 
 void colorCode(
@@ -44,6 +41,7 @@ void plotData(
 
 vtkSmartPointer<vtkPolyDataMapper> dataPoints(
 	vector<point_t> points_,
+	int num_locations_,
 	vector<unsigned char*> color_,
 	bool cluster_);
 

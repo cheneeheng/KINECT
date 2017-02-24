@@ -14,3 +14,7 @@
 [03] Predicition
 - 22/02/2017
 - merged code with [06] of HMAR_LOCATION
+
+[04] Merge
+- 22/02/2017
+- merged code with [07] of HMAR_LOCATION

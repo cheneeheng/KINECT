@@ -85,22 +85,24 @@ void gaussKernel(
 //=============================================================================
 // inline
 
-static inline int min (int x,int y) { return (x<y)?x:y; }
+//static inline int min (int x,int y) { return (x<y)?x:y; }
+//
+//static inline int max (int x,int y) { return (x>y)?x:y; }
+//
+//static inline double min (double x,double y) { return (x<y)?x:y; }
+//
+//static inline double max (double x,double y) { return (x>y)?x:y; }
 
-static inline int max (int x,int y) { return (x>y)?x:y; }
+template<typename T>
+static inline bool min_ (T x,T y) { return (x<y)?true:false; }
 
-static inline double min (double x,double y) { return (x<y)?x:y; }
+template<typename T>
+static inline bool max_ (T x,T y) { return (x>y)?true:false; }
 
-static inline double max (double x,double y) { return (x>y)?x:y; }
-
-static inline bool min_ (double x,double y) { return (x<y)?true:false; }
-
-static inline bool max_ (double x,double y) { return (x>y)?true:false; }
-
-static inline point_t min (point_t x, point_t y)
-{
-	return (l2Norm(x)<l2Norm(y)) ? x:y;
-}
+//static inline point_t min (point_t x, point_t y)
+//{
+//	return (l2Norm(x)<l2Norm(y)) ? x:y;
+//}
 
 static inline vector<double> point2vector(point_t A)
 {
