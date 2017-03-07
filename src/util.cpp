@@ -605,7 +605,7 @@ void writeSurfaceFile(
 		for(int i=0;i<surface_.size();i++)
 		{
 			write_file << i;
-			for(int ii=0;ii<4;ii++)
+			for(int ii=0;ii<surface_[i].size();ii++)
 			{
 				write_file << ",";
 				write_file << surface_[i][ii];
@@ -844,6 +844,18 @@ void writeCounterFile(
 	}
 }
 
+int fileSelect(
+	const struct dirent *entry)
+{
+	int n;
+	size_t found_extension = string(entry->d_name).find(".txt");
+	if ((int)found_extension == -1)
+		n = 0;
+	else
+		n = 1;
+	return n;
+}
+
 void readFile(
 	const char *name,
 	vector<vector<string> > &data_full,
@@ -884,7 +896,7 @@ void readSurfaceFile(
 	for(int i=0;i<data.size();i++)
 	{
 		int tmp = atoi(data[i][0].c_str());
-		for(int ii=0;ii<4;ii++)
+		for(int ii=0;ii<4;ii++) // TODO add mid points for locations
 			surface_[tmp].push_back(atof(data[i][ii+1].c_str()));
 	}
 
@@ -2822,26 +2834,6 @@ void outputMsg(
 			break;
 	}
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

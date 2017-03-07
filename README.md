@@ -23,3 +23,7 @@
 - 7/3/2017
 - added option for the thread to either record or do prediction.
 - most recent prediction code has not been merged.
+
+[06] Data
+- 7/3/2017
+- started data recording.

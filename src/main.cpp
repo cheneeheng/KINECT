@@ -34,7 +34,7 @@ Vec3f single_point_obj_global;
 
 float frame_number_global = 0.0;
 
-vector<Vec4f> plane_global;
+vector<vector<double> > plane_global;
 
 // threads
 int MAX = 4;
@@ -43,14 +43,14 @@ sem_t lock_t1,lock_t2,lock_t3,lock_t4,lock_t5,lock_t6;
 
 
 // option flags
-#define FLAG_RGB // shows window for rgb
-#define FLAG_DEPTH // shows window for depth
-#define FLAG_PLANE // detecting planes
+//#define FLAG_RGB // shows window for rgb
+//#define FLAG_DEPTH // shows window for depth
+//#define FLAG_PLANE // detecting planes
 #define FLAG_OBJECT // shows window for object detection
 #define FLAG_HAND // shows window for hand detection
 //#define FLAG_FACE // shows window for face detection
-//#define FLAG_CONTACT //shows contact value
-//#define FLAG_WRITE //records data
+#define FLAG_CONTACT //shows contact value
+#define FLAG_WRITE //records data
 
 //#define FREQ
 
@@ -124,10 +124,11 @@ void* kinectGrab(void* v_kinect)
 		tmp_cloud = cloud_global.clone();
 		while(!flag_plane)
 		{       
+			Rect box;
 			plane_tmp  = Mat::zeros(480,640,CV_8UC1);
 			plane_tmp2 = Mat::zeros(480,640,CV_8UC1);
 			Vec4f plane_eq = 
-				RANSAC3DPlane(tmp_cloud, plane_tmp, 1000, ratio, 0.004);
+				RANSAC3DPlane(tmp_cloud, plane_tmp, box, 1000, ratio, 0.003);
 			imshow("plane", plane_tmp*255);
 
 			printf("NR: %.4f %.4f %.4f %.4f \n", plane_eq[0], plane_eq[1], plane_eq[2], plane_eq[3]);
@@ -146,7 +147,14 @@ void* kinectGrab(void* v_kinect)
 			keypress = waitKey(0); 
 			if (keypress == 'y') 
 			{
-				plane_global.push_back(plane_eq);
+				vector<double> tmpeq = 
+					cvVector2vector(plane_eq);
+				vector<double> tmpmp = 
+					cvVector2vector(
+						tmp_cloud.at<Vec3f>((box.br().y+box.tl().y)/2,
+											(box.br().x+box.tl().x)/2));
+				tmpeq.insert(tmpeq.end(),tmpmp.begin(),tmpmp.end());
+				plane_global.push_back(tmpeq);
 				for(int y=0;y<480;y++)
 					for(int x=0;x<640;x++)
 						tmp_cloud.at<Vec3f>(y,x) *= 
@@ -154,10 +162,10 @@ void* kinectGrab(void* v_kinect)
 			} 
 			else if (keypress == 'q')
 			{
-				vector<vector<double> > tmptmp;
-				for(int i=0;i<plane_global.size();i++)
-					tmptmp.push_back(cvVector2vector(plane_global[i]));
-				writeSurfaceFile(tmptmp);
+				//vector<vector<double> > tmptmp;
+				//for(int i=0;i<plane_global.size();i++)
+				//	tmptmp.push_back(cvVector2vector(plane_global[i]));
+				writeSurfaceFile(plane_global);
 				flag_plane = true;
 			}
 			else if (keypress == 'd')
@@ -210,10 +218,8 @@ void* objectDetector(void* arg)
 //	sat_range_obj[0] = 76; sat_range_obj[1] = 214;
 
 	int hs[4]; // hue max/min, sat max/min
-	hs[0] = 98;
-	hs[1] = 77;
-	hs[2] = 214;
-	hs[3] = 76;
+	hs[0] = 98; hs[1] = 77; hs[2] = 214; hs[3] = 76;
+	//hs[0] = 102; hs[1] = 80; hs[2] = 255; hs[3] = 135;
 
 	while(true)
 	{
@@ -413,7 +419,7 @@ void* writeData(void* arg)
     char buf[80];
     tstruct = *localtime(&now);
     strftime(buf, sizeof(buf), "%y%m%d%H%M%S", &tstruct);
-	string file_name = "../data/";
+	string file_name = "../recording/";
 	file_name += buf;
 	file_name += ".txt";
 	while(true)
@@ -425,15 +431,11 @@ void* writeData(void* arg)
 		{
 			// write values into data.txt
 			ofstream write_file(file_name.c_str(), std::ios::app);
-			write_file 	<< frame_number_global << ","
-						<< contact_obj << ","
-						<< single_point_obj_global[0]  << ","
-						<< single_point_obj_global[1]  << ","
-						<< single_point_obj_global[2]  << ","            
-						<< plane_global[0] << ","
-						<< plane_global[1] << ","
-						<< plane_global[2] << ","
-						<< plane_global[3] 
+			write_file 	<< frame_number_global			<< ","
+						<< contact_obj 					<< ","
+						<< single_point_obj_global[0]	<< ","
+						<< single_point_obj_global[1]	<< ","
+						<< single_point_obj_global[2]           
 						<< "\n";
 		}
 		sem_post(&mutex6);

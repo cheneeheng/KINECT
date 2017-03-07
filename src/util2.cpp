@@ -292,6 +292,7 @@ void pointCloudTrajectory(
 Vec4f RANSAC3DPlane(
 	Mat cloud,
 	Mat &plane,
+	Rect &box_,
 	int iter,
 	float *ratio,
 	float threshold)
@@ -381,7 +382,6 @@ Vec4f RANSAC3DPlane(
 			CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, Point(0, 0));
 
 		vector<vector<Point> > contours_poly(contours.size());
-		vector<Rect> box(contours.size());
 		double biggest_box = 0;
 		int big = 0;
 		for (int j=0;j<(int)contours.size();j++)
@@ -390,12 +390,12 @@ Vec4f RANSAC3DPlane(
 			if (biggest_box < contourArea(contours[j]))
 			{
 				biggest_box = contourArea(contours[j]);
-				box[0] = boundingRect(Mat(contours_poly[j]));
+				box_ = boundingRect(Mat(contours_poly[j]));
 				big = j;
 			}
 		}
 		
-		if(biggest_box>2000)
+		if(biggest_box>1000)
 		{	
 			Mat tmp_img = Mat::zeros(plane.size(), CV_8UC1);
 			drawContours(tmp_img, contours, big, 1, -1);

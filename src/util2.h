@@ -59,6 +59,7 @@ void pointCloudTrajectory(
 Vec4f RANSAC3DPlane(
 	Mat cloud,
 	Mat &plane,
+	Rect &box_,
 	int iter,
 	float *ratio,
 	float threshold);

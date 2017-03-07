@@ -115,6 +115,15 @@ static inline vector<double> cvVector2vector(Vec4f A)
 	return B;
 }
 
+static inline vector<double> cvVector2vector(Vec3f A)
+{
+	vector<double> B(3);
+	B[0]=A[0];
+	B[1]=A[1];
+	B[2]=A[2];
+	return B;
+}
+
 template<typename T>
 static inline bool min_ (T x,T y) { return (x<y)?true:false; }
 
