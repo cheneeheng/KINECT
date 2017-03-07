@@ -6,5 +6,5 @@ CXX_FLAGS =  -g  -O3 -DNDEBUG   -std=c++11
 
 CXX_DEFINES = -DvtkFiltersStatistics_AUTOINIT="1(vtkFiltersStatisticsGnuR)" -DvtkRenderingContext2D_AUTOINIT="1(vtkRenderingContextOpenGL)" -DvtkRenderingCore_AUTOINIT="4(vtkInteractionStyle,vtkRenderingFreeType,vtkRenderingFreeTypeOpenGL,vtkRenderingOpenGL)" -DvtkRenderingVolume_AUTOINIT="1(vtkRenderingVolumeOpenGL)"
 
-CXX_INCLUDES = -I/usr/include/vtk -I/usr/include/jsoncpp -I/usr/include/freetype2 -I/usr/include/libxml2 -I/usr/include/python2.7 -I/usr/local/src/XVision2/include -I/usr/local/intel/ipp/5.2/em64t/include -I/usr/local/src/OpenNI2/Include -I/usr/local/include/opencv2 
+CXX_INCLUDES = -I/usr/include/vtk -I/usr/include/jsoncpp -I/usr/include/freetype2 -I/usr/include/libxml2 -I/usr/include/python2.7 -I/usr/local/src/XVision2/include -I/usr/local/intel/ipp/5.2/em64t/include -I/usr/local/src/OpenNI2/Include -I/home/chen/gsl/include -I/usr/local/include/opencv2 
 

@@ -9,28 +9,40 @@
 #define VTKEXTRA_H_
 
 #include "dataDeclaration.h"
+#include "Graph.h"
+#include "algo.h"
 
 //=============================================================================
 
-void colorCode(vector<unsigned char*> &container);
+void colorCode(
+	vector<unsigned char*> &container_);
 
 void showData(
-	vector<point_t> p,
-	vector<string> &label,
+	vector<point_t> points_,
+	vector<string> &labels_,
 	vector<unsigned char*> color_,
-	bool cluster,
-	bool labeling);
+	bool cluster_,
+	bool labeling_);
 
-void showConnection(
-	vector<vector<vector<sector_t> > > 	sector,
-	vector<vector<vector<double> > > sector_constraint,
-	vector<point_t> loc_loc_vec,
-	vector<point_t> loc_loc_normal,
-	vector<double>  loc_loc_norm,
-	vector<point_t> location,
-	int num_location_intervals,
-	int num_sector_intervals,
+void showConnectionOnly(
+	Graph Graph_,
 	vector<unsigned char*> color_);
 
+void showConnection(
+	vector<point_t> points_,
+	vector<string> &labels_,
+	Graph Graph_,
+	vector<unsigned char*> color_,
+	bool show_points);
+
+void plotData(
+	vector<double> x_,
+	vector<double> y_);
+
+vtkSmartPointer<vtkPolyDataMapper> dataPoints(
+	vector<point_t> points_,
+	int num_locations_,
+	vector<unsigned char*> color_,
+	bool cluster_);
 
 #endif /* VTKEXTRA_H_ */

@@ -196,7 +196,7 @@ double euclidean_dist(point_t *a, point_t *b)
             pow(a->y - b->y, 2) +
             pow(a->z - b->z, 2));
 }
-
+/*
 unsigned int parse_input(
     FILE *file,
     point_t **points,
@@ -239,7 +239,7 @@ void print_points(
           ++i;
     }
 }
-/*
+
 int main(void) {
     point_t *points;
     double epsilon;

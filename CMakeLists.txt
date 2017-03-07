@@ -6,6 +6,8 @@ add_compile_options(-std=c++11)
 
 set(OpenCV_LIBS_DIR "/usr/local/src/opencv-3.1/build/lib")
 set(OpenCV_INCLUDE_DIR "/usr/local/include/opencv2")
+set(GSL_LIBS_DIR "/home/chen/gsl/lib")
+set(GSL_INCLUDE_DIR "/home/chen/gsl/include")
 
 set(GCC_GDB_COMPILE_FLAGS "-g")
 set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${GCC_GDB_COMPILE_FLAGS}")
@@ -19,6 +21,7 @@ include_directories(
 	/usr/local/src/XVision2/include 
 	/usr/local/intel/ipp/5.2/em64t/include 
 	/usr/local/src/OpenNI2/Include 
+	${GSL_INCLUDE_DIR}
 	${OpenCV_INCLUDE_DIR})
 
 link_directories( 
@@ -26,6 +29,7 @@ link_directories(
 	/usr/local/src/XVision2/lib 
 	/usr/local/intel/ipp/5.2/em64t/sharedlib 
 	/usr/local/src/OpenNI2/Bin/x64-Release 
+	${GSL_LIBS_DIR}
 	${OpenCV_LIBS_DIR})
 
 add_executable(HMAR
@@ -43,7 +47,8 @@ target_link_libraries( HMAR
 	XVSeg XVCons XVTrack XVDevs XVTools XVImages 
 	ippccem64t ippcvem64t ippiem64t 
 	OpenNI2
-	${VTK_LIBRARIES})
+	${VTK_LIBRARIES}
+	gsl gslcblas)
 
 
 #message("CMAKE_CXX_FLAGS is ${CMAKE_CXX_FLAGS}")

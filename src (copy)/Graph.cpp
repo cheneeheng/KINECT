@@ -7,31 +7,72 @@
 
 #include "Graph.h"
 
+Graph::Graph(
+	string scene_,
+	string object_)
+{
+	scene 	= scene_;
+	object 	= object_;
+	node 	= {};
+	edge 	= {};
+
+	movLabel.clear();
+	nodes.clear();
+	edges.clear();
+	surface.clear();
+}
+
+void Graph::addSurface(
+	vector<vector<double> > surface_)
+{
+	surface = surface_;
+}
+
+void Graph::updateMovLabel(
+	vector<string> movLabel_)
+{
+	movLabel.clear();
+	movLabel = movLabel_;
+}
+
+void Graph::updateSectorPara(
+	sector_para_t sector_para_)
+{
+	sector_para = {};
+	sector_para = sector_para_;
+}
+
 //=============================================================================
 // NODES
 //=============================================================================
 void Graph::addNode(
-	string name_,
-	unsigned int category_, //moving???
-	unsigned int surface_num_,
-	double boundary_,
-	vector<data_t> data_)
+	string 			name_,
+	unsigned int 	index_,
+	int 			category_, //not used
+	point_t 		location,
+	double 			boundary,
+	int 			surface_num_,
+	vector<data_t> 	data_)
 {
 	node = {};
 
-	node.name     		= name_;
-	node.index    		= nodes.size();
-	node.category 		= category_;
-	node.surface_num	= surface_num_;
-	node.boundary 		= boundary_,
-	node.data    	 	= data_;
-	nodes.push_back(node);
-	edges.push_back(emptyEdgeList());
+	node.name     	= name_;
+	node.index    	= index_;
+	node.category 	= category_;
+	node.location	= location;
+	node.boundary 	= boundary;
+	node.surface	= surface_num_;
+	node.data    	= data_;
+
+	if (nodes.size() < index_+1)
+		nodes.resize(index_+1);
+
+	nodes[index_] = node;
 }
 
 void Graph::extendNode(
-	vector<data_t> data_,
-	unsigned int node_num_)
+	unsigned int 	node_num_,
+	vector<data_t> 	data_)
 {
 	if(data_.size()==0)
 		cout << "[WARNING] : Data used to extend node is empty." << endl;
@@ -43,77 +84,127 @@ void Graph::extendNode(
 }
 
 bool Graph::checkNode(
-	unsigned int node_index1_)
+	unsigned int n1_)
 {
 	bool check_flag = false;
-	if(nodes.size() > 0)
-		if(nodes.size()-1 >= node_index1_)
-			check_flag = true;
+	if(nodes.size() >= n1_+1)
+		check_flag = true;
 	return check_flag;
 }
 
 //=============================================================================
 // EDGES
 //=============================================================================
-void Graph::addEdge(
-	vector<data_t> data_,
-	unsigned int node_index1_,
-	unsigned int node_index2_,
-	unsigned int num_location_intervals_,
-	unsigned int num_sector_intervals_,
-	vector<vector<sector_t> > sector_map_)
+void Graph::initEdge(
+	int loc_int,
+	int sec_int)
 {
+	edges.clear();
+	sector.clear();
+	sector_const.clear();
+
+	edges.resize(Sqr(nodes.size()));
+	sector.resize(loc_int*sec_int);
+	sector_const.resize(loc_int*sec_int);
+
+	for(int i=0;i<loc_int*sec_int;i++)
+	{
+		sector[i].max 	= 0;
+		sector[i].min 	= INFINITY;
+		sector_const[i] = 0;
+	}
+
+	for(int i=0;i<Sqr(nodes.size());i++)
+	{
+		edges[i].resize(1);
+		edges[i][0].sector_map   = sector;
+		edges[i][0].sector_const = sector_const;
+	}
+
+	sector_para.loc_int = loc_int;
+	sector_para.sec_int = sec_int;
+
+	sector_para.dir.clear();
+	sector_para.dir_n.clear();
+	sector_para.dist.clear();
+
+	sector_para.dir.  resize(Sqr(nodes.size()));
+	sector_para.dir_n.resize(Sqr(nodes.size()));
+	sector_para.dist. resize(Sqr(nodes.size()));
+}
+
+void Graph::addEdge(
+	vector<data_t> 	 data_,
+	vector<sector_t> sector_map_,
+	unsigned int 	 n1_,
+	unsigned int 	 n2_,
+	unsigned int 	 edge_num_)
+{
+
 	edge = {};
 
-	edge.begin_index 			= node_index1_;
-	edge.end_index   			= node_index2_;
-	edge.data 					= data_;
-	edge.num_location_intervals = num_location_intervals_;
-	edge.num_sector_intervals 	= num_sector_intervals_;
-	edge.sector_map 			= sector_map_;
+	edge.begin_index  = n1_;
+	edge.end_index    = n2_;
+	edge.data 		  = data_;
+	edge.sector_map   = sector_map_;
 
-	checkEdgeList(node_index1_);
-	edges[node_index1_].push_back(edge);
+	if (edges[n1_*nodes.size()+n2_].size()>edge_num_)
+	{
+		edge.sector_const =
+				edges[n1_*nodes.size()+n2_][edge_num_].sector_const;
+		edges[n1_*nodes.size()+n2_][edge_num_] = edge;
+	}
+	else
+	{
+		edges[n1_*nodes.size()+n2_].resize(edge_num_);
+		edge.sector_const = sector_const;
+		edges[n1_*nodes.size()+n2_][edge_num_] = edge;
+	}
+}
+
+void Graph::updateEdgeConst(
+	vector<double> 	sector_map_,
+	unsigned int  	n1_,
+	unsigned int  	n2_,
+	unsigned int 	edge_num_)
+{
+	edges[n1_*nodes.size()+n2_][edge_num_].sector_const = sector_map_;
+}
+
+void Graph::updateEdgeSector(
+	vector<sector_t> 	sector_map_,
+	unsigned int  		n1_,
+	unsigned int  		n2_,
+	unsigned int 		edge_num_)
+{
+	edges[n1_*nodes.size()+n2_][edge_num_].sector_map = sector_map_;
 }
 
 void Graph::extendEdge(
 	vector<data_t> data_,
-	unsigned int node_index1_,
-	unsigned int node_index2_)
+	unsigned int n1_,
+	unsigned int n2_,
+	unsigned int edge_num_)
 {
 	if(data_.size()==0)
 		cout << "[WARNING] : Data to extend edge is empty." << endl;
 	else if(data_.size()==1)
-		edges[node_index1_][node_index2_].data.push_back(data_[0]);
+		edges[n1_*nodes.size()+n2_][edge_num_].data.push_back(data_[0]);
 	else
-		edges[node_index1_][node_index2_].data.insert(
-				edges[node_index1_][node_index2_].data.end(),
+		edges[n1_*nodes.size()+n2_][edge_num_].data.insert(
+				edges[n1_*nodes.size()+n2_][edge_num_].data.end(),
 				data_.begin(), data_.end());
 }
 
-void Graph::checkEdgeList(
-	unsigned int node_index1_)
-{
-	if(node_index1_ > edges.size())
-	{
-		cout << "[WARNING] : Edge does not exists in list. Resizing list." << endl;
-		edges.resize(node_index1_);
-	}
-}
-
 bool Graph::checkEdge(
-	unsigned int node_index1_,
-	unsigned int node_index2_,
-	unsigned int &edge_num_ )
+	unsigned int n1_,
+	unsigned int n2_)
 {
-	bool check_flag = false;
-	if(edges[node_index1_].size()>0)
-		for(int i=0;i<edges[node_index1_].size();i++)
-			if(edges[node_index1_][i].end_index == node_index2_)
-			{
-				check_flag = true;
-				edge_num_ = (unsigned int)i;
-			}
+	bool check_flag = true;
+	if (edges[n1_*nodes.size()+n2_].empty())
+	{
+		check_flag = false;
+	}
 	return check_flag;
 }
 
@@ -211,3 +302,5 @@ vector<vector<double> > Graph::getNodeDataLabel(
 	}
 	return output;
 }
+
+

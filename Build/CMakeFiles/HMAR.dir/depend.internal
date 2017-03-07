@@ -5,6 +5,81 @@ CMakeFiles/HMAR.dir/src/Graph.cpp.o
  /home/chen/HMAR/KINECT/src/Graph.cpp
  /home/chen/HMAR/KINECT/src/Graph.h
  /home/chen/HMAR/KINECT/src/dataDeclaration.h
+ /home/chen/gsl/include/gsl/gsl_block_char.h
+ /home/chen/gsl/include/gsl/gsl_block_complex_double.h
+ /home/chen/gsl/include/gsl/gsl_block_complex_float.h
+ /home/chen/gsl/include/gsl/gsl_block_complex_long_double.h
+ /home/chen/gsl/include/gsl/gsl_block_double.h
+ /home/chen/gsl/include/gsl/gsl_block_float.h
+ /home/chen/gsl/include/gsl/gsl_block_int.h
+ /home/chen/gsl/include/gsl/gsl_block_long.h
+ /home/chen/gsl/include/gsl/gsl_block_long_double.h
+ /home/chen/gsl/include/gsl/gsl_block_short.h
+ /home/chen/gsl/include/gsl/gsl_block_uchar.h
+ /home/chen/gsl/include/gsl/gsl_block_uint.h
+ /home/chen/gsl/include/gsl/gsl_block_ulong.h
+ /home/chen/gsl/include/gsl/gsl_block_ushort.h
+ /home/chen/gsl/include/gsl/gsl_bspline.h
+ /home/chen/gsl/include/gsl/gsl_check_range.h
+ /home/chen/gsl/include/gsl/gsl_complex.h
+ /home/chen/gsl/include/gsl/gsl_errno.h
+ /home/chen/gsl/include/gsl/gsl_inline.h
+ /home/chen/gsl/include/gsl/gsl_integration.h
+ /home/chen/gsl/include/gsl/gsl_machine.h
+ /home/chen/gsl/include/gsl/gsl_math.h
+ /home/chen/gsl/include/gsl/gsl_matrix.h
+ /home/chen/gsl/include/gsl/gsl_matrix_char.h
+ /home/chen/gsl/include/gsl/gsl_matrix_complex_double.h
+ /home/chen/gsl/include/gsl/gsl_matrix_complex_float.h
+ /home/chen/gsl/include/gsl/gsl_matrix_complex_long_double.h
+ /home/chen/gsl/include/gsl/gsl_matrix_double.h
+ /home/chen/gsl/include/gsl/gsl_matrix_float.h
+ /home/chen/gsl/include/gsl/gsl_matrix_int.h
+ /home/chen/gsl/include/gsl/gsl_matrix_long.h
+ /home/chen/gsl/include/gsl/gsl_matrix_long_double.h
+ /home/chen/gsl/include/gsl/gsl_matrix_short.h
+ /home/chen/gsl/include/gsl/gsl_matrix_uchar.h
+ /home/chen/gsl/include/gsl/gsl_matrix_uint.h
+ /home/chen/gsl/include/gsl/gsl_matrix_ulong.h
+ /home/chen/gsl/include/gsl/gsl_matrix_ushort.h
+ /home/chen/gsl/include/gsl/gsl_minmax.h
+ /home/chen/gsl/include/gsl/gsl_multifit.h
+ /home/chen/gsl/include/gsl/gsl_nan.h
+ /home/chen/gsl/include/gsl/gsl_poly.h
+ /home/chen/gsl/include/gsl/gsl_pow_int.h
+ /home/chen/gsl/include/gsl/gsl_precision.h
+ /home/chen/gsl/include/gsl/gsl_randist.h
+ /home/chen/gsl/include/gsl/gsl_rng.h
+ /home/chen/gsl/include/gsl/gsl_statistics.h
+ /home/chen/gsl/include/gsl/gsl_statistics_char.h
+ /home/chen/gsl/include/gsl/gsl_statistics_double.h
+ /home/chen/gsl/include/gsl/gsl_statistics_float.h
+ /home/chen/gsl/include/gsl/gsl_statistics_int.h
+ /home/chen/gsl/include/gsl/gsl_statistics_long.h
+ /home/chen/gsl/include/gsl/gsl_statistics_long_double.h
+ /home/chen/gsl/include/gsl/gsl_statistics_short.h
+ /home/chen/gsl/include/gsl/gsl_statistics_uchar.h
+ /home/chen/gsl/include/gsl/gsl_statistics_uint.h
+ /home/chen/gsl/include/gsl/gsl_statistics_ulong.h
+ /home/chen/gsl/include/gsl/gsl_statistics_ushort.h
+ /home/chen/gsl/include/gsl/gsl_sys.h
+ /home/chen/gsl/include/gsl/gsl_types.h
+ /home/chen/gsl/include/gsl/gsl_vector.h
+ /home/chen/gsl/include/gsl/gsl_vector_char.h
+ /home/chen/gsl/include/gsl/gsl_vector_complex.h
+ /home/chen/gsl/include/gsl/gsl_vector_complex_double.h
+ /home/chen/gsl/include/gsl/gsl_vector_complex_float.h
+ /home/chen/gsl/include/gsl/gsl_vector_complex_long_double.h
+ /home/chen/gsl/include/gsl/gsl_vector_double.h
+ /home/chen/gsl/include/gsl/gsl_vector_float.h
+ /home/chen/gsl/include/gsl/gsl_vector_int.h
+ /home/chen/gsl/include/gsl/gsl_vector_long.h
+ /home/chen/gsl/include/gsl/gsl_vector_long_double.h
+ /home/chen/gsl/include/gsl/gsl_vector_short.h
+ /home/chen/gsl/include/gsl/gsl_vector_uchar.h
+ /home/chen/gsl/include/gsl/gsl_vector_uint.h
+ /home/chen/gsl/include/gsl/gsl_vector_ulong.h
+ /home/chen/gsl/include/gsl/gsl_vector_ushort.h
  /usr/include/vtk/vtkABI.h
  /usr/include/vtk/vtkAbstractArray.h
  /usr/include/vtk/vtkAbstractContextItem.h
@@ -16,10 +91,12 @@ CMakeFiles/HMAR.dir/src/Graph.cpp.o
  /usr/include/vtk/vtkActor2D.h
  /usr/include/vtk/vtkActorCollection.h
  /usr/include/vtk/vtkAlgorithm.h
+ /usr/include/vtk/vtkAppendPolyData.h
  /usr/include/vtk/vtkArrayIterator.h
  /usr/include/vtk/vtkArrayIteratorTemplate.h
  /usr/include/vtk/vtkArrayIteratorTemplate.txx
  /usr/include/vtk/vtkArrayIteratorTemplateImplicit.txx
+ /usr/include/vtk/vtkAssembly.h
  /usr/include/vtk/vtkAtomicInt.h
  /usr/include/vtk/vtkAutoInit.h
  /usr/include/vtk/vtkCamera.h
@@ -31,9 +108,11 @@ CMakeFiles/HMAR.dir/src/Graph.cpp.o
  /usr/include/vtk/vtkChart.h
  /usr/include/vtk/vtkChartXY.h
  /usr/include/vtk/vtkChartsCoreModule.h
+ /usr/include/vtk/vtkCleanPolyData.h
  /usr/include/vtk/vtkCollection.h
  /usr/include/vtk/vtkColor.h
  /usr/include/vtk/vtkCommonColorModule.h
+ /usr/include/vtk/vtkCommonComputationalGeometryModule.h
  /usr/include/vtk/vtkCommonCoreModule.h
  /usr/include/vtk/vtkCommonDataModelModule.h
  /usr/include/vtk/vtkCommonExecutionModelModule.h
@@ -45,6 +124,7 @@ CMakeFiles/HMAR.dir/src/Graph.cpp.o
  /usr/include/vtk/vtkContextView.h
  /usr/include/vtk/vtkCoordinate.h
  /usr/include/vtk/vtkCubeSource.h
+ /usr/include/vtk/vtkCurvatures.h
  /usr/include/vtk/vtkDataArray.h
  /usr/include/vtk/vtkDataArrayTemplate.h
  /usr/include/vtk/vtkDataArrayTemplate.txx
@@ -82,6 +162,7 @@ CMakeFiles/HMAR.dir/src/Graph.cpp.o
  /usr/include/vtk/vtkInteractorObserver.h
  /usr/include/vtk/vtkInteractorStyle.h
  /usr/include/vtk/vtkInteractorStyleTrackballCamera.h
+ /usr/include/vtk/vtkLight.h
  /usr/include/vtk/vtkLineSource.h
  /usr/include/vtk/vtkLookupTable.h
  /usr/include/vtk/vtkMappedDataArray.h
@@ -93,6 +174,9 @@ CMakeFiles/HMAR.dir/src/Graph.cpp.o
  /usr/include/vtk/vtkObject.h
  /usr/include/vtk/vtkObjectBase.h
  /usr/include/vtk/vtkObjectFactory.h
+ /usr/include/vtk/vtkParametricFunction.h
+ /usr/include/vtk/vtkParametricFunctionSource.h
+ /usr/include/vtk/vtkParametricSpline.h
  /usr/include/vtk/vtkPen.h
  /usr/include/vtk/vtkPicker.h
  /usr/include/vtk/vtkPlot.h
@@ -104,12 +188,15 @@ CMakeFiles/HMAR.dir/src/Graph.cpp.o
  /usr/include/vtk/vtkPolyData.h
  /usr/include/vtk/vtkPolyDataAlgorithm.h
  /usr/include/vtk/vtkPolyDataMapper.h
+ /usr/include/vtk/vtkPolygon.h
  /usr/include/vtk/vtkProp.h
  /usr/include/vtk/vtkProp3D.h
+ /usr/include/vtk/vtkPropAssembly.h
  /usr/include/vtk/vtkPropCollection.h
  /usr/include/vtk/vtkPropPicker.h
  /usr/include/vtk/vtkProperty.h
  /usr/include/vtk/vtkRect.h
+ /usr/include/vtk/vtkRegularPolygonSource.h
  /usr/include/vtk/vtkRenderViewBase.h
  /usr/include/vtk/vtkRenderWindow.h
  /usr/include/vtk/vtkRenderWindowInteractor.h
@@ -123,6 +210,7 @@ CMakeFiles/HMAR.dir/src/Graph.cpp.o
  /usr/include/vtk/vtkSetGet.h
  /usr/include/vtk/vtkSmartPointer.h
  /usr/include/vtk/vtkSmartPointerBase.h
+ /usr/include/vtk/vtkSmoothPolyDataFilter.h
  /usr/include/vtk/vtkSortDataArray.h
  /usr/include/vtk/vtkSphereSource.h
  /usr/include/vtk/vtkStdString.h
@@ -136,6 +224,7 @@ CMakeFiles/HMAR.dir/src/Graph.cpp.o
  /usr/include/vtk/vtkTimeStamp.h
  /usr/include/vtk/vtkTubeFilter.h
  /usr/include/vtk/vtkTuple.h
+ /usr/include/vtk/vtkTupleInterpolator.h
  /usr/include/vtk/vtkType.h
  /usr/include/vtk/vtkTypeTemplate.h
  /usr/include/vtk/vtkTypeTraits.h
@@ -165,6 +254,81 @@ CMakeFiles/HMAR.dir/src/algo.cpp.o
  /home/chen/HMAR/KINECT/src/algo.cpp
  /home/chen/HMAR/KINECT/src/algo.h
  /home/chen/HMAR/KINECT/src/dataDeclaration.h
+ /home/chen/gsl/include/gsl/gsl_block_char.h
+ /home/chen/gsl/include/gsl/gsl_block_complex_double.h
+ /home/chen/gsl/include/gsl/gsl_block_complex_float.h
+ /home/chen/gsl/include/gsl/gsl_block_complex_long_double.h
+ /home/chen/gsl/include/gsl/gsl_block_double.h
+ /home/chen/gsl/include/gsl/gsl_block_float.h
+ /home/chen/gsl/include/gsl/gsl_block_int.h
+ /home/chen/gsl/include/gsl/gsl_block_long.h
+ /home/chen/gsl/include/gsl/gsl_block_long_double.h
+ /home/chen/gsl/include/gsl/gsl_block_short.h
+ /home/chen/gsl/include/gsl/gsl_block_uchar.h
+ /home/chen/gsl/include/gsl/gsl_block_uint.h
+ /home/chen/gsl/include/gsl/gsl_block_ulong.h
+ /home/chen/gsl/include/gsl/gsl_block_ushort.h
+ /home/chen/gsl/include/gsl/gsl_bspline.h
+ /home/chen/gsl/include/gsl/gsl_check_range.h
+ /home/chen/gsl/include/gsl/gsl_complex.h
+ /home/chen/gsl/include/gsl/gsl_errno.h
+ /home/chen/gsl/include/gsl/gsl_inline.h
+ /home/chen/gsl/include/gsl/gsl_integration.h
+ /home/chen/gsl/include/gsl/gsl_machine.h
+ /home/chen/gsl/include/gsl/gsl_math.h
+ /home/chen/gsl/include/gsl/gsl_matrix.h
+ /home/chen/gsl/include/gsl/gsl_matrix_char.h
+ /home/chen/gsl/include/gsl/gsl_matrix_complex_double.h
+ /home/chen/gsl/include/gsl/gsl_matrix_complex_float.h
+ /home/chen/gsl/include/gsl/gsl_matrix_complex_long_double.h
+ /home/chen/gsl/include/gsl/gsl_matrix_double.h
+ /home/chen/gsl/include/gsl/gsl_matrix_float.h
+ /home/chen/gsl/include/gsl/gsl_matrix_int.h
+ /home/chen/gsl/include/gsl/gsl_matrix_long.h
+ /home/chen/gsl/include/gsl/gsl_matrix_long_double.h
+ /home/chen/gsl/include/gsl/gsl_matrix_short.h
+ /home/chen/gsl/include/gsl/gsl_matrix_uchar.h
+ /home/chen/gsl/include/gsl/gsl_matrix_uint.h
+ /home/chen/gsl/include/gsl/gsl_matrix_ulong.h
+ /home/chen/gsl/include/gsl/gsl_matrix_ushort.h
+ /home/chen/gsl/include/gsl/gsl_minmax.h
+ /home/chen/gsl/include/gsl/gsl_multifit.h
+ /home/chen/gsl/include/gsl/gsl_nan.h
+ /home/chen/gsl/include/gsl/gsl_poly.h
+ /home/chen/gsl/include/gsl/gsl_pow_int.h
+ /home/chen/gsl/include/gsl/gsl_precision.h
+ /home/chen/gsl/include/gsl/gsl_randist.h
+ /home/chen/gsl/include/gsl/gsl_rng.h
+ /home/chen/gsl/include/gsl/gsl_statistics.h
+ /home/chen/gsl/include/gsl/gsl_statistics_char.h
+ /home/chen/gsl/include/gsl/gsl_statistics_double.h
+ /home/chen/gsl/include/gsl/gsl_statistics_float.h
+ /home/chen/gsl/include/gsl/gsl_statistics_int.h
+ /home/chen/gsl/include/gsl/gsl_statistics_long.h
+ /home/chen/gsl/include/gsl/gsl_statistics_long_double.h
+ /home/chen/gsl/include/gsl/gsl_statistics_short.h
+ /home/chen/gsl/include/gsl/gsl_statistics_uchar.h
+ /home/chen/gsl/include/gsl/gsl_statistics_uint.h
+ /home/chen/gsl/include/gsl/gsl_statistics_ulong.h
+ /home/chen/gsl/include/gsl/gsl_statistics_ushort.h
+ /home/chen/gsl/include/gsl/gsl_sys.h
+ /home/chen/gsl/include/gsl/gsl_types.h
+ /home/chen/gsl/include/gsl/gsl_vector.h
+ /home/chen/gsl/include/gsl/gsl_vector_char.h
+ /home/chen/gsl/include/gsl/gsl_vector_complex.h
+ /home/chen/gsl/include/gsl/gsl_vector_complex_double.h
+ /home/chen/gsl/include/gsl/gsl_vector_complex_float.h
+ /home/chen/gsl/include/gsl/gsl_vector_complex_long_double.h
+ /home/chen/gsl/include/gsl/gsl_vector_double.h
+ /home/chen/gsl/include/gsl/gsl_vector_float.h
+ /home/chen/gsl/include/gsl/gsl_vector_int.h
+ /home/chen/gsl/include/gsl/gsl_vector_long.h
+ /home/chen/gsl/include/gsl/gsl_vector_long_double.h
+ /home/chen/gsl/include/gsl/gsl_vector_short.h
+ /home/chen/gsl/include/gsl/gsl_vector_uchar.h
+ /home/chen/gsl/include/gsl/gsl_vector_uint.h
+ /home/chen/gsl/include/gsl/gsl_vector_ulong.h
+ /home/chen/gsl/include/gsl/gsl_vector_ushort.h
  /usr/include/vtk/vtkABI.h
  /usr/include/vtk/vtkAbstractArray.h
  /usr/include/vtk/vtkAbstractContextItem.h
@@ -176,10 +340,12 @@ CMakeFiles/HMAR.dir/src/algo.cpp.o
  /usr/include/vtk/vtkActor2D.h
  /usr/include/vtk/vtkActorCollection.h
  /usr/include/vtk/vtkAlgorithm.h
+ /usr/include/vtk/vtkAppendPolyData.h
  /usr/include/vtk/vtkArrayIterator.h
  /usr/include/vtk/vtkArrayIteratorTemplate.h
  /usr/include/vtk/vtkArrayIteratorTemplate.txx
  /usr/include/vtk/vtkArrayIteratorTemplateImplicit.txx
+ /usr/include/vtk/vtkAssembly.h
  /usr/include/vtk/vtkAtomicInt.h
  /usr/include/vtk/vtkAutoInit.h
  /usr/include/vtk/vtkCamera.h
@@ -191,9 +357,11 @@ CMakeFiles/HMAR.dir/src/algo.cpp.o
  /usr/include/vtk/vtkChart.h
  /usr/include/vtk/vtkChartXY.h
  /usr/include/vtk/vtkChartsCoreModule.h
+ /usr/include/vtk/vtkCleanPolyData.h
  /usr/include/vtk/vtkCollection.h
  /usr/include/vtk/vtkColor.h
  /usr/include/vtk/vtkCommonColorModule.h
+ /usr/include/vtk/vtkCommonComputationalGeometryModule.h
  /usr/include/vtk/vtkCommonCoreModule.h
  /usr/include/vtk/vtkCommonDataModelModule.h
  /usr/include/vtk/vtkCommonExecutionModelModule.h
@@ -205,6 +373,7 @@ CMakeFiles/HMAR.dir/src/algo.cpp.o
  /usr/include/vtk/vtkContextView.h
  /usr/include/vtk/vtkCoordinate.h
  /usr/include/vtk/vtkCubeSource.h
+ /usr/include/vtk/vtkCurvatures.h
  /usr/include/vtk/vtkDataArray.h
  /usr/include/vtk/vtkDataArrayTemplate.h
  /usr/include/vtk/vtkDataArrayTemplate.txx
@@ -242,6 +411,7 @@ CMakeFiles/HMAR.dir/src/algo.cpp.o
  /usr/include/vtk/vtkInteractorObserver.h
  /usr/include/vtk/vtkInteractorStyle.h
  /usr/include/vtk/vtkInteractorStyleTrackballCamera.h
+ /usr/include/vtk/vtkLight.h
  /usr/include/vtk/vtkLineSource.h
  /usr/include/vtk/vtkLookupTable.h
  /usr/include/vtk/vtkMappedDataArray.h
@@ -253,6 +423,9 @@ CMakeFiles/HMAR.dir/src/algo.cpp.o
  /usr/include/vtk/vtkObject.h
  /usr/include/vtk/vtkObjectBase.h
  /usr/include/vtk/vtkObjectFactory.h
+ /usr/include/vtk/vtkParametricFunction.h
+ /usr/include/vtk/vtkParametricFunctionSource.h
+ /usr/include/vtk/vtkParametricSpline.h
  /usr/include/vtk/vtkPen.h
  /usr/include/vtk/vtkPicker.h
  /usr/include/vtk/vtkPlot.h
@@ -264,12 +437,15 @@ CMakeFiles/HMAR.dir/src/algo.cpp.o
  /usr/include/vtk/vtkPolyData.h
  /usr/include/vtk/vtkPolyDataAlgorithm.h
  /usr/include/vtk/vtkPolyDataMapper.h
+ /usr/include/vtk/vtkPolygon.h
  /usr/include/vtk/vtkProp.h
  /usr/include/vtk/vtkProp3D.h
+ /usr/include/vtk/vtkPropAssembly.h
  /usr/include/vtk/vtkPropCollection.h
  /usr/include/vtk/vtkPropPicker.h
  /usr/include/vtk/vtkProperty.h
  /usr/include/vtk/vtkRect.h
+ /usr/include/vtk/vtkRegularPolygonSource.h
  /usr/include/vtk/vtkRenderViewBase.h
  /usr/include/vtk/vtkRenderWindow.h
  /usr/include/vtk/vtkRenderWindowInteractor.h
@@ -283,6 +459,7 @@ CMakeFiles/HMAR.dir/src/algo.cpp.o
  /usr/include/vtk/vtkSetGet.h
  /usr/include/vtk/vtkSmartPointer.h
  /usr/include/vtk/vtkSmartPointerBase.h
+ /usr/include/vtk/vtkSmoothPolyDataFilter.h
  /usr/include/vtk/vtkSortDataArray.h
  /usr/include/vtk/vtkSphereSource.h
  /usr/include/vtk/vtkStdString.h
@@ -296,6 +473,7 @@ CMakeFiles/HMAR.dir/src/algo.cpp.o
  /usr/include/vtk/vtkTimeStamp.h
  /usr/include/vtk/vtkTubeFilter.h
  /usr/include/vtk/vtkTuple.h
+ /usr/include/vtk/vtkTupleInterpolator.h
  /usr/include/vtk/vtkType.h
  /usr/include/vtk/vtkTypeTemplate.h
  /usr/include/vtk/vtkTypeTraits.h
@@ -325,6 +503,81 @@ CMakeFiles/HMAR.dir/src/dbscan.cpp.o
  /home/chen/HMAR/KINECT/src/dataDeclaration.h
  /home/chen/HMAR/KINECT/src/dbscan.cpp
  /home/chen/HMAR/KINECT/src/dbscan.h
+ /home/chen/gsl/include/gsl/gsl_block_char.h
+ /home/chen/gsl/include/gsl/gsl_block_complex_double.h
+ /home/chen/gsl/include/gsl/gsl_block_complex_float.h
+ /home/chen/gsl/include/gsl/gsl_block_complex_long_double.h
+ /home/chen/gsl/include/gsl/gsl_block_double.h
+ /home/chen/gsl/include/gsl/gsl_block_float.h
+ /home/chen/gsl/include/gsl/gsl_block_int.h
+ /home/chen/gsl/include/gsl/gsl_block_long.h
+ /home/chen/gsl/include/gsl/gsl_block_long_double.h
+ /home/chen/gsl/include/gsl/gsl_block_short.h
+ /home/chen/gsl/include/gsl/gsl_block_uchar.h
+ /home/chen/gsl/include/gsl/gsl_block_uint.h
+ /home/chen/gsl/include/gsl/gsl_block_ulong.h
+ /home/chen/gsl/include/gsl/gsl_block_ushort.h
+ /home/chen/gsl/include/gsl/gsl_bspline.h
+ /home/chen/gsl/include/gsl/gsl_check_range.h
+ /home/chen/gsl/include/gsl/gsl_complex.h
+ /home/chen/gsl/include/gsl/gsl_errno.h
+ /home/chen/gsl/include/gsl/gsl_inline.h
+ /home/chen/gsl/include/gsl/gsl_integration.h
+ /home/chen/gsl/include/gsl/gsl_machine.h
+ /home/chen/gsl/include/gsl/gsl_math.h
+ /home/chen/gsl/include/gsl/gsl_matrix.h
+ /home/chen/gsl/include/gsl/gsl_matrix_char.h
+ /home/chen/gsl/include/gsl/gsl_matrix_complex_double.h
+ /home/chen/gsl/include/gsl/gsl_matrix_complex_float.h
+ /home/chen/gsl/include/gsl/gsl_matrix_complex_long_double.h
+ /home/chen/gsl/include/gsl/gsl_matrix_double.h
+ /home/chen/gsl/include/gsl/gsl_matrix_float.h
+ /home/chen/gsl/include/gsl/gsl_matrix_int.h
+ /home/chen/gsl/include/gsl/gsl_matrix_long.h
+ /home/chen/gsl/include/gsl/gsl_matrix_long_double.h
+ /home/chen/gsl/include/gsl/gsl_matrix_short.h
+ /home/chen/gsl/include/gsl/gsl_matrix_uchar.h
+ /home/chen/gsl/include/gsl/gsl_matrix_uint.h
+ /home/chen/gsl/include/gsl/gsl_matrix_ulong.h
+ /home/chen/gsl/include/gsl/gsl_matrix_ushort.h
+ /home/chen/gsl/include/gsl/gsl_minmax.h
+ /home/chen/gsl/include/gsl/gsl_multifit.h
+ /home/chen/gsl/include/gsl/gsl_nan.h
+ /home/chen/gsl/include/gsl/gsl_poly.h
+ /home/chen/gsl/include/gsl/gsl_pow_int.h
+ /home/chen/gsl/include/gsl/gsl_precision.h
+ /home/chen/gsl/include/gsl/gsl_randist.h
+ /home/chen/gsl/include/gsl/gsl_rng.h
+ /home/chen/gsl/include/gsl/gsl_statistics.h
+ /home/chen/gsl/include/gsl/gsl_statistics_char.h
+ /home/chen/gsl/include/gsl/gsl_statistics_double.h
+ /home/chen/gsl/include/gsl/gsl_statistics_float.h
+ /home/chen/gsl/include/gsl/gsl_statistics_int.h
+ /home/chen/gsl/include/gsl/gsl_statistics_long.h
+ /home/chen/gsl/include/gsl/gsl_statistics_long_double.h
+ /home/chen/gsl/include/gsl/gsl_statistics_short.h
+ /home/chen/gsl/include/gsl/gsl_statistics_uchar.h
+ /home/chen/gsl/include/gsl/gsl_statistics_uint.h
+ /home/chen/gsl/include/gsl/gsl_statistics_ulong.h
+ /home/chen/gsl/include/gsl/gsl_statistics_ushort.h
+ /home/chen/gsl/include/gsl/gsl_sys.h
+ /home/chen/gsl/include/gsl/gsl_types.h
+ /home/chen/gsl/include/gsl/gsl_vector.h
+ /home/chen/gsl/include/gsl/gsl_vector_char.h
+ /home/chen/gsl/include/gsl/gsl_vector_complex.h
+ /home/chen/gsl/include/gsl/gsl_vector_complex_double.h
+ /home/chen/gsl/include/gsl/gsl_vector_complex_float.h
+ /home/chen/gsl/include/gsl/gsl_vector_complex_long_double.h
+ /home/chen/gsl/include/gsl/gsl_vector_double.h
+ /home/chen/gsl/include/gsl/gsl_vector_float.h
+ /home/chen/gsl/include/gsl/gsl_vector_int.h
+ /home/chen/gsl/include/gsl/gsl_vector_long.h
+ /home/chen/gsl/include/gsl/gsl_vector_long_double.h
+ /home/chen/gsl/include/gsl/gsl_vector_short.h
+ /home/chen/gsl/include/gsl/gsl_vector_uchar.h
+ /home/chen/gsl/include/gsl/gsl_vector_uint.h
+ /home/chen/gsl/include/gsl/gsl_vector_ulong.h
+ /home/chen/gsl/include/gsl/gsl_vector_ushort.h
  /usr/include/vtk/vtkABI.h
  /usr/include/vtk/vtkAbstractArray.h
  /usr/include/vtk/vtkAbstractContextItem.h
@@ -336,10 +589,12 @@ CMakeFiles/HMAR.dir/src/dbscan.cpp.o
  /usr/include/vtk/vtkActor2D.h
  /usr/include/vtk/vtkActorCollection.h
  /usr/include/vtk/vtkAlgorithm.h
+ /usr/include/vtk/vtkAppendPolyData.h
  /usr/include/vtk/vtkArrayIterator.h
  /usr/include/vtk/vtkArrayIteratorTemplate.h
  /usr/include/vtk/vtkArrayIteratorTemplate.txx
  /usr/include/vtk/vtkArrayIteratorTemplateImplicit.txx
+ /usr/include/vtk/vtkAssembly.h
  /usr/include/vtk/vtkAtomicInt.h
  /usr/include/vtk/vtkAutoInit.h
  /usr/include/vtk/vtkCamera.h
@@ -351,9 +606,11 @@ CMakeFiles/HMAR.dir/src/dbscan.cpp.o
  /usr/include/vtk/vtkChart.h
  /usr/include/vtk/vtkChartXY.h
  /usr/include/vtk/vtkChartsCoreModule.h
+ /usr/include/vtk/vtkCleanPolyData.h
  /usr/include/vtk/vtkCollection.h
  /usr/include/vtk/vtkColor.h
  /usr/include/vtk/vtkCommonColorModule.h
+ /usr/include/vtk/vtkCommonComputationalGeometryModule.h
  /usr/include/vtk/vtkCommonCoreModule.h
  /usr/include/vtk/vtkCommonDataModelModule.h
  /usr/include/vtk/vtkCommonExecutionModelModule.h
@@ -365,6 +622,7 @@ CMakeFiles/HMAR.dir/src/dbscan.cpp.o
  /usr/include/vtk/vtkContextView.h
  /usr/include/vtk/vtkCoordinate.h
  /usr/include/vtk/vtkCubeSource.h
+ /usr/include/vtk/vtkCurvatures.h
  /usr/include/vtk/vtkDataArray.h
  /usr/include/vtk/vtkDataArrayTemplate.h
  /usr/include/vtk/vtkDataArrayTemplate.txx
@@ -402,6 +660,7 @@ CMakeFiles/HMAR.dir/src/dbscan.cpp.o
  /usr/include/vtk/vtkInteractorObserver.h
  /usr/include/vtk/vtkInteractorStyle.h
  /usr/include/vtk/vtkInteractorStyleTrackballCamera.h
+ /usr/include/vtk/vtkLight.h
  /usr/include/vtk/vtkLineSource.h
  /usr/include/vtk/vtkLookupTable.h
  /usr/include/vtk/vtkMappedDataArray.h
@@ -413,6 +672,9 @@ CMakeFiles/HMAR.dir/src/dbscan.cpp.o
  /usr/include/vtk/vtkObject.h
  /usr/include/vtk/vtkObjectBase.h
  /usr/include/vtk/vtkObjectFactory.h
+ /usr/include/vtk/vtkParametricFunction.h
+ /usr/include/vtk/vtkParametricFunctionSource.h
+ /usr/include/vtk/vtkParametricSpline.h
  /usr/include/vtk/vtkPen.h
  /usr/include/vtk/vtkPicker.h
  /usr/include/vtk/vtkPlot.h
@@ -424,12 +686,15 @@ CMakeFiles/HMAR.dir/src/dbscan.cpp.o
  /usr/include/vtk/vtkPolyData.h
  /usr/include/vtk/vtkPolyDataAlgorithm.h
  /usr/include/vtk/vtkPolyDataMapper.h
+ /usr/include/vtk/vtkPolygon.h
  /usr/include/vtk/vtkProp.h
  /usr/include/vtk/vtkProp3D.h
+ /usr/include/vtk/vtkPropAssembly.h
  /usr/include/vtk/vtkPropCollection.h
  /usr/include/vtk/vtkPropPicker.h
  /usr/include/vtk/vtkProperty.h
  /usr/include/vtk/vtkRect.h
+ /usr/include/vtk/vtkRegularPolygonSource.h
  /usr/include/vtk/vtkRenderViewBase.h
  /usr/include/vtk/vtkRenderWindow.h
  /usr/include/vtk/vtkRenderWindowInteractor.h
@@ -443,6 +708,7 @@ CMakeFiles/HMAR.dir/src/dbscan.cpp.o
  /usr/include/vtk/vtkSetGet.h
  /usr/include/vtk/vtkSmartPointer.h
  /usr/include/vtk/vtkSmartPointerBase.h
+ /usr/include/vtk/vtkSmoothPolyDataFilter.h
  /usr/include/vtk/vtkSortDataArray.h
  /usr/include/vtk/vtkSphereSource.h
  /usr/include/vtk/vtkStdString.h
@@ -456,6 +722,7 @@ CMakeFiles/HMAR.dir/src/dbscan.cpp.o
  /usr/include/vtk/vtkTimeStamp.h
  /usr/include/vtk/vtkTubeFilter.h
  /usr/include/vtk/vtkTuple.h
+ /usr/include/vtk/vtkTupleInterpolator.h
  /usr/include/vtk/vtkType.h
  /usr/include/vtk/vtkTypeTemplate.h
  /usr/include/vtk/vtkTypeTraits.h
@@ -490,6 +757,81 @@ CMakeFiles/HMAR.dir/src/main.cpp.o
  /home/chen/HMAR/KINECT/src/util.h
  /home/chen/HMAR/KINECT/src/util2.h
  /home/chen/HMAR/KINECT/src/vtkExtra.h
+ /home/chen/gsl/include/gsl/gsl_block_char.h
+ /home/chen/gsl/include/gsl/gsl_block_complex_double.h
+ /home/chen/gsl/include/gsl/gsl_block_complex_float.h
+ /home/chen/gsl/include/gsl/gsl_block_complex_long_double.h
+ /home/chen/gsl/include/gsl/gsl_block_double.h
+ /home/chen/gsl/include/gsl/gsl_block_float.h
+ /home/chen/gsl/include/gsl/gsl_block_int.h
+ /home/chen/gsl/include/gsl/gsl_block_long.h
+ /home/chen/gsl/include/gsl/gsl_block_long_double.h
+ /home/chen/gsl/include/gsl/gsl_block_short.h
+ /home/chen/gsl/include/gsl/gsl_block_uchar.h
+ /home/chen/gsl/include/gsl/gsl_block_uint.h
+ /home/chen/gsl/include/gsl/gsl_block_ulong.h
+ /home/chen/gsl/include/gsl/gsl_block_ushort.h
+ /home/chen/gsl/include/gsl/gsl_bspline.h
+ /home/chen/gsl/include/gsl/gsl_check_range.h
+ /home/chen/gsl/include/gsl/gsl_complex.h
+ /home/chen/gsl/include/gsl/gsl_errno.h
+ /home/chen/gsl/include/gsl/gsl_inline.h
+ /home/chen/gsl/include/gsl/gsl_integration.h
+ /home/chen/gsl/include/gsl/gsl_machine.h
+ /home/chen/gsl/include/gsl/gsl_math.h
+ /home/chen/gsl/include/gsl/gsl_matrix.h
+ /home/chen/gsl/include/gsl/gsl_matrix_char.h
+ /home/chen/gsl/include/gsl/gsl_matrix_complex_double.h
+ /home/chen/gsl/include/gsl/gsl_matrix_complex_float.h
+ /home/chen/gsl/include/gsl/gsl_matrix_complex_long_double.h
+ /home/chen/gsl/include/gsl/gsl_matrix_double.h
+ /home/chen/gsl/include/gsl/gsl_matrix_float.h
+ /home/chen/gsl/include/gsl/gsl_matrix_int.h
+ /home/chen/gsl/include/gsl/gsl_matrix_long.h
+ /home/chen/gsl/include/gsl/gsl_matrix_long_double.h
+ /home/chen/gsl/include/gsl/gsl_matrix_short.h
+ /home/chen/gsl/include/gsl/gsl_matrix_uchar.h
+ /home/chen/gsl/include/gsl/gsl_matrix_uint.h
+ /home/chen/gsl/include/gsl/gsl_matrix_ulong.h
+ /home/chen/gsl/include/gsl/gsl_matrix_ushort.h
+ /home/chen/gsl/include/gsl/gsl_minmax.h
+ /home/chen/gsl/include/gsl/gsl_multifit.h
+ /home/chen/gsl/include/gsl/gsl_nan.h
+ /home/chen/gsl/include/gsl/gsl_poly.h
+ /home/chen/gsl/include/gsl/gsl_pow_int.h
+ /home/chen/gsl/include/gsl/gsl_precision.h
+ /home/chen/gsl/include/gsl/gsl_randist.h
+ /home/chen/gsl/include/gsl/gsl_rng.h
+ /home/chen/gsl/include/gsl/gsl_statistics.h
+ /home/chen/gsl/include/gsl/gsl_statistics_char.h
+ /home/chen/gsl/include/gsl/gsl_statistics_double.h
+ /home/chen/gsl/include/gsl/gsl_statistics_float.h
+ /home/chen/gsl/include/gsl/gsl_statistics_int.h
+ /home/chen/gsl/include/gsl/gsl_statistics_long.h
+ /home/chen/gsl/include/gsl/gsl_statistics_long_double.h
+ /home/chen/gsl/include/gsl/gsl_statistics_short.h
+ /home/chen/gsl/include/gsl/gsl_statistics_uchar.h
+ /home/chen/gsl/include/gsl/gsl_statistics_uint.h
+ /home/chen/gsl/include/gsl/gsl_statistics_ulong.h
+ /home/chen/gsl/include/gsl/gsl_statistics_ushort.h
+ /home/chen/gsl/include/gsl/gsl_sys.h
+ /home/chen/gsl/include/gsl/gsl_types.h
+ /home/chen/gsl/include/gsl/gsl_vector.h
+ /home/chen/gsl/include/gsl/gsl_vector_char.h
+ /home/chen/gsl/include/gsl/gsl_vector_complex.h
+ /home/chen/gsl/include/gsl/gsl_vector_complex_double.h
+ /home/chen/gsl/include/gsl/gsl_vector_complex_float.h
+ /home/chen/gsl/include/gsl/gsl_vector_complex_long_double.h
+ /home/chen/gsl/include/gsl/gsl_vector_double.h
+ /home/chen/gsl/include/gsl/gsl_vector_float.h
+ /home/chen/gsl/include/gsl/gsl_vector_int.h
+ /home/chen/gsl/include/gsl/gsl_vector_long.h
+ /home/chen/gsl/include/gsl/gsl_vector_long_double.h
+ /home/chen/gsl/include/gsl/gsl_vector_short.h
+ /home/chen/gsl/include/gsl/gsl_vector_uchar.h
+ /home/chen/gsl/include/gsl/gsl_vector_uint.h
+ /home/chen/gsl/include/gsl/gsl_vector_ulong.h
+ /home/chen/gsl/include/gsl/gsl_vector_ushort.h
  /usr/include/vtk/vtkABI.h
  /usr/include/vtk/vtkAbstractArray.h
  /usr/include/vtk/vtkAbstractContextItem.h
@@ -501,10 +843,12 @@ CMakeFiles/HMAR.dir/src/main.cpp.o
  /usr/include/vtk/vtkActor2D.h
  /usr/include/vtk/vtkActorCollection.h
  /usr/include/vtk/vtkAlgorithm.h
+ /usr/include/vtk/vtkAppendPolyData.h
  /usr/include/vtk/vtkArrayIterator.h
  /usr/include/vtk/vtkArrayIteratorTemplate.h
  /usr/include/vtk/vtkArrayIteratorTemplate.txx
  /usr/include/vtk/vtkArrayIteratorTemplateImplicit.txx
+ /usr/include/vtk/vtkAssembly.h
  /usr/include/vtk/vtkAtomicInt.h
  /usr/include/vtk/vtkAutoInit.h
  /usr/include/vtk/vtkCamera.h
@@ -516,9 +860,11 @@ CMakeFiles/HMAR.dir/src/main.cpp.o
  /usr/include/vtk/vtkChart.h
  /usr/include/vtk/vtkChartXY.h
  /usr/include/vtk/vtkChartsCoreModule.h
+ /usr/include/vtk/vtkCleanPolyData.h
  /usr/include/vtk/vtkCollection.h
  /usr/include/vtk/vtkColor.h
  /usr/include/vtk/vtkCommonColorModule.h
+ /usr/include/vtk/vtkCommonComputationalGeometryModule.h
  /usr/include/vtk/vtkCommonCoreModule.h
  /usr/include/vtk/vtkCommonDataModelModule.h
  /usr/include/vtk/vtkCommonExecutionModelModule.h
@@ -530,6 +876,7 @@ CMakeFiles/HMAR.dir/src/main.cpp.o
  /usr/include/vtk/vtkContextView.h
  /usr/include/vtk/vtkCoordinate.h
  /usr/include/vtk/vtkCubeSource.h
+ /usr/include/vtk/vtkCurvatures.h
  /usr/include/vtk/vtkDataArray.h
  /usr/include/vtk/vtkDataArrayTemplate.h
  /usr/include/vtk/vtkDataArrayTemplate.txx
@@ -567,6 +914,7 @@ CMakeFiles/HMAR.dir/src/main.cpp.o
  /usr/include/vtk/vtkInteractorObserver.h
  /usr/include/vtk/vtkInteractorStyle.h
  /usr/include/vtk/vtkInteractorStyleTrackballCamera.h
+ /usr/include/vtk/vtkLight.h
  /usr/include/vtk/vtkLineSource.h
  /usr/include/vtk/vtkLookupTable.h
  /usr/include/vtk/vtkMappedDataArray.h
@@ -578,6 +926,9 @@ CMakeFiles/HMAR.dir/src/main.cpp.o
  /usr/include/vtk/vtkObject.h
  /usr/include/vtk/vtkObjectBase.h
  /usr/include/vtk/vtkObjectFactory.h
+ /usr/include/vtk/vtkParametricFunction.h
+ /usr/include/vtk/vtkParametricFunctionSource.h
+ /usr/include/vtk/vtkParametricSpline.h
  /usr/include/vtk/vtkPen.h
  /usr/include/vtk/vtkPicker.h
  /usr/include/vtk/vtkPlot.h
@@ -589,12 +940,15 @@ CMakeFiles/HMAR.dir/src/main.cpp.o
  /usr/include/vtk/vtkPolyData.h
  /usr/include/vtk/vtkPolyDataAlgorithm.h
  /usr/include/vtk/vtkPolyDataMapper.h
+ /usr/include/vtk/vtkPolygon.h
  /usr/include/vtk/vtkProp.h
  /usr/include/vtk/vtkProp3D.h
+ /usr/include/vtk/vtkPropAssembly.h
  /usr/include/vtk/vtkPropCollection.h
  /usr/include/vtk/vtkPropPicker.h
  /usr/include/vtk/vtkProperty.h
  /usr/include/vtk/vtkRect.h
+ /usr/include/vtk/vtkRegularPolygonSource.h
  /usr/include/vtk/vtkRenderViewBase.h
  /usr/include/vtk/vtkRenderWindow.h
  /usr/include/vtk/vtkRenderWindowInteractor.h
@@ -608,6 +962,7 @@ CMakeFiles/HMAR.dir/src/main.cpp.o
  /usr/include/vtk/vtkSetGet.h
  /usr/include/vtk/vtkSmartPointer.h
  /usr/include/vtk/vtkSmartPointerBase.h
+ /usr/include/vtk/vtkSmoothPolyDataFilter.h
  /usr/include/vtk/vtkSortDataArray.h
  /usr/include/vtk/vtkSphereSource.h
  /usr/include/vtk/vtkStdString.h
@@ -621,6 +976,7 @@ CMakeFiles/HMAR.dir/src/main.cpp.o
  /usr/include/vtk/vtkTimeStamp.h
  /usr/include/vtk/vtkTubeFilter.h
  /usr/include/vtk/vtkTuple.h
+ /usr/include/vtk/vtkTupleInterpolator.h
  /usr/include/vtk/vtkType.h
  /usr/include/vtk/vtkTypeTemplate.h
  /usr/include/vtk/vtkTypeTraits.h
@@ -654,6 +1010,81 @@ CMakeFiles/HMAR.dir/src/util.cpp.o
  /home/chen/HMAR/KINECT/src/util.cpp
  /home/chen/HMAR/KINECT/src/util.h
  /home/chen/HMAR/KINECT/src/vtkExtra.h
+ /home/chen/gsl/include/gsl/gsl_block_char.h
+ /home/chen/gsl/include/gsl/gsl_block_complex_double.h
+ /home/chen/gsl/include/gsl/gsl_block_complex_float.h
+ /home/chen/gsl/include/gsl/gsl_block_complex_long_double.h
+ /home/chen/gsl/include/gsl/gsl_block_double.h
+ /home/chen/gsl/include/gsl/gsl_block_float.h
+ /home/chen/gsl/include/gsl/gsl_block_int.h
+ /home/chen/gsl/include/gsl/gsl_block_long.h
+ /home/chen/gsl/include/gsl/gsl_block_long_double.h
+ /home/chen/gsl/include/gsl/gsl_block_short.h
+ /home/chen/gsl/include/gsl/gsl_block_uchar.h
+ /home/chen/gsl/include/gsl/gsl_block_uint.h
+ /home/chen/gsl/include/gsl/gsl_block_ulong.h
+ /home/chen/gsl/include/gsl/gsl_block_ushort.h
+ /home/chen/gsl/include/gsl/gsl_bspline.h
+ /home/chen/gsl/include/gsl/gsl_check_range.h
+ /home/chen/gsl/include/gsl/gsl_complex.h
+ /home/chen/gsl/include/gsl/gsl_errno.h
+ /home/chen/gsl/include/gsl/gsl_inline.h
+ /home/chen/gsl/include/gsl/gsl_integration.h
+ /home/chen/gsl/include/gsl/gsl_machine.h
+ /home/chen/gsl/include/gsl/gsl_math.h
+ /home/chen/gsl/include/gsl/gsl_matrix.h
+ /home/chen/gsl/include/gsl/gsl_matrix_char.h
+ /home/chen/gsl/include/gsl/gsl_matrix_complex_double.h
+ /home/chen/gsl/include/gsl/gsl_matrix_complex_float.h
+ /home/chen/gsl/include/gsl/gsl_matrix_complex_long_double.h
+ /home/chen/gsl/include/gsl/gsl_matrix_double.h
+ /home/chen/gsl/include/gsl/gsl_matrix_float.h
+ /home/chen/gsl/include/gsl/gsl_matrix_int.h
+ /home/chen/gsl/include/gsl/gsl_matrix_long.h
+ /home/chen/gsl/include/gsl/gsl_matrix_long_double.h
+ /home/chen/gsl/include/gsl/gsl_matrix_short.h
+ /home/chen/gsl/include/gsl/gsl_matrix_uchar.h
+ /home/chen/gsl/include/gsl/gsl_matrix_uint.h
+ /home/chen/gsl/include/gsl/gsl_matrix_ulong.h
+ /home/chen/gsl/include/gsl/gsl_matrix_ushort.h
+ /home/chen/gsl/include/gsl/gsl_minmax.h
+ /home/chen/gsl/include/gsl/gsl_multifit.h
+ /home/chen/gsl/include/gsl/gsl_nan.h
+ /home/chen/gsl/include/gsl/gsl_poly.h
+ /home/chen/gsl/include/gsl/gsl_pow_int.h
+ /home/chen/gsl/include/gsl/gsl_precision.h
+ /home/chen/gsl/include/gsl/gsl_randist.h
+ /home/chen/gsl/include/gsl/gsl_rng.h
+ /home/chen/gsl/include/gsl/gsl_statistics.h
+ /home/chen/gsl/include/gsl/gsl_statistics_char.h
+ /home/chen/gsl/include/gsl/gsl_statistics_double.h
+ /home/chen/gsl/include/gsl/gsl_statistics_float.h
+ /home/chen/gsl/include/gsl/gsl_statistics_int.h
+ /home/chen/gsl/include/gsl/gsl_statistics_long.h
+ /home/chen/gsl/include/gsl/gsl_statistics_long_double.h
+ /home/chen/gsl/include/gsl/gsl_statistics_short.h
+ /home/chen/gsl/include/gsl/gsl_statistics_uchar.h
+ /home/chen/gsl/include/gsl/gsl_statistics_uint.h
+ /home/chen/gsl/include/gsl/gsl_statistics_ulong.h
+ /home/chen/gsl/include/gsl/gsl_statistics_ushort.h
+ /home/chen/gsl/include/gsl/gsl_sys.h
+ /home/chen/gsl/include/gsl/gsl_types.h
+ /home/chen/gsl/include/gsl/gsl_vector.h
+ /home/chen/gsl/include/gsl/gsl_vector_char.h
+ /home/chen/gsl/include/gsl/gsl_vector_complex.h
+ /home/chen/gsl/include/gsl/gsl_vector_complex_double.h
+ /home/chen/gsl/include/gsl/gsl_vector_complex_float.h
+ /home/chen/gsl/include/gsl/gsl_vector_complex_long_double.h
+ /home/chen/gsl/include/gsl/gsl_vector_double.h
+ /home/chen/gsl/include/gsl/gsl_vector_float.h
+ /home/chen/gsl/include/gsl/gsl_vector_int.h
+ /home/chen/gsl/include/gsl/gsl_vector_long.h
+ /home/chen/gsl/include/gsl/gsl_vector_long_double.h
+ /home/chen/gsl/include/gsl/gsl_vector_short.h
+ /home/chen/gsl/include/gsl/gsl_vector_uchar.h
+ /home/chen/gsl/include/gsl/gsl_vector_uint.h
+ /home/chen/gsl/include/gsl/gsl_vector_ulong.h
+ /home/chen/gsl/include/gsl/gsl_vector_ushort.h
  /usr/include/vtk/vtkABI.h
  /usr/include/vtk/vtkAbstractArray.h
  /usr/include/vtk/vtkAbstractContextItem.h
@@ -665,10 +1096,12 @@ CMakeFiles/HMAR.dir/src/util.cpp.o
  /usr/include/vtk/vtkActor2D.h
  /usr/include/vtk/vtkActorCollection.h
  /usr/include/vtk/vtkAlgorithm.h
+ /usr/include/vtk/vtkAppendPolyData.h
  /usr/include/vtk/vtkArrayIterator.h
  /usr/include/vtk/vtkArrayIteratorTemplate.h
  /usr/include/vtk/vtkArrayIteratorTemplate.txx
  /usr/include/vtk/vtkArrayIteratorTemplateImplicit.txx
+ /usr/include/vtk/vtkAssembly.h
  /usr/include/vtk/vtkAtomicInt.h
  /usr/include/vtk/vtkAutoInit.h
  /usr/include/vtk/vtkCamera.h
@@ -680,9 +1113,11 @@ CMakeFiles/HMAR.dir/src/util.cpp.o
  /usr/include/vtk/vtkChart.h
  /usr/include/vtk/vtkChartXY.h
  /usr/include/vtk/vtkChartsCoreModule.h
+ /usr/include/vtk/vtkCleanPolyData.h
  /usr/include/vtk/vtkCollection.h
  /usr/include/vtk/vtkColor.h
  /usr/include/vtk/vtkCommonColorModule.h
+ /usr/include/vtk/vtkCommonComputationalGeometryModule.h
  /usr/include/vtk/vtkCommonCoreModule.h
  /usr/include/vtk/vtkCommonDataModelModule.h
  /usr/include/vtk/vtkCommonExecutionModelModule.h
@@ -694,6 +1129,7 @@ CMakeFiles/HMAR.dir/src/util.cpp.o
  /usr/include/vtk/vtkContextView.h
  /usr/include/vtk/vtkCoordinate.h
  /usr/include/vtk/vtkCubeSource.h
+ /usr/include/vtk/vtkCurvatures.h
  /usr/include/vtk/vtkDataArray.h
  /usr/include/vtk/vtkDataArrayTemplate.h
  /usr/include/vtk/vtkDataArrayTemplate.txx
@@ -731,6 +1167,7 @@ CMakeFiles/HMAR.dir/src/util.cpp.o
  /usr/include/vtk/vtkInteractorObserver.h
  /usr/include/vtk/vtkInteractorStyle.h
  /usr/include/vtk/vtkInteractorStyleTrackballCamera.h
+ /usr/include/vtk/vtkLight.h
  /usr/include/vtk/vtkLineSource.h
  /usr/include/vtk/vtkLookupTable.h
  /usr/include/vtk/vtkMappedDataArray.h
@@ -742,6 +1179,9 @@ CMakeFiles/HMAR.dir/src/util.cpp.o
  /usr/include/vtk/vtkObject.h
  /usr/include/vtk/vtkObjectBase.h
  /usr/include/vtk/vtkObjectFactory.h
+ /usr/include/vtk/vtkParametricFunction.h
+ /usr/include/vtk/vtkParametricFunctionSource.h
+ /usr/include/vtk/vtkParametricSpline.h
  /usr/include/vtk/vtkPen.h
  /usr/include/vtk/vtkPicker.h
  /usr/include/vtk/vtkPlot.h
@@ -753,12 +1193,15 @@ CMakeFiles/HMAR.dir/src/util.cpp.o
  /usr/include/vtk/vtkPolyData.h
  /usr/include/vtk/vtkPolyDataAlgorithm.h
  /usr/include/vtk/vtkPolyDataMapper.h
+ /usr/include/vtk/vtkPolygon.h
  /usr/include/vtk/vtkProp.h
  /usr/include/vtk/vtkProp3D.h
+ /usr/include/vtk/vtkPropAssembly.h
  /usr/include/vtk/vtkPropCollection.h
  /usr/include/vtk/vtkPropPicker.h
  /usr/include/vtk/vtkProperty.h
  /usr/include/vtk/vtkRect.h
+ /usr/include/vtk/vtkRegularPolygonSource.h
  /usr/include/vtk/vtkRenderViewBase.h
  /usr/include/vtk/vtkRenderWindow.h
  /usr/include/vtk/vtkRenderWindowInteractor.h
@@ -772,6 +1215,7 @@ CMakeFiles/HMAR.dir/src/util.cpp.o
  /usr/include/vtk/vtkSetGet.h
  /usr/include/vtk/vtkSmartPointer.h
  /usr/include/vtk/vtkSmartPointerBase.h
+ /usr/include/vtk/vtkSmoothPolyDataFilter.h
  /usr/include/vtk/vtkSortDataArray.h
  /usr/include/vtk/vtkSphereSource.h
  /usr/include/vtk/vtkStdString.h
@@ -785,6 +1229,7 @@ CMakeFiles/HMAR.dir/src/util.cpp.o
  /usr/include/vtk/vtkTimeStamp.h
  /usr/include/vtk/vtkTubeFilter.h
  /usr/include/vtk/vtkTuple.h
+ /usr/include/vtk/vtkTupleInterpolator.h
  /usr/include/vtk/vtkType.h
  /usr/include/vtk/vtkTypeTemplate.h
  /usr/include/vtk/vtkTypeTraits.h
@@ -814,6 +1259,81 @@ CMakeFiles/HMAR.dir/src/util2.cpp.o
  /home/chen/HMAR/KINECT/src/dataDeclaration.h
  /home/chen/HMAR/KINECT/src/util2.cpp
  /home/chen/HMAR/KINECT/src/util2.h
+ /home/chen/gsl/include/gsl/gsl_block_char.h
+ /home/chen/gsl/include/gsl/gsl_block_complex_double.h
+ /home/chen/gsl/include/gsl/gsl_block_complex_float.h
+ /home/chen/gsl/include/gsl/gsl_block_complex_long_double.h
+ /home/chen/gsl/include/gsl/gsl_block_double.h
+ /home/chen/gsl/include/gsl/gsl_block_float.h
+ /home/chen/gsl/include/gsl/gsl_block_int.h
+ /home/chen/gsl/include/gsl/gsl_block_long.h
+ /home/chen/gsl/include/gsl/gsl_block_long_double.h
+ /home/chen/gsl/include/gsl/gsl_block_short.h
+ /home/chen/gsl/include/gsl/gsl_block_uchar.h
+ /home/chen/gsl/include/gsl/gsl_block_uint.h
+ /home/chen/gsl/include/gsl/gsl_block_ulong.h
+ /home/chen/gsl/include/gsl/gsl_block_ushort.h
+ /home/chen/gsl/include/gsl/gsl_bspline.h
+ /home/chen/gsl/include/gsl/gsl_check_range.h
+ /home/chen/gsl/include/gsl/gsl_complex.h
+ /home/chen/gsl/include/gsl/gsl_errno.h
+ /home/chen/gsl/include/gsl/gsl_inline.h
+ /home/chen/gsl/include/gsl/gsl_integration.h
+ /home/chen/gsl/include/gsl/gsl_machine.h
+ /home/chen/gsl/include/gsl/gsl_math.h
+ /home/chen/gsl/include/gsl/gsl_matrix.h
+ /home/chen/gsl/include/gsl/gsl_matrix_char.h
+ /home/chen/gsl/include/gsl/gsl_matrix_complex_double.h
+ /home/chen/gsl/include/gsl/gsl_matrix_complex_float.h
+ /home/chen/gsl/include/gsl/gsl_matrix_complex_long_double.h
+ /home/chen/gsl/include/gsl/gsl_matrix_double.h
+ /home/chen/gsl/include/gsl/gsl_matrix_float.h
+ /home/chen/gsl/include/gsl/gsl_matrix_int.h
+ /home/chen/gsl/include/gsl/gsl_matrix_long.h
+ /home/chen/gsl/include/gsl/gsl_matrix_long_double.h
+ /home/chen/gsl/include/gsl/gsl_matrix_short.h
+ /home/chen/gsl/include/gsl/gsl_matrix_uchar.h
+ /home/chen/gsl/include/gsl/gsl_matrix_uint.h
+ /home/chen/gsl/include/gsl/gsl_matrix_ulong.h
+ /home/chen/gsl/include/gsl/gsl_matrix_ushort.h
+ /home/chen/gsl/include/gsl/gsl_minmax.h
+ /home/chen/gsl/include/gsl/gsl_multifit.h
+ /home/chen/gsl/include/gsl/gsl_nan.h
+ /home/chen/gsl/include/gsl/gsl_poly.h
+ /home/chen/gsl/include/gsl/gsl_pow_int.h
+ /home/chen/gsl/include/gsl/gsl_precision.h
+ /home/chen/gsl/include/gsl/gsl_randist.h
+ /home/chen/gsl/include/gsl/gsl_rng.h
+ /home/chen/gsl/include/gsl/gsl_statistics.h
+ /home/chen/gsl/include/gsl/gsl_statistics_char.h
+ /home/chen/gsl/include/gsl/gsl_statistics_double.h
+ /home/chen/gsl/include/gsl/gsl_statistics_float.h
+ /home/chen/gsl/include/gsl/gsl_statistics_int.h
+ /home/chen/gsl/include/gsl/gsl_statistics_long.h
+ /home/chen/gsl/include/gsl/gsl_statistics_long_double.h
+ /home/chen/gsl/include/gsl/gsl_statistics_short.h
+ /home/chen/gsl/include/gsl/gsl_statistics_uchar.h
+ /home/chen/gsl/include/gsl/gsl_statistics_uint.h
+ /home/chen/gsl/include/gsl/gsl_statistics_ulong.h
+ /home/chen/gsl/include/gsl/gsl_statistics_ushort.h
+ /home/chen/gsl/include/gsl/gsl_sys.h
+ /home/chen/gsl/include/gsl/gsl_types.h
+ /home/chen/gsl/include/gsl/gsl_vector.h
+ /home/chen/gsl/include/gsl/gsl_vector_char.h
+ /home/chen/gsl/include/gsl/gsl_vector_complex.h
+ /home/chen/gsl/include/gsl/gsl_vector_complex_double.h
+ /home/chen/gsl/include/gsl/gsl_vector_complex_float.h
+ /home/chen/gsl/include/gsl/gsl_vector_complex_long_double.h
+ /home/chen/gsl/include/gsl/gsl_vector_double.h
+ /home/chen/gsl/include/gsl/gsl_vector_float.h
+ /home/chen/gsl/include/gsl/gsl_vector_int.h
+ /home/chen/gsl/include/gsl/gsl_vector_long.h
+ /home/chen/gsl/include/gsl/gsl_vector_long_double.h
+ /home/chen/gsl/include/gsl/gsl_vector_short.h
+ /home/chen/gsl/include/gsl/gsl_vector_uchar.h
+ /home/chen/gsl/include/gsl/gsl_vector_uint.h
+ /home/chen/gsl/include/gsl/gsl_vector_ulong.h
+ /home/chen/gsl/include/gsl/gsl_vector_ushort.h
  /usr/include/vtk/vtkABI.h
  /usr/include/vtk/vtkAbstractArray.h
  /usr/include/vtk/vtkAbstractContextItem.h
@@ -825,10 +1345,12 @@ CMakeFiles/HMAR.dir/src/util2.cpp.o
  /usr/include/vtk/vtkActor2D.h
  /usr/include/vtk/vtkActorCollection.h
  /usr/include/vtk/vtkAlgorithm.h
+ /usr/include/vtk/vtkAppendPolyData.h
  /usr/include/vtk/vtkArrayIterator.h
  /usr/include/vtk/vtkArrayIteratorTemplate.h
  /usr/include/vtk/vtkArrayIteratorTemplate.txx
  /usr/include/vtk/vtkArrayIteratorTemplateImplicit.txx
+ /usr/include/vtk/vtkAssembly.h
  /usr/include/vtk/vtkAtomicInt.h
  /usr/include/vtk/vtkAutoInit.h
  /usr/include/vtk/vtkCamera.h
@@ -840,9 +1362,11 @@ CMakeFiles/HMAR.dir/src/util2.cpp.o
  /usr/include/vtk/vtkChart.h
  /usr/include/vtk/vtkChartXY.h
  /usr/include/vtk/vtkChartsCoreModule.h
+ /usr/include/vtk/vtkCleanPolyData.h
  /usr/include/vtk/vtkCollection.h
  /usr/include/vtk/vtkColor.h
  /usr/include/vtk/vtkCommonColorModule.h
+ /usr/include/vtk/vtkCommonComputationalGeometryModule.h
  /usr/include/vtk/vtkCommonCoreModule.h
  /usr/include/vtk/vtkCommonDataModelModule.h
  /usr/include/vtk/vtkCommonExecutionModelModule.h
@@ -854,6 +1378,7 @@ CMakeFiles/HMAR.dir/src/util2.cpp.o
  /usr/include/vtk/vtkContextView.h
  /usr/include/vtk/vtkCoordinate.h
  /usr/include/vtk/vtkCubeSource.h
+ /usr/include/vtk/vtkCurvatures.h
  /usr/include/vtk/vtkDataArray.h
  /usr/include/vtk/vtkDataArrayTemplate.h
  /usr/include/vtk/vtkDataArrayTemplate.txx
@@ -891,6 +1416,7 @@ CMakeFiles/HMAR.dir/src/util2.cpp.o
  /usr/include/vtk/vtkInteractorObserver.h
  /usr/include/vtk/vtkInteractorStyle.h
  /usr/include/vtk/vtkInteractorStyleTrackballCamera.h
+ /usr/include/vtk/vtkLight.h
  /usr/include/vtk/vtkLineSource.h
  /usr/include/vtk/vtkLookupTable.h
  /usr/include/vtk/vtkMappedDataArray.h
@@ -902,6 +1428,9 @@ CMakeFiles/HMAR.dir/src/util2.cpp.o
  /usr/include/vtk/vtkObject.h
  /usr/include/vtk/vtkObjectBase.h
  /usr/include/vtk/vtkObjectFactory.h
+ /usr/include/vtk/vtkParametricFunction.h
+ /usr/include/vtk/vtkParametricFunctionSource.h
+ /usr/include/vtk/vtkParametricSpline.h
  /usr/include/vtk/vtkPen.h
  /usr/include/vtk/vtkPicker.h
  /usr/include/vtk/vtkPlot.h
@@ -913,12 +1442,15 @@ CMakeFiles/HMAR.dir/src/util2.cpp.o
  /usr/include/vtk/vtkPolyData.h
  /usr/include/vtk/vtkPolyDataAlgorithm.h
  /usr/include/vtk/vtkPolyDataMapper.h
+ /usr/include/vtk/vtkPolygon.h
  /usr/include/vtk/vtkProp.h
  /usr/include/vtk/vtkProp3D.h
+ /usr/include/vtk/vtkPropAssembly.h
  /usr/include/vtk/vtkPropCollection.h
  /usr/include/vtk/vtkPropPicker.h
  /usr/include/vtk/vtkProperty.h
  /usr/include/vtk/vtkRect.h
+ /usr/include/vtk/vtkRegularPolygonSource.h
  /usr/include/vtk/vtkRenderViewBase.h
  /usr/include/vtk/vtkRenderWindow.h
  /usr/include/vtk/vtkRenderWindowInteractor.h
@@ -932,6 +1464,7 @@ CMakeFiles/HMAR.dir/src/util2.cpp.o
  /usr/include/vtk/vtkSetGet.h
  /usr/include/vtk/vtkSmartPointer.h
  /usr/include/vtk/vtkSmartPointerBase.h
+ /usr/include/vtk/vtkSmoothPolyDataFilter.h
  /usr/include/vtk/vtkSortDataArray.h
  /usr/include/vtk/vtkSphereSource.h
  /usr/include/vtk/vtkStdString.h
@@ -945,6 +1478,7 @@ CMakeFiles/HMAR.dir/src/util2.cpp.o
  /usr/include/vtk/vtkTimeStamp.h
  /usr/include/vtk/vtkTubeFilter.h
  /usr/include/vtk/vtkTuple.h
+ /usr/include/vtk/vtkTupleInterpolator.h
  /usr/include/vtk/vtkType.h
  /usr/include/vtk/vtkTypeTemplate.h
  /usr/include/vtk/vtkTypeTraits.h
@@ -976,6 +1510,81 @@ CMakeFiles/HMAR.dir/src/vtkExtra.cpp.o
  /home/chen/HMAR/KINECT/src/dataDeclaration.h
  /home/chen/HMAR/KINECT/src/vtkExtra.cpp
  /home/chen/HMAR/KINECT/src/vtkExtra.h
+ /home/chen/gsl/include/gsl/gsl_block_char.h
+ /home/chen/gsl/include/gsl/gsl_block_complex_double.h
+ /home/chen/gsl/include/gsl/gsl_block_complex_float.h
+ /home/chen/gsl/include/gsl/gsl_block_complex_long_double.h
+ /home/chen/gsl/include/gsl/gsl_block_double.h
+ /home/chen/gsl/include/gsl/gsl_block_float.h
+ /home/chen/gsl/include/gsl/gsl_block_int.h
+ /home/chen/gsl/include/gsl/gsl_block_long.h
+ /home/chen/gsl/include/gsl/gsl_block_long_double.h
+ /home/chen/gsl/include/gsl/gsl_block_short.h
+ /home/chen/gsl/include/gsl/gsl_block_uchar.h
+ /home/chen/gsl/include/gsl/gsl_block_uint.h
+ /home/chen/gsl/include/gsl/gsl_block_ulong.h
+ /home/chen/gsl/include/gsl/gsl_block_ushort.h
+ /home/chen/gsl/include/gsl/gsl_bspline.h
+ /home/chen/gsl/include/gsl/gsl_check_range.h
+ /home/chen/gsl/include/gsl/gsl_complex.h
+ /home/chen/gsl/include/gsl/gsl_errno.h
+ /home/chen/gsl/include/gsl/gsl_inline.h
+ /home/chen/gsl/include/gsl/gsl_integration.h
+ /home/chen/gsl/include/gsl/gsl_machine.h
+ /home/chen/gsl/include/gsl/gsl_math.h
+ /home/chen/gsl/include/gsl/gsl_matrix.h
+ /home/chen/gsl/include/gsl/gsl_matrix_char.h
+ /home/chen/gsl/include/gsl/gsl_matrix_complex_double.h
+ /home/chen/gsl/include/gsl/gsl_matrix_complex_float.h
+ /home/chen/gsl/include/gsl/gsl_matrix_complex_long_double.h
+ /home/chen/gsl/include/gsl/gsl_matrix_double.h
+ /home/chen/gsl/include/gsl/gsl_matrix_float.h
+ /home/chen/gsl/include/gsl/gsl_matrix_int.h
+ /home/chen/gsl/include/gsl/gsl_matrix_long.h
+ /home/chen/gsl/include/gsl/gsl_matrix_long_double.h
+ /home/chen/gsl/include/gsl/gsl_matrix_short.h
+ /home/chen/gsl/include/gsl/gsl_matrix_uchar.h
+ /home/chen/gsl/include/gsl/gsl_matrix_uint.h
+ /home/chen/gsl/include/gsl/gsl_matrix_ulong.h
+ /home/chen/gsl/include/gsl/gsl_matrix_ushort.h
+ /home/chen/gsl/include/gsl/gsl_minmax.h
+ /home/chen/gsl/include/gsl/gsl_multifit.h
+ /home/chen/gsl/include/gsl/gsl_nan.h
+ /home/chen/gsl/include/gsl/gsl_poly.h
+ /home/chen/gsl/include/gsl/gsl_pow_int.h
+ /home/chen/gsl/include/gsl/gsl_precision.h
+ /home/chen/gsl/include/gsl/gsl_randist.h
+ /home/chen/gsl/include/gsl/gsl_rng.h
+ /home/chen/gsl/include/gsl/gsl_statistics.h
+ /home/chen/gsl/include/gsl/gsl_statistics_char.h
+ /home/chen/gsl/include/gsl/gsl_statistics_double.h
+ /home/chen/gsl/include/gsl/gsl_statistics_float.h
+ /home/chen/gsl/include/gsl/gsl_statistics_int.h
+ /home/chen/gsl/include/gsl/gsl_statistics_long.h
+ /home/chen/gsl/include/gsl/gsl_statistics_long_double.h
+ /home/chen/gsl/include/gsl/gsl_statistics_short.h
+ /home/chen/gsl/include/gsl/gsl_statistics_uchar.h
+ /home/chen/gsl/include/gsl/gsl_statistics_uint.h
+ /home/chen/gsl/include/gsl/gsl_statistics_ulong.h
+ /home/chen/gsl/include/gsl/gsl_statistics_ushort.h
+ /home/chen/gsl/include/gsl/gsl_sys.h
+ /home/chen/gsl/include/gsl/gsl_types.h
+ /home/chen/gsl/include/gsl/gsl_vector.h
+ /home/chen/gsl/include/gsl/gsl_vector_char.h
+ /home/chen/gsl/include/gsl/gsl_vector_complex.h
+ /home/chen/gsl/include/gsl/gsl_vector_complex_double.h
+ /home/chen/gsl/include/gsl/gsl_vector_complex_float.h
+ /home/chen/gsl/include/gsl/gsl_vector_complex_long_double.h
+ /home/chen/gsl/include/gsl/gsl_vector_double.h
+ /home/chen/gsl/include/gsl/gsl_vector_float.h
+ /home/chen/gsl/include/gsl/gsl_vector_int.h
+ /home/chen/gsl/include/gsl/gsl_vector_long.h
+ /home/chen/gsl/include/gsl/gsl_vector_long_double.h
+ /home/chen/gsl/include/gsl/gsl_vector_short.h
+ /home/chen/gsl/include/gsl/gsl_vector_uchar.h
+ /home/chen/gsl/include/gsl/gsl_vector_uint.h
+ /home/chen/gsl/include/gsl/gsl_vector_ulong.h
+ /home/chen/gsl/include/gsl/gsl_vector_ushort.h
  /usr/include/vtk/vtkABI.h
  /usr/include/vtk/vtkAbstractArray.h
  /usr/include/vtk/vtkAbstractContextItem.h
@@ -987,10 +1596,12 @@ CMakeFiles/HMAR.dir/src/vtkExtra.cpp.o
  /usr/include/vtk/vtkActor2D.h
  /usr/include/vtk/vtkActorCollection.h
  /usr/include/vtk/vtkAlgorithm.h
+ /usr/include/vtk/vtkAppendPolyData.h
  /usr/include/vtk/vtkArrayIterator.h
  /usr/include/vtk/vtkArrayIteratorTemplate.h
  /usr/include/vtk/vtkArrayIteratorTemplate.txx
  /usr/include/vtk/vtkArrayIteratorTemplateImplicit.txx
+ /usr/include/vtk/vtkAssembly.h
  /usr/include/vtk/vtkAtomicInt.h
  /usr/include/vtk/vtkAutoInit.h
  /usr/include/vtk/vtkCamera.h
@@ -1002,9 +1613,11 @@ CMakeFiles/HMAR.dir/src/vtkExtra.cpp.o
  /usr/include/vtk/vtkChart.h
  /usr/include/vtk/vtkChartXY.h
  /usr/include/vtk/vtkChartsCoreModule.h
+ /usr/include/vtk/vtkCleanPolyData.h
  /usr/include/vtk/vtkCollection.h
  /usr/include/vtk/vtkColor.h
  /usr/include/vtk/vtkCommonColorModule.h
+ /usr/include/vtk/vtkCommonComputationalGeometryModule.h
  /usr/include/vtk/vtkCommonCoreModule.h
  /usr/include/vtk/vtkCommonDataModelModule.h
  /usr/include/vtk/vtkCommonExecutionModelModule.h
@@ -1016,6 +1629,7 @@ CMakeFiles/HMAR.dir/src/vtkExtra.cpp.o
  /usr/include/vtk/vtkContextView.h
  /usr/include/vtk/vtkCoordinate.h
  /usr/include/vtk/vtkCubeSource.h
+ /usr/include/vtk/vtkCurvatures.h
  /usr/include/vtk/vtkDataArray.h
  /usr/include/vtk/vtkDataArrayTemplate.h
  /usr/include/vtk/vtkDataArrayTemplate.txx
@@ -1053,6 +1667,7 @@ CMakeFiles/HMAR.dir/src/vtkExtra.cpp.o
  /usr/include/vtk/vtkInteractorObserver.h
  /usr/include/vtk/vtkInteractorStyle.h
  /usr/include/vtk/vtkInteractorStyleTrackballCamera.h
+ /usr/include/vtk/vtkLight.h
  /usr/include/vtk/vtkLineSource.h
  /usr/include/vtk/vtkLookupTable.h
  /usr/include/vtk/vtkMappedDataArray.h
@@ -1064,6 +1679,9 @@ CMakeFiles/HMAR.dir/src/vtkExtra.cpp.o
  /usr/include/vtk/vtkObject.h
  /usr/include/vtk/vtkObjectBase.h
  /usr/include/vtk/vtkObjectFactory.h
+ /usr/include/vtk/vtkParametricFunction.h
+ /usr/include/vtk/vtkParametricFunctionSource.h
+ /usr/include/vtk/vtkParametricSpline.h
  /usr/include/vtk/vtkPen.h
  /usr/include/vtk/vtkPicker.h
  /usr/include/vtk/vtkPlot.h
@@ -1075,12 +1693,15 @@ CMakeFiles/HMAR.dir/src/vtkExtra.cpp.o
  /usr/include/vtk/vtkPolyData.h
  /usr/include/vtk/vtkPolyDataAlgorithm.h
  /usr/include/vtk/vtkPolyDataMapper.h
+ /usr/include/vtk/vtkPolygon.h
  /usr/include/vtk/vtkProp.h
  /usr/include/vtk/vtkProp3D.h
+ /usr/include/vtk/vtkPropAssembly.h
  /usr/include/vtk/vtkPropCollection.h
  /usr/include/vtk/vtkPropPicker.h
  /usr/include/vtk/vtkProperty.h
  /usr/include/vtk/vtkRect.h
+ /usr/include/vtk/vtkRegularPolygonSource.h
  /usr/include/vtk/vtkRenderViewBase.h
  /usr/include/vtk/vtkRenderWindow.h
  /usr/include/vtk/vtkRenderWindowInteractor.h
@@ -1094,6 +1715,7 @@ CMakeFiles/HMAR.dir/src/vtkExtra.cpp.o
  /usr/include/vtk/vtkSetGet.h
  /usr/include/vtk/vtkSmartPointer.h
  /usr/include/vtk/vtkSmartPointerBase.h
+ /usr/include/vtk/vtkSmoothPolyDataFilter.h
  /usr/include/vtk/vtkSortDataArray.h
  /usr/include/vtk/vtkSphereSource.h
  /usr/include/vtk/vtkStdString.h
@@ -1107,6 +1729,7 @@ CMakeFiles/HMAR.dir/src/vtkExtra.cpp.o
  /usr/include/vtk/vtkTimeStamp.h
  /usr/include/vtk/vtkTubeFilter.h
  /usr/include/vtk/vtkTuple.h
+ /usr/include/vtk/vtkTupleInterpolator.h
  /usr/include/vtk/vtkType.h
  /usr/include/vtk/vtkTypeTemplate.h
  /usr/include/vtk/vtkTypeTraits.h

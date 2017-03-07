@@ -6,8 +6,13 @@
  */
 
 
-//#include "dataDeclaration.h"
+#include "dataDeclaration.h"
+#include "algo.h"
+#include "util.h"
 #include "util2.h"
+#include "dbscan.h"
+#include "Graph.h"
+#include "vtkExtra.h"
 
 // image variables
 Mat rgb_global1 = Mat::zeros(480,640,CV_8UC3);
@@ -38,37 +43,30 @@ sem_t lock_t1,lock_t2,lock_t3,lock_t4,lock_t5,lock_t6;
 
 
 // option flags
-//#define FLAG_RGB
-//#define FLAG_DEPTH
-//#define FLAG_FACE
-//#define FLAG_MARKER
-//#define FLAG_PLANE
-#define FLAG_OBJECT
-#define FLAG_HAND
-#define FLAG_THREAD
-//#define FLAG_WRITE
+#define FLAG_RGB // shows window for rgb
+#define FLAG_DEPTH // shows window for depth
+#define FLAG_PLANE // detecting planes
+#define FLAG_OBJECT // shows window for object detection
+#define FLAG_HAND // shows window for hand detection
+//#define FLAG_FACE // shows window for face detection
+//#define FLAG_CONTACT //shows contact value
+//#define FLAG_WRITE //records data
 
 //#define FREQ
 
 
 //====================================================================================================================================
-#define SAVEDDATA
-//#define DBSCAN
-#include "dataDeclaration.h"
-#include "algo.h"
-#include "util.h"
-#include "dbscan.h"
-#include "Graph.h"
-#include "vtkExtra.h"
+
 unsigned int window = 5;
 vector<string> LABEL_MOV;
 vector<string> LABEL_LOC_MOV;
 vector<string> LABEL_LOC;
 
-int rate = 30;
+int freq_rate = 30;
 
-//====================================================================================================================================
-// [THREAD 1 : KINECT]*********************************************************
+// ============================================================================
+// THREAD 1 : KINECT 
+// ============================================================================
 void* kinectGrab(void* v_kinect)
 {
 	VideoCapture *kinect = reinterpret_cast<VideoCapture *>(v_kinect);
@@ -89,7 +87,7 @@ void* kinectGrab(void* v_kinect)
 	{
 
 #ifdef FREQ
-if(c%rate==0) gettimeofday(&start_time, NULL);
+		if(c%freq_rate==0) gettimeofday(&start_time, NULL);
 #endif
 
 		sem_wait(&lock_t1);
@@ -112,23 +110,27 @@ if(c%rate==0) gettimeofday(&start_time, NULL);
 			kinect->get(CV_CAP_OPENNI_IMAGE_GENERATOR+CV_CAP_PROP_POS_FRAMES);
 
 #ifdef FLAG_DEPTH
-Mat depth_image = Mat::zeros(480,640,CV_8UC3);
-depthImaging(depth_image,depth_global);
-imshow("depth",depth_image); cvWaitKey(1);
+		Mat depth_image = Mat::zeros(480,640,CV_8UC3);
+		depthImaging(depth_image,depth_global);
+		imshow("depth",depth_image); cvWaitKey(1);
 #endif
 
 #ifdef FLAG_RGB
-imshow("rgb",rgb_global1); cvWaitKey(1);
+		imshow("rgb",rgb_global1); cvWaitKey(1);
 #endif
  
 #ifdef FLAG_PLANE
+		// [SURFACE DETECTION]*************************************************
 		tmp_cloud = cloud_global.clone();
 		while(!flag_plane)
 		{       
-			plane_tmp = Mat::zeros(480,640,CV_8UC1);
+			plane_tmp  = Mat::zeros(480,640,CV_8UC1);
 			plane_tmp2 = Mat::zeros(480,640,CV_8UC1);
-			Vec4f plane_eq = RANSAC3DPlane(tmp_cloud, plane_tmp, 500, ratio, 0.003);
+			Vec4f plane_eq = 
+				RANSAC3DPlane(tmp_cloud, plane_tmp, 1000, ratio, 0.004);
 			imshow("plane", plane_tmp*255);
+
+			printf("NR: %.4f %.4f %.4f %.4f \n", plane_eq[0], plane_eq[1], plane_eq[2], plane_eq[3]);
 
 			for(int y=0;y<480;y++)
 				for(int x=0;x<640;x++)
@@ -136,24 +138,20 @@ imshow("rgb",rgb_global1); cvWaitKey(1);
 						plane_tmp2.data[(y*640)+x] = 1;  
 			imshow("plane_reduced", plane_tmp2*255);
 
-			printf("SAVE NORMAL VECTOR OF PLANE : [Y/N] \n\n");
+			if (countNonZero(plane_tmp) < 1) 
+				printf("NO PLANE FOUND... \n\n");
+			else			
+				printf("SAVE NORMAL VECTOR OF PLANE : [Y/N] \n\n");
+
 			keypress = waitKey(0); 
 			if (keypress == 'y') 
 			{
 				plane_global.push_back(plane_eq);
-
 				for(int y=0;y<480;y++)
 					for(int x=0;x<640;x++)
-						tmp_cloud.at<Vec3f>(y,x) *= (int)(plane_tmp.data[(y*640)+x]==0);  
-
+						tmp_cloud.at<Vec3f>(y,x) *= 
+							(int)(plane_tmp.data[(y*640)+x]==0);  
 			} 
-			/*else if(keypress == 'a') TODO need to change the ransac algo to check for connected area
-			{
-				tmp_cloud2.release();
-				tmp_cloud.copyTo(tmp_cloud2,(plane_tmp==0)/255);
-				tmp_cloud.release();
-				tmp_cloud2.copyTo(tmp_cloud);
-			}*/ 
 			else if (keypress == 'q')
 			{
 				vector<vector<double> > tmptmp;
@@ -162,7 +160,18 @@ imshow("rgb",rgb_global1); cvWaitKey(1);
 				writeSurfaceFile(tmptmp);
 				flag_plane = true;
 			}
+			else if (keypress == 'd')
+			{
+				for(int y=0;y<480;y++)
+					for(int x=0;x<640;x++)
+						tmp_cloud.at<Vec3f>(y,x) *= 
+							(int)(plane_tmp.data[(y*640)+x]==0);
+			}
 		}
+		
+		destroyWindow("plane");
+		destroyWindow("plane_reduced");
+		// *************************************************[SURFACE DETECTION]
 #endif
 
 		sem_post(&mutex1);
@@ -172,24 +181,24 @@ imshow("rgb",rgb_global1); cvWaitKey(1);
 		sem_post(&lock_t6);
 
 #ifdef FREQ
-c++;
-if(c%rate==0)
-{
-	c = 0;
-	gettimeofday(&end_time, NULL);
-	cout << rate/ ((end_time.tv_sec - start_time.tv_sec) + 
-			(end_time.tv_usec- start_time.tv_usec) * 1e-6) 
-		 << " [Hz]"<< endl;
-}
+		c++;
+		if(c%freq_rate==0)
+		{
+			c = 0;
+			gettimeofday(&end_time, NULL);
+			cout << freq_rate/ ((end_time.tv_sec - start_time.tv_sec) + 
+					(end_time.tv_usec- start_time.tv_usec) * 1e-6) 
+				 << " [Hz]"<< endl;
+		}
 #endif
 
 	}
 	return 0;
 }
 
-
-//====================================================================================================================================
-// [THREAD 2 : OBJECT DETECTOR]************************************************
+// ============================================================================
+// THREAD 2 : OBJECT DETECTOR
+// ============================================================================
 void* objectDetector(void* arg)
 {
 //	int hue_range_obj[2], sat_range_obj[2];
@@ -200,7 +209,7 @@ void* objectDetector(void* arg)
 //	hue_range_obj[0] = 77; hue_range_obj[1] = 98;
 //	sat_range_obj[0] = 76; sat_range_obj[1] = 214;
 
-	int hs[4];
+	int hs[4]; // hue max/min, sat max/min
 	hs[0] = 98;
 	hs[1] = 77;
 	hs[2] = 214;
@@ -214,9 +223,9 @@ void* objectDetector(void* arg)
 		segmentHSV(rgb_global2, hs, mask_obj_global, box_obj_global);
 
 #ifdef FLAG_OBJECT
-Mat rgb_tmp = Mat::zeros(480,640, CV_8UC3);
-rgb_global1.copyTo(rgb_tmp, mask_obj_global);
-imshow("rgb_o",rgb_tmp); cvWaitKey(1);
+		Mat rgb_tmp = Mat::zeros(480,640, CV_8UC3);
+		rgb_global1.copyTo(rgb_tmp, mask_obj_global);
+		imshow("rgb_o",rgb_tmp); cvWaitKey(1);
 #endif
 
 		sem_post(&mutex2);
@@ -225,9 +234,9 @@ imshow("rgb_o",rgb_tmp); cvWaitKey(1);
 	return 0;
 }
 
-
-//====================================================================================================================================
-// [THREAD 3 : HAND DETECTOR]**************************************************
+// ============================================================================
+// THREAD 3 : HAND DETECTOR
+// ============================================================================
 void* handDetector(void* arg)
 { 
 //	// Crop Threshold
@@ -235,13 +244,13 @@ void* handDetector(void* arg)
 //	hue_range_hand[0] = 102; hue_range_hand[1] = 122;
 //	sat_range_hand[0] = 69 ; sat_range_hand[1] = 150;
 
-	int hs[4];
+	int hs[4]; // hue max/min, sat max/min
 	hs[0] = 122;
 	hs[1] = 102;
 	hs[2] = 150;
 	hs[3] = 69;
 
-  cv::Mat img_no_head = cv::Mat::zeros(480,640,CV_8UC3);
+	cv::Mat img_no_head = cv::Mat::zeros(480,640,CV_8UC3);
 
 	while(true)
 	{
@@ -256,9 +265,9 @@ void* handDetector(void* arg)
 		segmentHSV(img_no_head, hs, mask_hand_global, box_hand_global);
 
 #ifdef FLAG_HAND
-Mat rgb_tmp = Mat::zeros(480,640, CV_8UC3);
-rgb_global1.copyTo(rgb_tmp, mask_hand_global);
-imshow("rgb_h",rgb_tmp); cvWaitKey(1);
+		Mat rgb_tmp = Mat::zeros(480,640, CV_8UC3);
+		rgb_global1.copyTo(rgb_tmp, mask_hand_global);
+		imshow("rgb_h",rgb_tmp); cvWaitKey(1);
 #endif
 
 		sem_post(&mutex3);
@@ -267,9 +276,9 @@ imshow("rgb_h",rgb_tmp); cvWaitKey(1);
 	return 0;
 }
 
-//====================================================================================================================================
-// [THREAD 4 : FACE DETECTOR]**************************************************
-
+// ============================================================================
+// THREAD 4 : FACE DETECTOR
+// ============================================================================
 void* faceDetector(void* arg)
 {
 	//Load the cascade for face detector
@@ -283,10 +292,10 @@ void* faceDetector(void* arg)
 	while(true)
 	{
 		sem_wait(&mutex4);
-
+/*
 		bool testing1 = rgb_global4.empty();
 		bool testing2 = img_tmp.empty();
-		//if(c%rate==0)
+		//if(c%freq_rate==0)
 		//	cout << testing1 << testing2 ;
 		//c++;
 
@@ -299,53 +308,48 @@ void* faceDetector(void* arg)
 		}
 
 #ifdef FLAG_FACE
-imshow("face",rgb_global4); cvWaitKey(1);
+		imshow("face",rgb_global4); cvWaitKey(1);
 #endif
-
+*/
 		sem_post(&mutex4);
 	}
 	return 0;
 }
 
-//====================================================================================================================================
-// [THREAD 5 : CONTACT DETECTOR]***********************************************
+// ============================================================================
+// THREAD 5 : CONTACT DETECTOR
+// ============================================================================
 void* contactDetector(void* arg)
 {
-
-	Mat img_depth_def, mask_obj_def, img_sub;
-
-	Mat cloud_mask,cloud_mask2;
-
+	Mat img_depth_def, mask_obj_def, img_sub, cloud_mask,cloud_mask2;
 	float contact_sub;
-
-	bool flag = true;
-	bool flag_contact_obj = false;
-
+	bool flag_contact_init	= true;
+	bool flag_contact_obj	= false;
 	int c = 0;
-
 	while(true)
 	{
 		sem_wait(&lock_t5);
 		sem_wait(&mutex5);
 
-		//[DEFAULT SCENE]********************************************************
-		if(flag)
+		// [DEFAULT SCENE]*****************************************************
+		if(flag_contact_init)
 		{
 			mask_obj_def = mask_obj_global.clone();
 			depth_global.copyTo(img_depth_def,mask_obj_def);
-			if(box_obj_global.x > 0 && box_obj_global.y > 0) flag = false;
+			if(box_obj_global.x > 0 && box_obj_global.y > 0) 
+				flag_contact_init = false;
 		}
-		//********************************************************[DEFAULT SCENE]
+		// *****************************************************[DEFAULT SCENE]
 
-		//[OBJECT POINT]*********************************************************
+		//[OBJECT POINT]*******************************************************
 		cloud_global.copyTo(cloud_mask,mask_obj_global); //taking the obj only
 		cloud_mask(box_obj_global).copyTo(cloud_mask2); // reducing the search area
 		pointCloudTrajectory(cloud_mask2, single_point_obj_global);
 		cloud_mask.release(); 
 		cloud_mask2.release();
-		//*********************************************************[OBJECT POINT]
+		// ******************************************************[OBJECT POINT]
 
-		//[OBJECT CONTACT]*******************************************************
+		// [OBJECT CONTACT]****************************************************
 		if(contactCheck(mask_hand_global, mask_obj_global,
 						box_hand_global, box_obj_global))
 		{
@@ -357,8 +361,8 @@ void* contactDetector(void* arg)
 
 				if(contact_sub > 0 && contact_sub < 250)
 				{
-					contact_obj = true;
-					flag_contact_obj = true;
+					contact_obj 		= true;
+					flag_contact_obj 	= true;
 				}
 				else contact_obj = false;
 			}
@@ -366,24 +370,26 @@ void* contactDetector(void* arg)
 		}
 		else
 		{
-			flag = true;
-			flag_contact_obj = false;
-			contact_obj = false;
+			flag_contact_init 	= true;
+			flag_contact_obj 	= false;
+			contact_obj 		= false;
 		}
-
+		// face prevention
 		if(box_obj_global.y < 161) 
 		{
-			flag = false;
-			flag_contact_obj = true;
-			contact_obj = true;
-		} // face prevention
-		//*******************************************************[OBJECT CONTACT]
+			flag_contact_init	= false;
+			flag_contact_obj	= true;
+			contact_obj 		= true;
+		} 
+		// ****************************************************[OBJECT CONTACT]
 
+#ifdef FLAG_CONTACT
 		c++;
-		if(c%rate==0)
+		if(c%freq_rate==0)
 		{
-			printf("CONTACT : %d     CONTACTVAL : %f\n", contact_obj, contact_sub);
+			printf("CONTACT : %d , CONTACTVAL : %f\n", contact_obj, contact_sub);
 		}
+#endif
 
 		sem_post(&mutex5);
 		sem_post(&lock_t6);
@@ -392,447 +398,16 @@ void* contactDetector(void* arg)
 	return 0;
 }
 
-//====================================================================================================================================
-// [THREAD 6 : WRITE DATA]*****************************************************
+// ============================================================================
+// THREAD 6 : WRITE DATA
+// ============================================================================
 void* writeData(void* arg)
 {
-	//[VARIABLES]**************************************************************
-	int num_scene 		= 1;
-	int num_object 		= 1;
 
-	string scene  = "Kitchen";
-	string object = "Cup";
+#ifdef FLAG_WRITE
 
-	//	vector<vector<Graph> > Graph; // scene -> object
-	//	reshapeVector(Graph, num_scene);
-	//	for(int i=0;i<num_scene;i++) reshapeVector(Graph[i], num_object);
-
-	Graph Graph_(scene, object);
-
-	int num_points 		= 0;
-	int num_locations	= 0;
-	int num_surface		= 0;
-	int file_num 		= 0;
-
-	int minpts 			= 10;
-	double epsilon 		= 0.015; 	// if datasets are merged these 2 values can be increased.
-	double vel_limit 	= 0.005; //##### still need to validate
-
-	vector<int> 				file_eof;
-	vector<point_t> 			points_test;
-	vector<vector<string> > 	data_test;
-
-	vector<unsigned char*> color_code(12);
-	for(int j=0;j<12;j++) color_code[j] = Calloc(unsigned char,3);
-	colorCode(color_code);
-	//**************************************************************[VARIABLES]
-
-	// [LEARNED DATA]**********************************************************
-	readSurfaceFile(Graph_	 );
-	readLocation_  (Graph_   );
-	readMovement   (Graph_   );
-	readSectorFile (Graph_, 0);
-	readSectorFile (Graph_, 1);
-	readSectorFile (Graph_, 2);
-	num_locations = Graph_.getNodeList().size();
-	num_surface	  = Graph_.getSurface().size();
-	// **********************************************************[LEARNED DATA]
-
-	// [PREDICTION VARIABLES]**************************************************
-	bool flag_motion      	= false;
-	bool flag_predict      	= false;
-	bool flag_predict_last 	= false;
-	bool learn 				= false;
-	bool slide 				= false;
-	int last_location 		= 0;
-	int surface_num_tmp 	= 0;
-	double pow_dec 			= 1;
-
-	vector<int> prediction;
-	vector<double> t_val;
-	vector<double> predict_in;
-	vector<double> predict_err;
-	vector<double> predict_in_last;
-	reshapeVector(prediction, 		num_locations);
-	reshapeVector(t_val,      		num_locations);
-	reshapeVector(predict_in,		num_locations);
-	reshapeVector(predict_err,		num_locations);
-	reshapeVector(predict_in_last,	num_locations);
-
-	prepareSector(Graph_);
-	printf("Preparing sectors......Complete\n");
-
-	Graph Graph_mem = Graph_;
-
-	point_t curr_point;
-	vector<point_t>	pos_vel_acc_avg(3);	
-	vector<vector< point_t > > 	pos_vel_acc_mem; // motion->length
-	reshapeVector(pos_vel_acc_mem, 3);
-
-	label_t LABEL;
-	LABEL.mov = -1;
-	reshapeVector(LABEL.loc, 		num_locations);
-	reshapeVector(LABEL.surface, 	num_surface);
-	// **************************************************[PREDICTION VARIABLES]
-
-	int i = -1;
-	while(true)
-	{
-		sem_wait(&lock_t6);
-		sem_wait(&lock_t6);
-		sem_wait(&mutex6);
-
-		i++;
-
-		//[PREPROCESS DATA]****************************************************
-		curr_point.x = single_point_obj_global[0];
-		curr_point.y = single_point_obj_global[1];
-		curr_point.z = single_point_obj_global[2];
-		curr_point.cluster_id = UNCLASSIFIED;
-
-		preprocessDataLive(curr_point, pos_vel_acc_mem,
-						   pos_vel_acc_avg, window);
-		//****************************************************[PREPROCESS DATA]
-
-
-// ============================================================================
-// PREDICTION STARTS
-// ============================================================================
-slide 	  = false;
-LABEL.mov = -1;
-reshapeVector(LABEL.loc, 		num_locations);
-reshapeVector(LABEL.surface, 	num_surface);
-
-// 1. Contact trigger
-// 1.1 Check if the object is within a sphere volume of the location areas
-triggerContact(pos_vel_acc_avg[0], Graph_);
-
-// 2. Prediction during motion
-if (pos_vel_acc_avg[0].cluster_id < 0)
-{
-	flag_motion = true;
-
-	// 2.1. Set flag to allow online learning/updates of the knowledge base
-	// learn = true;
-
-	// 2.2. Check if the trajectory is within the range of sector map
-	checkSector(prediction, t_val,
-				pos_vel_acc_avg[0], Graph_, Graph_mem,
-				last_location, learn);
-
-	// 2.3. Check for motion (moving/null)
-	checkMotion(pos_vel_acc_avg[0], pos_vel_acc_avg[1],
-				Graph_.getMovLabel(), Graph_.getSurface(),
-				0.1, 0.97, vel_limit, LABEL);
-
-	// 2.4. Prediction based on the trajectory error from sector map
-	motionPrediction(prediction, t_val,
-					 flag_predict, flag_predict_last,
-					 predict_in, predict_err, predict_in_last,
-					 pow_dec, Graph_);
-
-	if ((VERBOSE == 0 || VERBOSE == 1) && (i%rate==0))
-	{
-		printf("Nr:%04d,  ", i);
-
-		if (LABEL.mov < 0)
-		{
-			printf("LABEL: NULL");
-		}
-		else if (LABEL.mov == 1)
-		{
-			for(int ii=0;ii<num_surface;ii++)
-			{
-				if (LABEL.surface[ii] > 0)
-				{
-					printf("LABEL: %s on surface %d  ",
-							Graph_.getMovLabel()[LABEL.mov].c_str(), ii);
-					break;
-				}
-			}
-		}
-		else
-		{
-			printf("LABEL: %s  ", Graph_.getMovLabel()[LABEL.mov].c_str());
-		}
-
-		for(int ii=0;ii<num_locations;ii++)
-		{
-			printf(" %.4f ", predict_err[ii]);
-		}
-
-		for(int ii=0;ii<num_locations;ii++)
-		{
-			if (prediction[ii] == WITHIN_RANGE)
-			{
-				printf(" %s %.4f ", Graph_.getNode(ii).name.c_str(), predict_in[ii]);
-			}
-		}
-
-		printf("\n");
-	}
-
-}
-
-// 3. Prediction within location area
-else
-{
-
-	flag_predict      = false;
-	flag_predict_last = false;
-
-	// 3.1. Location area prediction based on contact trigger
-	locationPrediction(pos_vel_acc_avg[0].cluster_id,
-					   pos_vel_acc_avg[0], pos_vel_acc_avg[1],
-					   Graph_, 0.1, 0.97, vel_limit, LABEL);
-
-	// 3.2. Check if it is moved back to the same location or not
-	if (last_location == pos_vel_acc_avg[0].cluster_id && flag_motion)
-	{
-		cout << " (same last location...)";
-		// update the sector using values from memory
-		for(int ii=0;ii<num_locations;ii++)
-		{
-			int cc = last_location * num_locations + ii;
-			int tmp = Graph_.getEdgeList()[cc].size();
-			for(int a=0;a<tmp;a++)
-			{
-				for(int b=0;b<Graph_.getSectorPara().loc_int*Graph_.getSectorPara().sec_int;b++)
-				{
-					Graph_.getEdgeList()[cc][a].sector_map[b].max =
-							Graph_mem.getEdgeList()[cc][a].sector_map[b].max;
-					Graph_.getEdgeList()[cc][a].sector_map[b].min =
-							Graph_mem.getEdgeList()[cc][a].sector_map[b].min;
-				}
-			}
-		}
-	}
-
-	// 3.3. Update sector map if learn flag is set
-	if (last_location != pos_vel_acc_avg[0].cluster_id && flag_motion)
-	{
-		if (learn)
-		{
-			// copy only the intended values for sectors
-			// updating the values in memory
-			int c = last_location * num_locations + pos_vel_acc_avg[0].cluster_id;
-			int tmp = Graph_.getEdgeList()[c].size();
-			for(int iii=0;iii<tmp;iii++)
-			{
-				Graph_mem.updateEdgeSector(
-						Graph_.getEdgeList()[c][iii].sector_map,
-						last_location, pos_vel_acc_avg[0].cluster_id, iii);
-			}
-			// update the sector using values from memory
-			// last location is used because only sector with last location was changed
-			for(int ii=0;ii<num_locations;ii++)
-			{
-				int cc = last_location * num_locations + ii;
-				int tmp = Graph_.getEdgeList()[cc].size();
-				for(int iii=0;iii<tmp;iii++)
-				{
-					Graph_.updateEdgeSector(
-							Graph_mem.getEdgeList()[cc][iii].sector_map,
-							last_location, ii, iii);
-				}
-			}
-		}
-		else
-		{
-			// update the sector using values from memory
-			for(int ii=0;ii<num_locations;ii++)
-			{
-				int cc  = last_location * num_locations + ii;
-				int tmp = Graph_.getEdgeList()[cc].size();
-				for(int iii=0;iii<tmp;iii++)
-				{
-					Graph_.updateEdgeSector(
-							Graph_mem.getEdgeList()[cc][iii].sector_map,
-							last_location, ii, iii);
-				}
-			}
-		}
-	}
-
-	last_location = pos_vel_acc_avg[0].cluster_id;
-	flag_motion = false;
-
-	if ((VERBOSE == 0 || VERBOSE == 2) && (i%rate==0))
-	{
-		printf("Nr:%04d,  ", i);
-
-		for(int ii=0;ii<num_locations;ii++)
-		{
-			if (LABEL.loc[ii] > 0)
-			{
-				printf("LABEL: %s  ", Graph_.getNode(ii).name.c_str());
-				break;
-			}
-			else if (LABEL.loc[ii] < 0)
-			{
-				printf("LABEL: Empty location Label.  ");
-				if (LABEL.mov < 0)
-				{
-					printf("LABEL: NULL");
-				}
-				else if (LABEL.mov < 0)
-				{
-					for(int ii=0;ii<num_surface;ii++)
-					{
-						if (LABEL.surface[ii] > 0)
-						{
-							printf("LABEL: %s on surface %d  ",
-									Graph_.getMovLabel()[LABEL.mov].c_str(), ii);
-							break;
-						}
-					}
-				}
-				else
-				{
-					printf("LABEL: %s  ", Graph_.getMovLabel()[LABEL.mov].c_str());
-				}
-				break;
-			}
-		}
-
-		printf("\n");
-	}
-
-}
-
-
-// LABEL ONLY
-if ((VERBOSE == 3) && (i%rate==0))
-{
-	if (pos_vel_acc_avg[0].cluster_id < 0)
-	{
-		printf("Nr:%04d,  ", i);
-
-		if (LABEL.mov < 0)
-		{
-			printf("LABEL: NULL  ");
-		}
-		else if (LABEL.mov == 1)
-		{
-			for(int ii=0;ii<num_surface;ii++)
-			{
-				if (LABEL.surface[ii] > 0)
-				{
-					printf("LABEL: %s on surface %d  ",
-							Graph_.getMovLabel()[LABEL.mov].c_str(), ii);
-					break;
-				}
-			}
-		}
-		else
-		{
-			printf("LABEL: %s  ", Graph_.getMovLabel()[LABEL.mov].c_str());
-		}
-
-		if (*max_element(predict_in.begin(), predict_in.end()) > 0)
-		{
-			unsigned int tmptmp = distance(predict_in.begin(), max_element(predict_in.begin(), predict_in.end()));
-			printf("%s  %.4f  ", Graph_.getNode(tmptmp).name.c_str(), *max_element(predict_in.begin(), predict_in.end()));
-		}
-		else if (*max_element(prediction.begin(), prediction.end()) < 0)
-		{
-			printf("OUT OF BOUNDS  ");
-		}
-		else
-		{
-			unsigned int tmptmp = distance(predict_err.begin(), max_element(predict_err.begin(), predict_err.end()));
-			printf("%s  %.4f  ", Graph_.getNode(tmptmp).name.c_str(), *max_element(predict_err.begin(), predict_err.end()));
-		}
-
-		printf("\n");
-
-	}
-	else
-	{
-		printf("Nr:%04d,  ", i);
-
-		for(int ii=0;ii<num_locations;ii++)
-		{
-			if (LABEL.loc[ii] > 0)
-			{
-				printf("LABEL: %s  ", Graph_.getNode(ii).name.c_str());
-				break;
-			}
-			else if (LABEL.loc[ii] < 0)
-			{
-				printf("LABEL: Empty location Label.  ");
-				if (LABEL.mov < 0)
-				{
-					printf("LABEL: NULL  ");
-				}
-				else if (LABEL.mov < 0)
-				{
-					for(int ii=0;ii<num_surface;ii++)
-					{
-						if (LABEL.surface[ii] > 0)
-						{
-							printf("LABEL: %s on surface %d  ",
-									Graph_.getMovLabel()[LABEL.mov].c_str(), ii);
-							break;
-						}
-					}
-				}
-				else
-				{
-					printf("LABEL: %s  ", Graph_.getMovLabel()[LABEL.mov].c_str());
-				}
-				break;
-			}
-		}
-
-		printf("\n");
-
-	}
-
-}
-
-
-// ============================================================================
-// PREDICTION ENDS
-// ============================================================================
-
-
-
-
-		sem_post(&mutex6);
-		sem_post(&lock_t1);
-	}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*
-	//remove("../data/traj_data.txt");
+// [RECORD DATA]***************************************************************
 	ofstream write_file;
-
     time_t now = time(0);
     struct tm tstruct;
     char buf[80];
@@ -841,14 +416,11 @@ if ((VERBOSE == 3) && (i%rate==0))
 	string file_name = "../data/";
 	file_name += buf;
 	file_name += ".txt";
-
 	while(true)
 	{
 		sem_wait(&lock_t6);
 		sem_wait(&lock_t6);
 		sem_wait(&mutex6);
-
-#ifdef FLAG_WRITE
 		if(frame_number_global>100)
 		{
 			// write values into data.txt
@@ -864,24 +436,37 @@ if ((VERBOSE == 3) && (i%rate==0))
 						<< plane_global[3] 
 						<< "\n";
 		}
+		sem_post(&mutex6);
+		sem_post(&lock_t1);
+	}
+// ***************************************************************[RECORD DATA]
+
+#else
+
+// [PREDICTION]****************************************************************
+	while(true)
+	{
+		sem_wait(&lock_t6);
+		sem_wait(&lock_t6);
+		sem_wait(&mutex6);
+		// RESERVED FOR PREDICTION CODE
+		sem_post(&mutex6);
+		sem_post(&lock_t1);
+	}
+// ****************************************************************[PREDICTION]
+
 #endif
 
-    sem_post(&mutex6);
-    sem_post(&lock_t1);
-  }
-*/
   return 0;
 }
 
-
-//====================================================================================================================================
-
-
+// ============================================================================
+// >>>>> MAIN <<<<<
+// ============================================================================
 int main(int argc, char *argv[])
 {
 	VideoCapture kinect(CV_CAP_OPENNI2); 
 	printf("Starting Kinect ...\n");
-
 
   // Run the visualization
 #ifdef FLAG_DEPTH
@@ -909,12 +494,12 @@ int main(int argc, char *argv[])
   namedWindow("face");
 #endif
 
-	pthread_t thread_kinectGrab,
-	thread_objDetector,
-	thread_handDetector,
-	thread_faceDetector,
-	thread_contactDetector,
-	thread_writeData;
+	pthread_t 	thread_kinectGrab,
+				thread_objDetector,
+				thread_handDetector,
+				thread_faceDetector,
+				thread_contactDetector,
+				thread_writeData;
 
 	sem_init(&lock_t1, 0, MAX);
 	sem_init(&lock_t2, 0, 0);

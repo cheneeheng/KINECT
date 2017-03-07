@@ -27,14 +27,6 @@ double normalPdf(
 	double mu,
 	double x);
 
-vector<double> addVector(
-	vector<double> A,
-	vector<double> B);
-
-vector<double> minusVector(
-	vector<double> A,
-	vector<double> B);
-
 point_t minusPoint(
 	point_t A,
 	point_t B);
@@ -43,6 +35,10 @@ point_t addPoint(
 	point_t A,
 	point_t B);
 
+point_t multiPoint(
+	point_t A,
+	double B);
+
 vector<double> crossProduct(
 	vector<double> A,
 	vector<double> B);
@@ -50,22 +46,6 @@ vector<double> crossProduct(
 double dotProduct(
 	vector<double> A,
 	vector<double> B);
-
-// DATA IS ASSUMED TO BE POSITIVE ONLY
-template<typename T> 
-void normalizeData(vector<T> &data_)
-{
-	T tmp = 0;
-	for(int i=0;i<data_.size();i++)
-		tmp += data_[i];
-	if (tmp>0)
-		for(int i=0;i<data_.size();i++)
-			data_[i]/=tmp;
-//	else
-//		printf("[WARNING] : Data is empty.\n");
-}
-
-double average(vector<double> &A);
 
 point_t movingAverage(
 	point_t a,
@@ -83,14 +63,28 @@ void gaussKernel(
 	int numy_,
 	double var_);
 
+point_t rodriguezVec(
+	double angle_,
+	point_t axis_,
+	point_t vec_);
+
+vector<double> rodriguezRot(
+	point_t vec_1,
+	point_t vec_2);
+
+vector<double> transInv(
+		vector<double> A);
+
+void cal_tangent_normal(
+	double t_mid_,
+	point_t &p_tan_,
+	point_t &p_nor_,
+	vector<point_t> coeff,
+	int dim,
+	bool normal);
+
 //=============================================================================
 // inline
-
-template<typename T>
-static inline bool min_ (T x,T y) { return (x<y)?true:false; }
-
-template<typename T>
-static inline bool max_ (T x,T y) { return (x>y)?true:false; }
 
 static inline vector<double> point2vector(point_t A)
 {
@@ -122,6 +116,15 @@ static inline vector<double> cvVector2vector(Vec4f A)
 }
 
 template<typename T>
+static inline bool min_ (T x,T y) { return (x<y)?true:false; }
+
+template<typename T>
+static inline bool max_ (T x,T y) { return (x>y)?true:false; }
+
+//=============================================================================
+// template
+
+template<typename T>
 void vector2array(vector<T> A, T *B)
 {
 	for(int i=0;i<A.size();i++) B[i] = A[i];
@@ -138,6 +141,45 @@ void reshapeVector(vector<T> &A, int size)
 {
 	A.clear();
 	A.resize(size);
+}
+
+template<typename T>
+T average(vector<T> A)
+{
+	T avg = accumulate( A.begin(), A.end(), 0.0)/A.size();
+	return avg;
+}
+
+template<typename T>
+vector<T> addVector(vector<T> A, vector<T> B)
+{
+	vector<T> C;
+	for(int i=0;i<A.size();i++)
+		C.push_back(A[i]+B[i]);
+	return C;
+}
+
+template<typename T>
+vector<T> minusVector(vector<T> A, vector<T> B)
+{
+	vector<T> C;
+	for(int i=0;i<A.size();i++)
+		C.push_back(A[i]-B[i]);
+	return C;
+}
+
+// DATA IS ASSUMED TO BE POSITIVE ONLY
+template<typename T>
+void normalizeData(vector<T> &data_)
+{
+	T tmp = 0;
+	for(int i=0;i<data_.size();i++)
+		tmp += data_[i];
+	if (tmp>0)
+		for(int i=0;i<data_.size();i++)
+			data_[i]/=tmp;
+//	else
+//		printf("[WARNING] : Data is empty.\n");
 }
 
 #endif /* ALGO_H_ */

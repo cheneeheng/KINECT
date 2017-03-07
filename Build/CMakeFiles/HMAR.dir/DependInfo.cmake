@@ -32,6 +32,7 @@ set(CMAKE_CXX_TARGET_INCLUDE_PATH
   "/usr/local/src/XVision2/include"
   "/usr/local/intel/ipp/5.2/em64t/include"
   "/usr/local/src/OpenNI2/Include"
+  "/home/chen/gsl/include"
   "/usr/local/include/opencv2"
   )
 

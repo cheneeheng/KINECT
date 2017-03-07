@@ -35,6 +35,13 @@ void showConnection(
 	vector<unsigned char*> color_,
 	bool show_points);
 
+void showConnectionTest(
+	vector<point_t> points_,
+	vector<string> &labels_,
+	Graph Graph_,
+	vector<unsigned char*> color_,
+	bool show_points);
+
 void plotData(
 	vector<double> x_,
 	vector<double> y_);

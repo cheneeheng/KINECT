@@ -18,3 +18,8 @@
 [04] Merge
 - 22/02/2017
 - merged code with [07] of HMAR_LOCATION
+
+[05] Prediction and Record separation
+- 7/3/2017
+- added option for the thread to either record or do prediction.
+- most recent prediction code has not been merged.

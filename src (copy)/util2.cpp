@@ -65,7 +65,6 @@ void segmentHSVEDIT(
 	Mat src,
 	Mat& seg_mask,
 	int *hs)
-//	int h_top, int h_bot, int s_top, int s_bot)
 {
 	Mat src_hsv;
 	cvtColor(src,src_hsv,CV_RGB2HSV);
@@ -116,7 +115,6 @@ void noiseRemove(
 			big1 = j;
 		}
 	}
-
 	Mat tmp_img = Mat::zeros(seg_mask.size(), CV_8UC1);
 	drawContours( tmp_img, contours, big1, 1, -1);
 	seg_mask_noisefree = tmp_img;
@@ -129,7 +127,6 @@ void segmentHSV(
 	Mat& seg_mask_noisefree,
 	Rect& box)
 {
-	//Mat seg_mask(480,640,CV_8UC1);
 	Mat src_hsv, seg_mask;
 	cvtColor(src,src_hsv,CV_RGB2HSV);
 
@@ -177,7 +174,6 @@ void segmentHSV(
 			big1 = j;
 		}
 	}
-
 	Mat tmp_img = Mat::zeros(seg_mask.size(), CV_8UC1);
 	drawContours( tmp_img, contours, big1, 1, -1);
 	seg_mask_noisefree = tmp_img;
@@ -196,7 +192,6 @@ Rect detectFaceAndEyes(
 	//-- Detect faces
 	face_cascade.detectMultiScale(frame_gray, faces, 
 								  1.2, 2, 0, Size(60, 60), Size(90, 90));
-
 	for(size_t i=0;i<faces.size();i++)
 	{
 		if (faces[i].area() > face.area())
@@ -206,7 +201,6 @@ Rect detectFaceAndEyes(
 		ellipse(frame, center, Size( faces[i].width*0.5, faces[i].height*0.5), 
 				0, 0, 360, Scalar( 255, 0, 255 ), 4, 8, 0);
 	}
-
 	return face;
 }
 
@@ -308,6 +302,8 @@ Vec4f RANSAC3DPlane(
 
 	counter_max = 0;
 	srand(time(NULL));
+
+	int stop_num = 100;
 	while (counter_max == 0)
 	{
 		for (int i=0;i<iter;i++)
@@ -328,7 +324,7 @@ Vec4f RANSAC3DPlane(
 			p1 = cloud.at<Vec3f>(y1,x1);  
 			p2 = cloud.at<Vec3f>(y2,x2); 
 			p3 = cloud.at<Vec3f>(y3,x3); 
-			p_check = crossProd(p1-p2,p2-p3); // prevent degenerate case
+			p_check = (p1 - p2).cross((p2 - p3)); // prevent degenerate case
 			if (p_check[0]!=0 &&
 				p_check[1]!=0 &&
 				p_check[2]!=0 && 
@@ -336,17 +332,18 @@ Vec4f RANSAC3DPlane(
 				p1[2]<2 && p2[2]<2 && p3[2]<2 )
 			{
 				counter = 0; 
+
 				// hypothesis
-				plane_norm = computePlane(p1, p2, p3);
+  				plane_norm = (p1 - p2).cross((p2 - p3));
+  				plane_norm = plane_norm / norm(plane_norm);
+
 				d_def = plane_norm[0]*p1[0]+plane_norm[1]*p1[1]+plane_norm[2]*p1[2];
 				for(y=0;y<480;y++)
 				{
 					for(x=0;x<640;x++)
 					{
 						p4 = cloud.at<Vec3f>(y,x); 
-						d_tmp = plane_norm[0]*p4[0]+
-								plane_norm[1]*p4[1]+
-								plane_norm[2]*p4[2];   //offset plane from origin            
+						d_tmp = plane_norm.dot(p4);   //offset plane from origin            
 						if(abs(d_tmp-d_def)<threshold) counter +=1;              
 					}
 				}   
@@ -356,23 +353,59 @@ Vec4f RANSAC3DPlane(
 				{counter_max = counter; plane_best = plane_norm; d_def_best = d_def;}
 			}
 		}
-	}
-  
-	// using the best points to build the mask
-	counter = 0;
-	for(y=0;y<480;y++){
-		for(x=0;x<640;x++){
-			p4 = cloud.at<Vec3f>(y,x);               
-			d_tmp = plane_best[0]*p4[0]+
-					plane_best[1]*p4[1]+
-					plane_best[2]*p4[2];   //offset plane from origin    
-			if(abs(d_tmp-d_def_best)<threshold && p4[2]<2 && p4[2]>0)
+
+		// using the best points to build the mask
+		for(y=0;y<480;y++)
+		{
+			for(x=0;x<640;x++)
 			{
-				counter +=1;
-				plane.data[(y*640)+x] = 1;         
-			}             
+				p4 = cloud.at<Vec3f>(y,x);               
+				d_tmp = plane_best.dot(p4);   //offset plane from origin    
+				if(abs(d_tmp-d_def_best)<threshold && p4[2]<2 && p4[2]>0)
+				{
+					plane.data[(y*640)+x] = 1;         
+				}     
+				else
+				{
+					plane.data[(y*640)+x] = 0;         
+				}  
+			}
+		}
+
+		//denoising
+		vector<vector<Point> > contours;
+		vector<Vec4i> hierarchy;
+		findContours(plane, contours, hierarchy,
+			CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, Point(0, 0));
+
+		vector<vector<Point> > contours_poly(contours.size());
+		vector<Rect> box(contours.size());
+		double biggest_box = 0;
+		int big = 0;
+		for (int j=0;j<(int)contours.size();j++)
+		{
+			approxPolyDP(Mat(contours[j]), contours_poly[j], 3, true);
+			if (biggest_box < contourArea(contours[j]))
+			{
+				biggest_box = contourArea(contours[j]);
+				box[0] = boundingRect(Mat(contours_poly[j]));
+				big = j;
+			}
+		}
+		
+		if(biggest_box>2000)
+		{	
+			Mat tmp_img = Mat::zeros(plane.size(), CV_8UC1);
+			drawContours(tmp_img, contours, big, 1, -1);
+			plane = tmp_img;
+		}
+		else if (stop_num > 0)
+		{
+			stop_num--;
+			counter_max = 0;
 		}
 	}
+
 	Vec4f plane_constants;
 	plane_constants[0] = plane_best[0];
 	plane_constants[1] = plane_best[1];
@@ -381,51 +414,6 @@ Vec4f RANSAC3DPlane(
     normalPlaneCheck(plane_constants);
 
 	return plane_constants;
-}
-
-Vec3f crossProd(Vec3f A, Vec3f B){
-  Vec3f C;
-  C[0] = A[1]*B[2] - A[2]*B[1]; 
-  C[1] = A[2]*B[0] - A[0]*B[2]; 
-  C[2] = A[0]*B[1] - A[1]*B[0];
-  if(C[0]*C[0]+C[1]*C[1]+C[2]*C[2] == 0){ // prevent degenerate case
-    printf("WARNING : VECTORS ARE COLLINEAR !!!\n");
-    C[0]=0; C[1]=0; C[2]=0;
-  }
-  if(A[0] == 0 && A[1] == 0 && A[2] == 0) 
-    printf("WARNING : VECTOR A IS A ZERO VECTOR !!!\n");
-  if(B[0] == 0 && B[1] == 0 && B[2] == 0) 
-    printf("WARNING : VECTOR B IS A ZERO VECTOR !!!\n");
-  return C;
-}
-
-float dotProd(Vec3f A, Vec3f B){
-  float ans;
-  Vec3f C;
-  C[0] = A[0]*B[0]; 
-  C[1] = A[1]*B[1]; 
-  C[2] = A[2]*B[2];
-  ans = C[0]+C[1]+C[2];
-  if(A[0] == 0 && A[1] == 0 && A[2] == 0) 
-    printf("WARNING : VECTOR A IS A ZERO VECTOR !!!\n");
-  if(B[0] == 0 && B[1] == 0 && B[2] == 0) 
-    printf("WARNING : VECTOR B IS A ZERO VECTOR !!!\n");
-  return ans;
-}
-
-Vec3f normalization3D(Vec3f vec){
-  float length = sqrt(vec[0]*vec[0]+
-                      vec[1]*vec[1]+
-                      vec[2]*vec[2]);
-  Vec3f vec_normed(vec[0]/length,vec[1]/length,vec[2]/length);
-  return vec_normed;
-}
-
-Vec3f computePlane(Vec3f A, Vec3f B, Vec3f C){
-  Vec3f N_norm;
-  Vec3f N = crossProd((A - B),(B - C)); //perform cross product of two lines on plane 
-  N_norm = normalization3D(N);
-  return N_norm;
 }
 
 void normalPlaneCheck(Vec4f &plane_equation){

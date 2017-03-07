@@ -8,6 +8,9 @@
 #ifndef DATADECLARATION_H_
 #define DATADECLARATION_H_
 
+// For backward compatibility with new VTK generic data arrays
+#define InsertNextTypedTuple InsertNextTupleValue
+
 #include <iostream>
 #include <pthread.h>
 #include <signal.h>
@@ -30,7 +33,6 @@
 #include <sys/stat.h>
 #include <stack>
 #include <ctime>
-#include <iostream>
 
 #include <opencv2/opencv.hpp>
 
@@ -64,33 +66,28 @@
 #include <vtkTubeFilter.h>
 #include <vtkLineSource.h>
 #include <vtkDoubleArray.h>
+#include <vtkChartXY.h>
+#include <vtkTable.h>
+#include <vtkPlot.h>
+#include <vtkFloatArray.h>
+#include <vtkContextView.h>
+#include <vtkContextScene.h>
+#include <vtkPen.h>
 
-#include <XVImageSeq.h>
-#include <XVMpeg.h>
-#include <XVImageIO.h>
-#include <XVColorSeg.h>
-#include <XVBlobFeature.h>
-#include <XVTracker.h>
-#include <XVWindowX.h>
-
-#include "ippi.h"
-#include "ippcv.h"
-#include "ippcc.h"
-/*
-#include "../aruco/markerdetector.cpp"
-#include "../aruco/marker.cpp"
-#include "../aruco/ar_omp.cpp"
-#include "../aruco/subpixelcorner.cpp"
-#include "../aruco/cameraparameters.cpp"
-#include "../aruco/arucofidmarkers.cpp"
-*/
 using namespace std;
 using namespace cv;
+
+
+#define VERBOSE 3
 
 
 #define Sqr(x) ((x)*(x))
 #define Malloc(type,n) (type *)malloc((n)*sizeof(type))
 #define Calloc(type,n) (type *)calloc( n, sizeof(type))
+
+#define OUT_OF_RANGE 1
+#define	WITHIN_RANGE 0
+#define EXCEED_RANGE -1
 
 //******************** TAKEN FROM .....
 #define UNCLASSIFIED -1
@@ -116,6 +113,16 @@ struct sector_s
 	double min;
 };
 
+typedef struct sector_para_s sector_para_t;
+struct sector_para_s
+{
+	vector<point_t> dir;
+	vector<point_t> dir_n;
+	vector<double>  dist;
+	int loc_int;
+	int sec_int;
+};
+
 typedef struct data_s data_t;
 struct data_s
 {
@@ -129,21 +136,30 @@ struct node_ss
 {
 	string 			name;
 	unsigned int 	index;
-	unsigned int 	category; //moving???
-	unsigned int 	surface_num;
+	int 			category; //moving???
+	point_t 		location;
 	double 			boundary;
+	int				surface;
 	vector<data_t> 	data;
 };
 
 typedef struct edge_ss edge_tt;
 struct edge_ss
 {
-	unsigned int 				begin_index;
-	unsigned int 				end_index;
-	vector<data_t> 				data;
-	unsigned int 				num_location_intervals;
-	unsigned int 				num_sector_intervals;
-	vector<vector<sector_t> > 	sector_map; // locations * sectors
+	string 			 name;
+	unsigned int 	 begin_index;
+	unsigned int 	 end_index;
+	vector<data_t> 	 data;
+	vector<sector_t> sector_map; // locations * sectors
+	vector<double> 	 sector_const;
+};
+
+typedef struct label_s label_t;
+struct label_s
+{
+	int 		mov;
+	vector<int> loc;
+	vector<int> surface;
 };
 
 #endif /* DATADECLARATION_H_ */
