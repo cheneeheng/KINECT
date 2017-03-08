@@ -180,6 +180,42 @@ void segmentHSV(
 	box = box2[0];
 }
 
+void segmentHSV(cv::Mat src_hsv, cv::Mat src_rgb,
+                cv::Mat& seg_mask, cv::Mat& seg_rgb,
+                int h_top, int h_bot, int s_top, int s_bot){
+  std::vector<cv::Mat> splitted_HSV;
+  cv::split(src_hsv, splitted_HSV);
+  cv::Mat seg_mask1 = cv::Mat::zeros(src_hsv.size(), CV_8UC1);
+  cv::Mat seg_mask2 = cv::Mat::zeros(src_hsv.size(), CV_8UC1);
+  cv::Mat seg_mask3 = cv::Mat::zeros(src_hsv.size(), CV_8UC1);
+  cv::Mat seg_mask4 = cv::Mat::zeros(src_hsv.size(), CV_8UC1);
+  // Thresholding
+  seg_mask1 = splitted_HSV[0] <= (h_top);
+  seg_mask2 = splitted_HSV[0] >= (h_bot);
+  seg_mask3 = splitted_HSV[1] <= (s_top);
+  seg_mask4 = splitted_HSV[1] >= (s_bot);
+  //handling cyclic range of hue
+
+  /*cv::Mat seg_mask_t = (seg_mask1 > 0) & (seg_mask2 > 0) & (seg_mask3 > 0)
+                          & (seg_mask4 > 0);*/
+  cv::Mat seg_mask_t;
+  if (h_top < h_bot){
+    seg_mask_t = ((seg_mask1 > 0) | (seg_mask2 > 0)) & (seg_mask3 > 0)
+                  & (seg_mask4 > 0);
+  }
+  else{
+    seg_mask_t = (seg_mask1 > 0) & (seg_mask2 > 0) & (seg_mask3 > 0)
+                 & (seg_mask4 > 0);
+  }
+  // mask
+  /*cv::Mat seg_mask_t = (seg_mask1 > 0) & (seg_mask2 > 0) & (seg_mask3 > 0)
+                         & (seg_mask4 > 0);*/
+  cv::Mat seg_rgb_t = cv::Mat::zeros(src_rgb.size(), CV_8UC3);
+  src_rgb.copyTo(seg_rgb_t, seg_mask_t);
+  seg_mask = seg_mask_t;
+  seg_rgb = seg_rgb_t;
+}
+
 Rect detectFaceAndEyes(
 	Mat &frame,
 	CascadeClassifier face_cascade)
@@ -437,5 +473,295 @@ void normalPlaneCheck(Vec4f &plane_equation)
     plane_equation = (-1) * plane_equation;
   }
 }
+
+
+//====================================================================================================================================
+//[TOOLS]**********************************************************************
+
+void mouseCallBackHist(	int eventcode,int x,int y,int flags,void* data){
+  if(eventcode == CV_EVENT_LBUTTONDOWN){
+    MouseCallBackHistData* mouse_data = (MouseCallBackHistData*)data;
+    int x_hist = floor((float)x / (*mouse_data)._hscale);
+    int y_hist = floor((float)y / (*mouse_data)._sscale);
+    if (x_hist >= (*mouse_data)._hist.cols)
+      x_hist = (*mouse_data)._hist.cols - 1;
+    if (y_hist >= (*mouse_data)._hist.rows)
+      y_hist = (*mouse_data)._hist.rows - 1;
+    int h = round(x_hist* (*mouse_data)._hbin_scale);
+    int s = round(y_hist* (*mouse_data)._sbin_scale);
+    float i = (*mouse_data)._hist.at<float>(x_hist, y_hist);
+    mouse_data->_h_mean = h;
+    mouse_data->_s_mean = s;
+    std::cout << "H: " << h 
+              << " +/- " << (*mouse_data)._hbin_scale
+              << ", S: " << s 
+              << " +/- " << (*mouse_data)._sbin_scale
+              << ", Intensity: " << i << std::endl;
+  }
+}
+
+void trackbarCallBackCalib_H_top(int trackpos, void* data){
+  TrackbarCBDataCalib* tb = (TrackbarCBDataCalib*)data;
+  tb->_H_top = round(trackpos*179.0 / 100);
+  segmentHSV( tb->_hsv, //in
+              tb->_seg_in_rgb, //in
+              tb->_seg_mask, //out
+              tb->_seg_out_rgb, //out
+              tb->_H_top, //in
+              tb->_H_bot, //in
+              tb->_S_top, //in
+              tb->_S_bot); //in
+  cv::imshow(tb->_wn_seg_mask, tb->_seg_mask);
+  cv::imshow(tb->_wn_seg_rgb, tb->_seg_out_rgb);
+  std::cout << "[" << "H_top=" << tb->_H_top << ", "
+                   << "H_bot=" << tb->_H_bot << ", "
+                   << "S_top=" << tb->_S_top << ", "
+                   << "S_bot=" << tb->_S_bot << "]\n";
+}
+
+void trackbarCallBackCalib_H_bot(int trackpos, void* data){
+  TrackbarCBDataCalib* tb = (TrackbarCBDataCalib*)data;
+  tb->_H_bot = round(trackpos*179.0 / 100);
+  segmentHSV( tb->_hsv, //in
+              tb->_seg_in_rgb, //in
+              tb->_seg_mask, //out
+              tb->_seg_out_rgb, //out
+              tb->_H_top, //in
+              tb->_H_bot, //in
+              tb->_S_top, //in
+              tb->_S_bot); //in
+  cv::imshow(tb->_wn_seg_mask, tb->_seg_mask);
+  cv::imshow(tb->_wn_seg_rgb, tb->_seg_out_rgb);
+  std::cout << "[" << "H_top=" << tb->_H_top << ", "
+                   << "H_bot=" << tb->_H_bot << ", "
+                   << "S_top=" << tb->_S_top << ", "
+                   << "S_bot=" << tb->_S_bot << "]\n";
+}
+
+void trackbarCallBackCalib_S_top(int trackpos, void* data){
+  TrackbarCBDataCalib* tb = (TrackbarCBDataCalib*)data;
+  tb->_S_top = round(trackpos*255.0 / 100);
+  segmentHSV( tb->_hsv, //in
+              tb->_seg_in_rgb, //in
+              tb->_seg_mask, //out
+              tb->_seg_out_rgb, //out
+              tb->_H_top, //in
+              tb->_H_bot, //in
+              tb->_S_top, //in
+              tb->_S_bot); //in
+  cv::imshow(tb->_wn_seg_mask, tb->_seg_mask);
+  cv::imshow(tb->_wn_seg_rgb, tb->_seg_out_rgb);
+  std::cout << "[" << "H_top=" << tb->_H_top << ", "
+                   << "H_bot=" << tb->_H_bot << ", "
+                   << "S_top=" << tb->_S_top << ", "
+                   << "S_bot=" << tb->_S_bot << "]\n";
+}
+
+void trackbarCallBackCalib_S_bot(int trackpos, void* data){
+  TrackbarCBDataCalib* tb = (TrackbarCBDataCalib*)data;
+  tb->_S_bot = round(trackpos*255.0 / 100);
+  segmentHSV( tb->_hsv, //in
+              tb->_seg_in_rgb, //in
+              tb->_seg_mask, //out
+              tb->_seg_out_rgb, //out
+              tb->_H_top, //in
+              tb->_H_bot, //in
+              tb->_S_top, //in
+              tb->_S_bot); //in
+  cv::imshow(tb->_wn_seg_mask, tb->_seg_mask);
+  cv::imshow(tb->_wn_seg_rgb, tb->_seg_out_rgb);
+  std::cout << "[" << "H_top=" << tb->_H_top << ", "
+                   << "H_bot=" << tb->_H_bot << ", "
+                   << "S_top=" << tb->_S_top << ", "
+                   << "S_bot=" << tb->_S_bot << "]\n";
+}
+
+//**********************************************************************[TOOLS]
+
+
+
+//====================================================================================================================================
+
+void getColorThreshold(cv::Mat src, int (&hue_range)[2], int (&sat_range)[2]){
+  // check and warn if type of src is not CV_8UC3
+  if (src.type() != CV_8UC3){
+    std::cout
+      << "Error: [getColorThreshold()]: src must have type CV_8UC3!\n";
+    std::cout << "press any key to exit\n";
+    cv::waitKey(0);
+    exit(1);
+  }
+  cv::imshow("src in RGB", src);
+  // preproc do medianfilter*************************************************
+  cv::Mat src_median_blurred; // median burred src in rgb
+  cv::medianBlur(src, src_median_blurred, 5);
+  cv::imshow("Blurred", src_median_blurred); //just for debugging
+
+  // RGB -> HSV H=[0...179] S,V=[0...255]
+  cv::Mat src_hsv; // median blurred src hsv
+  cv::cvtColor(src_median_blurred, src_hsv, CV_RGB2HSV);
+
+  // compute histogram*******************************************************
+  int hbins = 30; // please ensure that this is a modulo of the whole range
+  int sbins = 16; // please ensure that this is a modulo of the whole range
+  int histSize[] = { hbins, sbins };
+  float hranges[] = { 0, 180 };
+  float sranges[] = { 0, 256 };
+  const float* ranges[] = { hranges, sranges };
+  int channels[] = { 0, 1 };
+  cv::MatND hist;
+  calcHist(&src_hsv, 1, channels, cv::Mat(), // do not use mask
+               hist, 2, histSize, ranges,
+               true, // the histogram is uniform
+               false);
+  double maxVal = 0;
+  minMaxLoc(hist, 0, &maxVal, 0, 0);
+  int scale = 20;
+  std::vector<cv::Mat> col_hist(3);
+  col_hist[0] = cv::Mat::zeros(sbins*scale, hbins * scale, CV_8UC1); //H
+  col_hist[1] = cv::Mat::zeros(sbins*scale, hbins * scale, CV_8UC1); //S
+  col_hist[2] = cv::Mat::zeros(sbins*scale, hbins * scale, CV_8UC1); //V
+  for (int h = 0; h < hbins; h++){
+    for (int s = 0; s < sbins; s++)
+    {
+      float binVal = hist.at<float>(h, s);
+      int v_intensity;
+      // this is a hack to intensify smaller peaks because if the
+      // background is big and uniform then there is a top heavy effect
+      if ((((float)binVal) / ((float)maxVal)) > 0.05)
+        v_intensity = 255;
+      else
+        v_intensity = cvRound(binVal * 255 / maxVal);
+        cv::rectangle(col_hist[0], cv::Point(h*scale, s*scale),
+              cv::Point((h + 1)*scale - 1, (s + 1)*scale - 1),
+              cv::Scalar::all(h*(180 / hbins)),
+              CV_FILLED);
+        cv::rectangle(col_hist[1], cv::Point(h*scale, s*scale),
+              cv::Point((h + 1)*scale - 1, (s + 1)*scale - 1),
+              //cv::Scalar::all(s*(256/ sbins)),
+              cv::Scalar::all(256),
+              CV_FILLED);
+        cv::rectangle(col_hist[2], cv::Point(h*scale, s*scale),
+              cv::Point((h + 1)*scale - 1, (s + 1)*scale - 1),
+              cv::Scalar::all(v_intensity),
+              CV_FILLED);
+    }
+  }
+
+  cv::Mat colored_hist_hsv;
+  cv::merge(col_hist, colored_hist_hsv);
+  cv::Mat colored_hist_rgb;
+  cv::cvtColor(colored_hist_hsv, colored_hist_rgb, CV_HSV2RGB);
+  std::string hist_win_name = "Colored H-S Histogram";
+  cv::imshow(hist_win_name, colored_hist_rgb);
+  double s = cv::sum(hist)[0];
+  MouseCallBackHistData mouse_data;
+  mouse_data._hscale = scale;
+  mouse_data._sscale = scale;
+  mouse_data._hbin_scale = (180 / hbins);
+  mouse_data._sbin_scale = (256 / sbins);
+  mouse_data._hist = hist/s;
+  cv::setMouseCallback(hist_win_name, mouseCallBackHist, &mouse_data);
+  std::cout << "Click on " << hist_win_name
+            << "to read off all the hsv values from the console\n";
+  std::cout << "press any key to go further\n";
+  cv::waitKey(0);
+  int mean_h = mouse_data._h_mean;
+  int mean_s = mouse_data._s_mean;
+  std::cout << "mean hue = " << mean_h 
+            << ", mean saturation = " << mean_s << "\n\n";
+  cv::destroyAllWindows();
+  // calibration*************************************************************
+  std::cout << "\n\n...calibration phase...\n\n";
+  std::cout << "WARNING [calibration phase]: hue range is polar(cyclic)!!\n";
+  cv::imshow("Median Blurred SRC", src_median_blurred); //just for debugging
+  //int range_h[2] = { 0, 0 };
+  //int range_s[2] = { 0, 0 };
+  // create trackbar
+  int H_top = round(mean_h * 100 / 180) + 5; // starting value for bar1
+  int H_bot = round(mean_h * 100 / 180) - 5; // starting value for bar2
+  int S_top = round(mean_s * 100 / 180) + 5; // starting value for bar3
+  int S_bot = round(mean_s * 100 / 180) - 5; // starting value for bar4
+  std::string calib_win_name = "Color Range Calibration";
+  cv::namedWindow(calib_win_name, 1);
+  TrackbarCBDataCalib tb_calib;
+  tb_calib._hsv = src_hsv;
+  tb_calib._seg_in_rgb = src_median_blurred;
+  tb_calib._seg_mask = cv::Mat();
+  tb_calib._seg_out_rgb = cv::Mat();
+  tb_calib._H_top = mean_h + 5;
+  tb_calib._H_bot = mean_h - 5;
+  tb_calib._S_top = mean_s + 5;
+  tb_calib._S_bot = mean_s - 5;
+  tb_calib._wn_seg_mask = "seg_mask";
+  tb_calib._wn_seg_rgb = "seg_rgb";
+  cv::createTrackbar("H_top", calib_win_name, &H_top, 100,
+    trackbarCallBackCalib_H_top, &tb_calib);
+  cv::createTrackbar("H_bot", calib_win_name, &H_bot, 100,
+    trackbarCallBackCalib_H_bot, &tb_calib);
+  cv::createTrackbar("S_top", calib_win_name, &S_top, 100,
+    trackbarCallBackCalib_S_top, &tb_calib);
+  cv::createTrackbar("S_bot", calib_win_name, &S_bot, 100,
+    trackbarCallBackCalib_S_bot, &tb_calib);
+  cv::resizeWindow(calib_win_name, 500, 100);
+  cv::waitKey(30);
+  char stopkey = 'a';
+  std::cout << "press <s> to stop calibrating.\n";
+  segmentHSV(tb_calib._hsv, //in
+             tb_calib._seg_in_rgb, //in
+             tb_calib._seg_mask, //out
+             tb_calib._seg_out_rgb, //out
+             tb_calib._H_top, //in
+             tb_calib._H_bot, //in
+             tb_calib._S_top, //in
+             tb_calib._S_bot); //in
+  cv::imshow(tb_calib._wn_seg_mask, tb_calib._seg_mask);
+  cv::imshow(tb_calib._wn_seg_rgb, tb_calib._seg_out_rgb);
+  std::cout << "[" << "H_top=" << tb_calib._H_top << ", "
+                   << "H_bot=" << tb_calib._H_bot << ", "
+                   << "S_top=" << tb_calib._S_top << ", "
+                   << "S_bot=" << tb_calib._S_bot << "]\n";
+  while (stopkey != 's'){stopkey = cv::waitKey(0);}
+  // extract calibrated values
+  cv::destroyAllWindows();
+  hue_range[0] = tb_calib._H_bot;
+  hue_range[1] = tb_calib._H_top;
+  sat_range[0] = tb_calib._S_bot;
+  sat_range[1] = tb_calib._S_top;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 

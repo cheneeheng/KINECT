@@ -46,6 +46,7 @@ sem_t lock_t1,lock_t2,lock_t3,lock_t4,lock_t5,lock_t6;
 //#define FLAG_RGB // shows window for rgb
 //#define FLAG_DEPTH // shows window for depth
 //#define FLAG_PLANE // detecting planes
+//#define FLAG_HSV // determines the hsv values 
 #define FLAG_OBJECT // shows window for object detection
 #define FLAG_HAND // shows window for hand detection
 //#define FLAG_FACE // shows window for face detection
@@ -74,14 +75,12 @@ void* kinectGrab(void* v_kinect)
 	struct timeval start_time, end_time;
 	int c = 0;
 
-	bool flag_plane = false;
-
 	float ratio[2]; ratio[0] = 0.00005; ratio[1] = 0.5;
 	char keypress;
     
 	Mat plane_tmp = Mat::zeros(480,640,CV_8UC1);
 	Mat plane_tmp2 = Mat::zeros(480,640,CV_8UC1);
-	Mat tmp_cloud,tmp_cloud2;
+	Mat tmp_cloud,tmp_cloud2,img;
 
 	while(true)
 	{
@@ -118,11 +117,32 @@ void* kinectGrab(void* v_kinect)
 #ifdef FLAG_RGB
 		imshow("rgb",rgb_global1); cvWaitKey(1);
 #endif
+
+
+
+
+#ifdef FLAG_HSV
+		while(true)
+		{
+			imwrite( "../test.png" , rgb_global1 );
+			int hue_range[2], sat_range[2];
+			Mat img = imread("../test.png");
+			getColorThreshold(img, hue_range, sat_range);
+			printf("Final Calibration values:\nhue = %d %d\nsat = %d %d\n",
+					hue_range[0],hue_range[1],
+					sat_range[0],sat_range[1]);
+			imshow("rgb",img);
+			cout << "press <s> to exit.\n";
+			keypress = waitKey(0);
+			if (keypress == 'q') 
+				break; 
+		}
+#endif
  
 #ifdef FLAG_PLANE
 		// [SURFACE DETECTION]*************************************************
 		tmp_cloud = cloud_global.clone();
-		while(!flag_plane)
+		while(true)
 		{       
 			Rect box;
 			plane_tmp  = Mat::zeros(480,640,CV_8UC1);
@@ -158,7 +178,8 @@ void* kinectGrab(void* v_kinect)
 				for(int y=0;y<480;y++)
 					for(int x=0;x<640;x++)
 						tmp_cloud.at<Vec3f>(y,x) *= 
-							(int)(plane_tmp.data[(y*640)+x]==0);  
+							(int)(plane_tmp.data[(y*640)+x]==0);
+				break;
 			} 
 			else if (keypress == 'q')
 			{
@@ -166,7 +187,6 @@ void* kinectGrab(void* v_kinect)
 				//for(int i=0;i<plane_global.size();i++)
 				//	tmptmp.push_back(cvVector2vector(plane_global[i]));
 				writeSurfaceFile(plane_global);
-				flag_plane = true;
 			}
 			else if (keypress == 'd')
 			{
@@ -216,10 +236,15 @@ void* objectDetector(void* arg)
 //	// green cup
 //	hue_range_obj[0] = 77; hue_range_obj[1] = 98;
 //	sat_range_obj[0] = 76; sat_range_obj[1] = 214;
+//red bar
+//  hue_range_obj[0] = 116; hue_range_obj[1] = 138;
+//  sat_range_obj[0] = 199; sat_range_obj[1] = 255;
 
 	int hs[4]; // hue max/min, sat max/min
-	hs[0] = 98; hs[1] = 77; hs[2] = 214; hs[3] = 76;
+	//hs[0] = 98; hs[1] = 77; hs[2] = 214; hs[3] = 76;
 	//hs[0] = 102; hs[1] = 80; hs[2] = 255; hs[3] = 135;
+	hs[0] = 134; hs[1] = 116; hs[2] = 255; hs[3] = 166;
+
 
 	while(true)
 	{
@@ -251,10 +276,8 @@ void* handDetector(void* arg)
 //	sat_range_hand[0] = 69 ; sat_range_hand[1] = 150;
 
 	int hs[4]; // hue max/min, sat max/min
-	hs[0] = 122;
-	hs[1] = 102;
-	hs[2] = 150;
-	hs[3] = 69;
+	//hs[0] = 122; hs[1] = 102; hs[2] = 150; hs[3] = 69;
+	hs[0] = 118; hs[1] = 104; hs[2] = 128; hs[3] = 77;
 
 	cv::Mat img_no_head = cv::Mat::zeros(480,640,CV_8UC3);
 
