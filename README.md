@@ -31,3 +31,7 @@
 [06a] Data
 - 8/3/2017
 - started data recording.
+
+[06b] Data
+- 9/3/2017
+- data restructuring
