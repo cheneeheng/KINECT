@@ -51,7 +51,7 @@ sem_t lock_t1,lock_t2,lock_t3,lock_t4,lock_t5,lock_t6;
 //#define FLAG_HAND // shows window for hand detection
 //#define FLAG_FACE // shows window for face detection
 #define FLAG_CONTACT //shows contact value
-#define FLAG_WRITE //records data
+//#define FLAG_WRITE //records data
 
 //#define FREQ
 
@@ -59,7 +59,7 @@ sem_t lock_t1,lock_t2,lock_t3,lock_t4,lock_t5,lock_t6;
 //====================================================================================================================================
 
 string scene  = "Kitchen";
-string object = "03";
+string object = "02";
 
 int freq_rate = 15;
 
@@ -246,8 +246,8 @@ void* objectDetector(void* arg)
 //  sat_range_obj[0] = 199; sat_range_obj[1] = 255;
 
 	int hs[4]; // hue max/min, sat max/min
-//	hs[0] = 98; hs[1] = 77; hs[2] = 214; hs[3] = 76;
-	hs[0] = 100; hs[1] = 63; hs[2] = 153; hs[3] = 92;
+	hs[0] = 98; hs[1] = 77; hs[2] = 214; hs[3] = 76;
+//	hs[0] = 100; hs[1] = 63; hs[2] = 153; hs[3] = 92;
 	//hs[0] = 102; hs[1] = 80; hs[2] = 255; hs[3] = 135;
 	//hs[0] = 134; hs[1] = 116; hs[2] = 255; hs[3] = 166; // red spannar
 

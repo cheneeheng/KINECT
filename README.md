@@ -35,3 +35,9 @@
 [06b] Data
 - 9/3/2017
 - data restructuring
+
+[07] Merge
+- 10/3/2017
+- merged code with [13] of HMAR_LOCATION
+- added function to detect out of boundary
+

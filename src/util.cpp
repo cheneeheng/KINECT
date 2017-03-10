@@ -1401,9 +1401,10 @@ double determineLocationInterval(
 	vector<point_t> end_,
 	vector<point_t> tangent_)
 {
-	double d1,d2,d3,d4,d5,d6; d6 = 0.0;
+	double d1,d2,d3,d4,d5,d6,d7; d6 = d7 = 0.0;
 	point_t proj_dir_tmp;
-	int idx = (loc_last_idx_<0?0:loc_last_idx_);
+	//int idx = (loc_last_idx_<0?0:loc_last_idx_);
+	int idx = 0;
 	for(int l=idx;l<loc_int_;l++)
 	{
 		proj_dir_tmp =
@@ -1422,6 +1423,7 @@ double determineLocationInterval(
 				point2vector(tangent_[l])))
 		{
 			if (l == 0)	d6 = d3-d5;
+			d7 = d3-d5;
 			if (d4<=d2 && (d3-d5)<0.001)
 			{
 				loc_idx_ = l; d6 = 0.0; break;
@@ -1429,7 +1431,8 @@ double determineLocationInterval(
 		}
 		else
 		{
-			if (l == 0)	d6 = d3-d5;
+			if (l == 0)	d6 = d4-d5;
+			d7 = d4-d5;
 			if (d3<=d1 && (d4-d5)<0.001)
 			{
 				loc_idx_ = l; d6 = 0.0; break;
@@ -1437,8 +1440,18 @@ double determineLocationInterval(
 		}
 	}
 	// to prevent unknown locations at start and end
-	if (loc_idx_<0) loc_idx_ = loc_last_idx_; loc_last_idx_ = loc_idx_;
-	return d6;
+	if (loc_idx_<0)
+	{
+		loc_idx_ = loc_last_idx_;
+		loc_last_idx_ = loc_idx_;
+		return d6;
+	}
+	else
+	{
+
+		loc_last_idx_ = loc_idx_;
+		return d7;
+	}
 }
 
 
@@ -2428,6 +2441,8 @@ void checkSector(
 
 	vector<node_tt> nodes = Graph_.getNodeList();
 	int num_locations = nodes.size();
+	vector<point_t> locations(num_locations);
+	for(int i=0;i<num_locations;i++) {locations[i] = nodes[i].location;}
 
 	bool flag=true;
 
@@ -2462,8 +2477,12 @@ void checkSector(
 		determineSectorInterval(
 				sec_idx, loc_idx, sec_int, delta_t, point_,
 				loc_mid, tan, nor);
-
-		//if (tmp_dis<0.1) flag=false;	
+		
+		if (tmp_dis > 0.1 && l2Norm(minusPoint(point_,locations[i])) > 0.1)
+		{
+			prediction_.pred[i] = OUT_OF_BOUND;
+			continue;
+		}
 
 		ind_ls  = loc_idx*sec_int + sec_idx;
 		if (loc_idx < loc_int && sec_idx < sec_int)
@@ -2481,9 +2500,6 @@ void checkSector(
 		}
 		// ********************************************************[SECTOR MAP]
 	}
-
-	//if(flag) cout << "OUT OF BOUNDS" << endl;
-
 }
 
 void motionPrediction(
