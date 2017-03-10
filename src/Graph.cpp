@@ -123,8 +123,8 @@ void Graph::initEdge(
 		edges[i].resize(1);
 		edges[i][0].sector_map   = sector_zero;
 		edges[i][0].sector_const = sector_zero;
-		edges[i][0].normal 		 = normal_zero;
-		edges[i][0].tangent 	 = tangent_zero;
+		edges[i][0].nor 		 = normal_zero;
+		edges[i][0].tan	 		 = tangent_zero;
 		edges[i][0].loc_start 	 = loc_start_zero;
 		edges[i][0].loc_mid 	 = loc_mid_zero;
 		edges[i][0].loc_end 	 = loc_end_zero;
@@ -153,10 +153,10 @@ void Graph::addEdge(
 
 	edge = {};
 
-	edge.begin_index  = n1_;
-	edge.end_index    = n2_;
-	edge.data 		  = data_;
-	edge.sector_map   = sector_map_;
+	edge.idx1		= n1_;
+	edge.idx2		= n2_;
+	edge.data		= data_;
+	edge.sector_map	= sector_map_;
 
 	if (edges[n1_*nodes.size()+n2_].size()>edge_num_)
 	{
@@ -205,7 +205,7 @@ void Graph::updateEdgeNormal(
 	unsigned int  		n2_,
 	unsigned int 		edge_num_)
 {
-	edges[n1_*nodes.size()+n2_][edge_num_].normal = normal_;
+	edges[n1_*nodes.size()+n2_][edge_num_].nor = normal_;
 }
 
 void Graph::updateEdgeTangent(
@@ -214,7 +214,7 @@ void Graph::updateEdgeTangent(
 	unsigned int  		n2_,
 	unsigned int 		edge_num_)
 {
-	edges[n1_*nodes.size()+n2_][edge_num_].tangent = tangent_;
+	edges[n1_*nodes.size()+n2_][edge_num_].tan = tangent_;
 }
 
 void Graph::updateEdgeLocStartMidEnd(

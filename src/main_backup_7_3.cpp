@@ -485,7 +485,7 @@ void* writeData(void* arg)
 		sem_wait(&lock_t6);
 		sem_wait(&lock_t6);
 		sem_wait(&mutex6);
-/*
+
 		i++;
 
 		//[PREPROCESS DATA]****************************************************
@@ -801,7 +801,7 @@ if ((VERBOSE == 3) && (i%rate==0))
 // ============================================================================
 
 
-*/
+
 
 		sem_post(&mutex6);
 		sem_post(&lock_t1);

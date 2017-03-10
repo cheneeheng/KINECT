@@ -34,16 +34,11 @@
 #include <limits.h>
 #include <iterator>
 #include <dirent.h>
-#include <fstream>
-#include <sys/stat.h>
-#include <stack>
-#include <ctime>
-
-#include <opencv2/opencv.hpp>
 
 #include <vtkVersion.h>
 #include <vtkSmartPointer.h>
 #include <vtkPoints.h>
+#include <vtkCellData.h>
 #include <vtkCellArray.h>
 #include <vtkUnsignedCharArray.h>
 #include <vtkPolyData.h>
@@ -78,11 +73,14 @@
 #include <vtkContextView.h>
 #include <vtkContextScene.h>
 #include <vtkPen.h>
+#include <vtkSmartPointer.h>
+#include <vtkVersion.h>
 #include <vtkParametricFunctionSource.h>
 #include <vtkTupleInterpolator.h>
 #include <vtkTubeFilter.h>
 #include <vtkParametricSpline.h>
 #include <vtkDoubleArray.h>
+#include <vtkPoints.h>
 #include <vtkPolyData.h>
 #include <vtkPointData.h>
 #include <vtkPolyDataMapper.h>
@@ -110,7 +108,11 @@
 #include <gsl/gsl_statistics.h>
 
 using namespace std;
-using namespace cv;
+
+#ifdef PC
+	#include <opencv2/opencv.hpp>
+	using namespace cv;
+#endif
 
 #define Sqr(x) ((x)*(x))
 #define Malloc(type,n) (type *)malloc((n)*sizeof(type))
@@ -120,7 +122,11 @@ using namespace cv;
 //1 : motion
 //2 : location
 //3 : label only
-#define VERBOSE 0
+#define VERBOSE 3
+
+#define FILTER_WIN 15
+
+#define BOUNDARY_VAR 0.01
 
 // number of fit coefficients
 // nbreak = ncoeffs + 2 - k = ncoeffs - 2 since k = 4
@@ -194,13 +200,13 @@ typedef struct edge_ss edge_tt;
 struct edge_ss
 {
 	string 			name;
-	unsigned int 	begin_index;
-	unsigned int 	end_index;
+	unsigned int 	idx1;
+	unsigned int 	idx2;
 	vector<data_t> 	data;
 	vector<double> 	sector_map; // locations int * sectors int
 	vector<double> 	sector_const;
-	vector<point_t> tangent; // locations int
-	vector<point_t> normal; // locations int
+	vector<point_t> tan; // locations int
+	vector<point_t> nor; // locations int
 	vector<point_t> loc_start; // locations int
 	vector<point_t> loc_mid; // locations int
 	vector<point_t> loc_end; // locations int
@@ -212,7 +218,36 @@ struct label_s
 {
 	int 		mov;
 	vector<int> loc;
-	vector<int> surface;
+	vector<int> sur; // surface
+};
+
+typedef struct pred_s pred_t;
+struct pred_s
+{
+	vector<int> 	pred; // in or outside
+	vector<double> 	pred_in; // prob shared between multiple predictions of inside
+	vector<double> 	pred_in_last; // prob shared between multiple predictions of inside
+	vector<double> 	pred_err; // prediction error = diff from the sectormap
+};
+
+typedef struct msg_s msg_t;
+struct msg_s
+{
+	int 	msg; // msg option
+	int 	idx;
+	int 	loc_idx;
+	int 	num_loc; // location
+	int 	num_sur; // surface
+	label_t label;
+	pred_t 	pred;
+};
+
+typedef struct limit_s limit_t;
+struct limit_s
+{
+	double vel;
+	double sur_dis;
+	double sur_ang;
 };
 
 #endif /* DATADECLARATION_H_ */

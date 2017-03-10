@@ -1,1 +1,1 @@
-table,leftfront,leftback,rightfront,rightback
+table,leftfront,leftback,rightfront,rightback,(backmid)

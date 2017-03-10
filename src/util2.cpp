@@ -431,7 +431,7 @@ Vec4f RANSAC3DPlane(
 			}
 		}
 		
-		if(biggest_box>1000)
+		if(biggest_box>500)
 		{	
 			Mat tmp_img = Mat::zeros(plane.size(), CV_8UC1);
 			drawContours(tmp_img, contours, big, 1, -1);

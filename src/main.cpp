@@ -48,7 +48,7 @@ sem_t lock_t1,lock_t2,lock_t3,lock_t4,lock_t5,lock_t6;
 //#define FLAG_PLANE // detecting planes
 //#define FLAG_HSV // determines the hsv values 
 #define FLAG_OBJECT // shows window for object detection
-#define FLAG_HAND // shows window for hand detection
+//#define FLAG_HAND // shows window for hand detection
 //#define FLAG_FACE // shows window for face detection
 #define FLAG_CONTACT //shows contact value
 #define FLAG_WRITE //records data
@@ -58,12 +58,10 @@ sem_t lock_t1,lock_t2,lock_t3,lock_t4,lock_t5,lock_t6;
 
 //====================================================================================================================================
 
-unsigned int window = 5;
-vector<string> LABEL_MOV;
-vector<string> LABEL_LOC_MOV;
-vector<string> LABEL_LOC;
+string scene  = "Kitchen";
+string object = "03";
 
-int freq_rate = 30;
+int freq_rate = 15;
 
 // ============================================================================
 // THREAD 1 : KINECT 
@@ -81,6 +79,8 @@ void* kinectGrab(void* v_kinect)
 	Mat plane_tmp = Mat::zeros(480,640,CV_8UC1);
 	Mat plane_tmp2 = Mat::zeros(480,640,CV_8UC1);
 	Mat tmp_cloud,tmp_cloud2,img;
+
+	bool flag_tmp = true;
 
 	while(true)
 	{
@@ -118,9 +118,6 @@ void* kinectGrab(void* v_kinect)
 		imshow("rgb",rgb_global1); cvWaitKey(1);
 #endif
 
-
-
-
 #ifdef FLAG_HSV
 		while(true)
 		{
@@ -142,7 +139,7 @@ void* kinectGrab(void* v_kinect)
 #ifdef FLAG_PLANE
 		// [SURFACE DETECTION]*************************************************
 		tmp_cloud = cloud_global.clone();
-		while(true)
+		while(flag_tmp)
 		{       
 			Rect box;
 			plane_tmp  = Mat::zeros(480,640,CV_8UC1);
@@ -179,14 +176,22 @@ void* kinectGrab(void* v_kinect)
 					for(int x=0;x<640;x++)
 						tmp_cloud.at<Vec3f>(y,x) *= 
 							(int)(plane_tmp.data[(y*640)+x]==0);
-				break;
+			} 
+			else if (keypress == 'x') 
+			{
+				vector<double> tmpeq = 
+					cvVector2vector(plane_eq);
+				vector<double> tmpmp = 
+					cvVector2vector(
+						tmp_cloud.at<Vec3f>((box.br().y+box.tl().y)/2,
+											(box.br().x+box.tl().x)/2));
+				tmpeq.insert(tmpeq.end(),tmpmp.begin(),tmpmp.end());
+				plane_global.push_back(tmpeq);
 			} 
 			else if (keypress == 'q')
 			{
-				//vector<vector<double> > tmptmp;
-				//for(int i=0;i<plane_global.size();i++)
-				//	tmptmp.push_back(cvVector2vector(plane_global[i]));
 				writeSurfaceFile(plane_global);
+				flag_tmp = false;
 			}
 			else if (keypress == 'd')
 			{
@@ -241,10 +246,10 @@ void* objectDetector(void* arg)
 //  sat_range_obj[0] = 199; sat_range_obj[1] = 255;
 
 	int hs[4]; // hue max/min, sat max/min
-	//hs[0] = 98; hs[1] = 77; hs[2] = 214; hs[3] = 76;
+//	hs[0] = 98; hs[1] = 77; hs[2] = 214; hs[3] = 76;
+	hs[0] = 100; hs[1] = 63; hs[2] = 153; hs[3] = 92;
 	//hs[0] = 102; hs[1] = 80; hs[2] = 255; hs[3] = 135;
-	hs[0] = 134; hs[1] = 116; hs[2] = 255; hs[3] = 166;
-
+	//hs[0] = 134; hs[1] = 116; hs[2] = 255; hs[3] = 166; // red spannar
 
 	while(true)
 	{
@@ -279,7 +284,7 @@ void* handDetector(void* arg)
 	//hs[0] = 122; hs[1] = 102; hs[2] = 150; hs[3] = 69;
 	hs[0] = 118; hs[1] = 104; hs[2] = 128; hs[3] = 77;
 
-	cv::Mat img_no_head = cv::Mat::zeros(480,640,CV_8UC3);
+	Mat img_no_head = Mat::zeros(480,640,CV_8UC3);
 
 	while(true)
 	{
@@ -416,7 +421,8 @@ void* contactDetector(void* arg)
 		c++;
 		if(c%freq_rate==0)
 		{
-			printf("CONTACT : %d , CONTACTVAL : %f\n", contact_obj, contact_sub);
+			//printf("c %d\n", contact_obj);
+			//printf("CONTACT : %d , CONTACTVAL : %f\n", contact_obj, contact_sub);
 		}
 #endif
 
@@ -469,12 +475,176 @@ void* writeData(void* arg)
 #else
 
 // [PREDICTION]****************************************************************
+	// [VARIABLES]*************************************************************
+	Graph Graph_(scene, object);
+
+	int num_points 			= 0;
+	int num_locations		= 0;
+	int num_surfaces		= 0;
+	int file_num 			= 0;
+	int minpts 				= 10;
+	double epsilon 			= 0.015; 	// if datasets are merged these 2 values can be increased.
+
+	limit_t LIMIT;
+	LIMIT.vel 				= 0.005;
+	LIMIT.sur_dis 			= 0.075;
+	LIMIT.sur_ang 			= 0.95;
+
+	point_t 				curr_point;
+	vector<point_t>			pos_vel_acc_avg(3); // motion
+
+	bool flag_motion      	= false;
+	bool flag_predict      	= false;
+	bool flag_predict_last 	= false;
+	bool learn 				= false;
+	bool slide 				= false;
+	int loc_last 			= 0;
+	int surface_num_tmp 	= 0;
+	double pow_dec 			= 1;
+
+	pred_t prediction;
+
+	label_t LABEL;
+
+	msg_t MSG;
+
+	vector<int> 				loc_last_idxs;
+	vector<double> 				t_val;
+	vector<vector< point_t > > 	pos_vel_acc_mem; // motion->length
+	vector<vector< point_t > > 	pva_avg;
+	// *************************************************************[VARIABLES]
+
+	// [READ FILE]*************************************************************
+	readSurfaceFile(Graph_);
+	printf("Reading test data......Complete\n");
+	// *************************************************************[READ FILE]
+
+	// [LEARNED DATA]**********************************************************
+	readLocation_   (Graph_   );
+	readMovement    (Graph_   );
+	readSectorFile  (Graph_, 0);
+	readSectorFile  (Graph_, 1);
+	readLocationFile(Graph_, 0);
+	readLocationFile(Graph_, 1);
+	readLocationFile(Graph_, 2);
+	readLocationFile(Graph_, 3);
+	readLocationFile(Graph_, 4);
+	readCounterFile (Graph_, 0);
+	num_locations = Graph_.getNodeList().size();
+	num_surfaces  = Graph_.getSurface ().size();
+	// **********************************************************[LEARNED DATA]
+
+	// [PREDICTION VARIABLES]**************************************************
+	reshapeVector(prediction.pred, 			num_locations);
+	reshapeVector(prediction.pred_in,		num_locations);
+	reshapeVector(prediction.pred_in_last, 	num_locations);
+	reshapeVector(prediction.pred_err,		num_locations);
+//	reshapeVector(pos_vel_acc_avg, 			num_points);
+	reshapeVector(pos_vel_acc_mem, 			3);
+	reshapeVector(loc_last_idxs, 			num_locations);
+	reshapeVector(LABEL.loc, 				num_locations);
+	reshapeVector(LABEL.sur, 				num_surfaces);
+	LABEL.mov   = -1;
+	MSG.num_loc = num_locations;
+	MSG.num_sur = num_surfaces;
+	// **************************************************[PREDICTION VARIABLES]
+
+	printf("\n\n>>>>> SYSTEM START <<<<<\n\n");
+
+	int step = -1;
+	int c = 0;
 	while(true)
 	{
 		sem_wait(&lock_t6);
 		sem_wait(&lock_t6);
 		sem_wait(&mutex6);
-		// RESERVED FOR PREDICTION CODE
+
+if(frame_number_global>100)
+{
+
+		step++;
+
+		//[PREPROCESS DATA]****************************************************
+		curr_point.x = single_point_obj_global[0];
+		curr_point.y = single_point_obj_global[1];
+		curr_point.z = single_point_obj_global[2];
+		curr_point.cluster_id = UNCLASSIFIED;
+		preprocessDataLive(curr_point, pos_vel_acc_mem,
+						   pos_vel_acc_avg, FILTER_WIN);
+		//****************************************************[PREPROCESS DATA]
+
+// ============================================================================
+// PREDICTION STARTS
+// ============================================================================
+		slide 	  = false;
+		LABEL.mov = -1;
+		MSG.idx   =  step;
+		reshapeVector(LABEL.loc, num_locations);
+		reshapeVector(LABEL.sur, num_surfaces);
+
+		// 1. Contact trigger
+		// 1.1 Check if the object is within a sphere volume of the location areas
+		triggerContact(pos_vel_acc_avg[0], Graph_);
+
+		// 2. Prediction during motion
+		if (pos_vel_acc_avg[0].cluster_id < 0)
+		{
+			pva_avg.push_back(pos_vel_acc_avg);
+			flag_motion = true;
+
+			predictionEdge(prediction, Graph_,
+					pos_vel_acc_avg[0], pos_vel_acc_avg[1],
+					loc_last, loc_last_idxs, LIMIT, LABEL,
+					flag_predict, flag_predict_last, pow_dec);
+
+			MSG.msg 	= 1;
+			MSG.label 	= LABEL;
+			MSG.loc_idx = pos_vel_acc_avg[0].cluster_id;
+			MSG.pred 	= prediction;
+			if(c%freq_rate==0)
+			outputMsg(MSG, Graph_);
+		}
+
+		// 3. Prediction within location area
+		else
+		{
+			flag_predict      = false;
+			flag_predict_last = false;
+			reshapeVector(loc_last_idxs,num_locations);
+
+			predictionNode(
+					pva_avg, pos_vel_acc_avg[0], pos_vel_acc_avg[1],
+					loc_last, pos_vel_acc_avg[0].cluster_id,
+					Graph_, LIMIT, LABEL,
+					flag_motion, learn);
+
+			loc_last 	= pos_vel_acc_avg[0].cluster_id;
+			flag_motion = false;
+
+			pva_avg.clear();
+
+			MSG.msg 	= 2;
+			MSG.label 	= LABEL;
+			MSG.loc_idx = pos_vel_acc_avg[0].cluster_id;
+			MSG.pred 	= prediction;
+			if(c%freq_rate==0)
+			outputMsg(MSG, Graph_);
+		}
+
+		MSG.msg 	= 3;
+		MSG.label 	= LABEL;
+		MSG.loc_idx = pos_vel_acc_avg[0].cluster_id;
+		MSG.pred 	= prediction;
+		if(c%freq_rate==0)
+		outputMsg(MSG, Graph_);
+
+// ============================================================================
+// PREDICTION ENDS
+// ============================================================================
+
+		c++;
+
+}
 		sem_post(&mutex6);
 		sem_post(&lock_t1);
 	}
