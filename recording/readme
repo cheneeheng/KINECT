@@ -1,4 +1,4 @@
-01,coffee_drink_sink
-02,coffee_drink_rest_drink_rest_drink_sink
+01,coffee_drink_sink *4
+01,coffee_drink_rest_drink_rest_drink_sink *4
 03,shelf_clean_throw
 04,shelf_cut_sink
