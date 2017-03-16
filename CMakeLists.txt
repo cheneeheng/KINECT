@@ -38,6 +38,9 @@ add_executable(HMAR
 	./src/util.cpp
 	./src/vtkExtra.cpp
 	./src/algo.cpp
+  	./src/readWriteFile.cpp 
+  	./src/labeling.cpp
+  	./src/prediction.cpp
 	./src/util2.cpp 
 	./src/main.cpp)
 

@@ -14,10 +14,21 @@ Dependencies
 ******************************************************************************/
 
 #include "dataDeclaration.h"
+#include "algo.h"
 
 /******************************************************************************
 Function Headers
 ******************************************************************************/
+
+void showPrediction(
+	Mat &imgHistogram,
+	vector<int>data,
+	vector<string>label);
+
+void showPrediction(
+	Mat &imgHistogram,
+	vector<double>data,
+	vector<string>label);
 
 void depthImaging(
 	Mat &depth_image,

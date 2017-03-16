@@ -7,12 +7,8 @@
 
 
 #include "dataDeclaration.h"
-#include "algo.h"
 #include "util.h"
 #include "util2.h"
-#include "dbscan.h"
-#include "Graph.h"
-#include "vtkExtra.h"
 
 // image variables
 Mat rgb_global1 = Mat::zeros(480,640,CV_8UC3);
@@ -50,7 +46,7 @@ sem_t lock_t1,lock_t2,lock_t3,lock_t4,lock_t5,lock_t6;
 #define FLAG_OBJECT // shows window for object detection
 //#define FLAG_HAND // shows window for hand detection
 //#define FLAG_FACE // shows window for face detection
-#define FLAG_CONTACT //shows contact value
+//#define FLAG_CONTACT //shows contact value
 //#define FLAG_WRITE //records data
 
 //#define FREQ
@@ -59,7 +55,7 @@ sem_t lock_t1,lock_t2,lock_t3,lock_t4,lock_t5,lock_t6;
 //====================================================================================================================================
 
 string scene  = "Kitchen";
-string object = "02";
+string object = "04";
 
 int freq_rate = 15;
 
@@ -502,11 +498,15 @@ void* writeData(void* arg)
 	int surface_num_tmp 	= 0;
 	double pow_dec 			= 1;
 
+	string path;	
+	vector<vector<string> > data;
+
 	pred_t prediction;
 
 	label_t LABEL;
+	vector<string> label;
 
-	msg_t MSG;
+	msg_t MSG, MSG_last;
 
 	vector<int> 				loc_last_idxs;
 	vector<double> 				t_val;
@@ -520,8 +520,31 @@ void* writeData(void* arg)
 	// *************************************************************[READ FILE]
 
 	// [LEARNED DATA]**********************************************************
-	readLocation_   (Graph_   );
-	readMovement    (Graph_   );
+	// [NODES]*****************************************************************
+	data.clear();
+	path =  "../Scene/" + scene + "/" + object + "/data_mov.txt";
+	readFile(path.c_str(), data , ',');
+	readMovement (Graph_, data);
+	label.clear(); label = Graph_.getMovLabel();
+	if (replaceLabel(label))
+	{
+		remove(path.c_str());
+		Graph_.updateMovLabel(label);
+		writeLabelFile(Graph_, path, 1);
+	}
+	data.clear();
+	path =  "../Scene/" + scene + "/" + object + "/data_loc.txt";
+	readFile(path.c_str(), data , ',');
+	readLocation_(Graph_, data);
+	label.clear(); label = Graph_.getNodeName();
+	if (replaceLabel(label))
+	{
+		remove(path.c_str());
+		Graph_.updateNodeName(label);
+		writeLabelFile(Graph_, path, 0);
+	}
+	printf("Creating nodes for the clusters (action locations)......Complete\n");
+	// *****************************************************************[NODES]
 	readSectorFile  (Graph_, 0);
 	readSectorFile  (Graph_, 1);
 	readLocationFile(Graph_, 0);
@@ -551,8 +574,11 @@ void* writeData(void* arg)
 
 	printf("\n\n>>>>> SYSTEM START <<<<<\n\n");
 
+	Mat imgHistogram(480,640,CV_8UC3);	
+
 	int step = -1;
 	int c = 0;
+	bool zeros = false;
 	while(true)
 	{
 		sem_wait(&lock_t6);
@@ -576,9 +602,10 @@ if(frame_number_global>100)
 // ============================================================================
 // PREDICTION STARTS
 // ============================================================================
-		slide 	  = false;
-		LABEL.mov = -1;
-		MSG.idx   =  step;
+		zeros 		= false;
+		slide 	  	= false;
+		LABEL.mov 	= -1;
+		MSG.idx   	= step;
 		reshapeVector(LABEL.loc, num_locations);
 		reshapeVector(LABEL.sur, num_surfaces);
 
@@ -597,12 +624,41 @@ if(frame_number_global>100)
 					loc_last, loc_last_idxs, LIMIT, LABEL,
 					flag_predict, flag_predict_last, pow_dec);
 
-			MSG.msg 	= 1;
-			MSG.label 	= LABEL;
-			MSG.loc_idx = pos_vel_acc_avg[0].cluster_id;
-			MSG.pred 	= prediction;
-			if(c%freq_rate==0)
-			outputMsg(MSG, Graph_);
+			zeros =
+					all_of(
+							prediction.pred_err.begin(),
+							prediction.pred_err.end(),
+							[](double ii) { return ii==0.0; });
+
+			if (!zeros)
+			{
+				MSG.msg 	= 1;
+				MSG.label 	= LABEL;
+				MSG.loc_idx = pos_vel_acc_avg[0].cluster_id;
+				MSG.pred	= prediction;
+
+				if(c%freq_rate==0)
+				outputMsg(MSG, Graph_);
+
+				showPrediction(imgHistogram, MSG.pred.pred_err, label);
+				imshow("hist", imgHistogram);
+				waitKey(1);
+			}
+			else
+			{
+				MSG 		= MSG_last;
+				cout << "Outside : ";
+				for(int i=0;i<6;i++)
+				cout << MSG.label.loc[i];
+				cout << endl;
+				MSG.msg		= 2;		
+				MSG.idx   	= step;		
+				if(c%freq_rate==0)
+				outputMsg(MSG, Graph_);
+				showPrediction(imgHistogram, MSG.label.loc, label);
+				imshow("hist", imgHistogram);
+				waitKey(1);
+			}
 		}
 
 		// 3. Prediction within location area
@@ -629,12 +685,30 @@ if(frame_number_global>100)
 			MSG.pred 	= prediction;
 			if(c%freq_rate==0)
 			outputMsg(MSG, Graph_);
+
+			showPrediction(imgHistogram, MSG.label.loc, label);
+			imshow("hist", imgHistogram);
+			waitKey(1);
 		}
 
+		MSG_last = MSG;
+
 		MSG.msg 	= 3;
-		MSG.label 	= LABEL;
-		MSG.loc_idx = pos_vel_acc_avg[0].cluster_id;
-		MSG.pred 	= prediction;
+		if (pos_vel_acc_avg[0].cluster_id < 0)
+		{
+			if (!zeros)
+			{
+				MSG.label 	= LABEL;
+				MSG.loc_idx = pos_vel_acc_avg[0].cluster_id;
+				MSG.pred 	= prediction;
+			}
+		}
+		else
+		{
+			MSG.label 	= LABEL;
+			MSG.loc_idx = pos_vel_acc_avg[0].cluster_id;
+			MSG.pred 	= prediction;
+		}
 		if(c%freq_rate==0)
 		outputMsg(MSG, Graph_);
 
@@ -643,6 +717,7 @@ if(frame_number_global>100)
 // ============================================================================
 
 		c++;
+
 
 }
 		sem_post(&mutex6);
@@ -688,6 +763,9 @@ int main(int argc, char *argv[])
 #ifdef FLAG_FACE
   namedWindow("face");
 #endif
+
+  namedWindow("hist");
+  moveWindow("hist",0,0);
 
 	pthread_t 	thread_kinectGrab,
 				thread_objDetector,

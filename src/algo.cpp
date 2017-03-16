@@ -7,7 +7,12 @@
 
 #include "algo.h"
 
-double l2Norm(vector<double> A)
+//=============================================================================
+// functions
+//=============================================================================
+
+double l2Norm(
+	vector<double> A)
 {
     double a=0.0;
     for (unsigned int i=0;i<A.size();i++)
@@ -15,17 +20,10 @@ double l2Norm(vector<double> A)
     return sqrt(a);
 }
 
-double l2Norm(point_t A)
+double l2Norm(
+	point_t A)
 {
     return sqrt(Sqr(A.x)+Sqr(A.y)+Sqr(A.z));
-}
-
-double normalPdf(
-	double var,
-	double mu,
-	double x)
-{
-	return (1/sqrt(2*var*M_PI)) * exp( - Sqr(x-mu)/(2*var) );
 }
 
 double pdfExp(
@@ -34,6 +32,22 @@ double pdfExp(
 	double x)
 {
 	return exp( - Sqr(x-mu)/(2*var) );
+}
+
+double invPdfExp(
+	double var,
+	double mu,
+	double x)
+{
+	return sqrt(-(log(x)*2*var));
+}
+
+double normalPdf(
+	double var,
+	double mu,
+	double x)
+{
+	return (1/sqrt(2*var*M_PI)) * exp( - Sqr(x-mu)/(2*var) );
 }
 
 point_t addPoint(
@@ -114,7 +128,8 @@ point_t movingAverage(
 	return avg;
 }
 
-point_t averagePoint(vector<point_t> A)
+point_t averagePoint(
+	vector<point_t> A)
 {
 	point_t avg;
 	avg.x = avg.y = avg.z = 0;
@@ -140,7 +155,6 @@ point_t averagePointIncrement(
 	A_mem.push_back(avg);
 	return avg;
 }
-
 
 void gaussKernel(
 	vector<vector<double> > &kernel_,
@@ -222,7 +236,6 @@ vector<double> rodriguezRot(
 	return R;
 }
 
-
 vector<double> transInv(
 		vector<double> A)
 {
@@ -281,4 +294,336 @@ void cal_tangent_normal(
 	}
 	else
 		p_nor_ = out4;
+}
+
+
+// ============================================================================
+// B-spline
+// ============================================================================
+
+double curveIntegral (
+	double x,
+	void * params)
+{
+	double dfx[2], dfy[2], dfz[2];
+	double cx[DEGREE], cy[DEGREE], cz[DEGREE];
+	double *cc = (double *)params;
+	for(int i=0;i<DEGREE;i++) cx[i] = cc[i+(DEGREE*0)];
+	for(int i=0;i<DEGREE;i++) cy[i] = cc[i+(DEGREE*1)];
+	for(int i=0;i<DEGREE;i++) cz[i] = cc[i+(DEGREE*2)];
+	gsl_poly_eval_derivs (cx, DEGREE, x, dfx, 2);
+	gsl_poly_eval_derivs (cy, DEGREE, x, dfy, 2);
+	gsl_poly_eval_derivs (cz, DEGREE, x, dfz, 2);
+	double f = sqrt(Sqr(dfx[1])+Sqr(dfy[1])+Sqr(dfz[1]));
+	return f;
+}
+
+// example
+void curveFit(
+	vector<point_t> points_,
+	vector<point_t> &curves_)
+{
+	const size_t n = points_.size();
+	const size_t ncoeffs = NCOEFFS;
+	const size_t nbreak = NBREAK;
+
+	size_t i, j;
+	gsl_bspline_workspace *bw;
+	gsl_vector *B;
+	gsl_vector *c, *w;
+	gsl_vector *x, *y;
+	gsl_vector *yerr;
+	gsl_matrix *X, *cov;
+	gsl_multifit_linear_workspace *mw;
+	double chisq;
+
+	for(int ii=0;ii<3;ii++)
+	{
+		/* allocate a cubic bspline workspace (k = 4) */
+		bw 	= gsl_bspline_alloc(4, nbreak);
+		B 	= gsl_vector_alloc(ncoeffs);
+
+		x 		= gsl_vector_alloc(n);
+		y 		= gsl_vector_alloc(n);
+		X 		= gsl_matrix_alloc(n, ncoeffs);
+		c 		= gsl_vector_alloc(ncoeffs);
+		w 		= gsl_vector_alloc(n);
+		cov 	= gsl_matrix_alloc(ncoeffs, ncoeffs);
+		mw 		= gsl_multifit_linear_alloc(n, ncoeffs);
+		yerr 	= gsl_vector_alloc(n);
+
+		/* this is the data to be fitted */
+		for (i=0;i<n;++i)
+		{
+			gsl_vector_set(x, i, double(i));
+			switch (ii)
+			{
+				case 0:
+					gsl_vector_set(y, i, points_[i].x);
+					break;
+				case 1:
+					gsl_vector_set(y, i, points_[i].y);
+					break;
+				case 2:
+					gsl_vector_set(y, i, points_[i].z);
+					break;
+			}
+		}
+
+		/* use uniform breakpoints on [0, 15] */
+		gsl_bspline_knots_uniform(0.0, (double)n, bw);
+
+		/* construct the fit matrix X */
+		for (i=0;i<n;++i)
+		{
+			double xi = gsl_vector_get(x, i);
+
+			/* compute B_j(xi) for all j */
+			gsl_bspline_eval(xi, B, bw);
+
+			/* fill in row i of X */
+			for (j = 0; j < ncoeffs; ++j)
+			{
+				double Bj = gsl_vector_get(B, j);
+				gsl_matrix_set(X, i, j, Bj);
+			}
+		}
+
+		/* do the fit */
+		gsl_multifit_linear(X, y, c, cov, &chisq, mw);
+
+		/* output the smoothed curve */
+		for (i=0;i<n;i++)
+		{
+			double yerr_tmp;
+			double xi = gsl_vector_get(x, i);
+			gsl_bspline_eval(xi, B, bw);
+			switch (ii)
+			{
+				case 0:
+					gsl_multifit_linear_est(B, c, cov, &curves_[i].x, &yerr_tmp);
+					break;
+				case 1:
+					gsl_multifit_linear_est(B, c, cov, &curves_[i].y, &yerr_tmp);
+					break;
+				case 2:
+					gsl_multifit_linear_est(B, c, cov, &curves_[i].z, &yerr_tmp);
+					break;
+			}
+			gsl_vector_set(yerr, i, yerr_tmp);
+		}
+
+		gsl_bspline_free(bw);
+		gsl_vector_free(B);
+		gsl_vector_free(x);
+		gsl_vector_free(y);
+		gsl_matrix_free(X);
+		gsl_vector_free(c);
+		gsl_vector_free(w);
+		gsl_matrix_free(cov);
+		gsl_multifit_linear_free(mw);
+	}
+}
+
+void polyCurveFit(
+	vector<double> points_,
+	vector<double> &coeff_,
+	vector<double> &cov_)
+{
+	gsl_multifit_linear_workspace *ws;
+	gsl_matrix *cov, *X;
+	gsl_vector *y, *c;
+	double chisq; //residual error
+	int num_points = points_.size();
+	X = gsl_matrix_alloc(num_points, DEGREE);
+	y = gsl_vector_alloc(num_points);
+	c = gsl_vector_alloc(DEGREE);
+	cov = gsl_matrix_alloc(DEGREE, DEGREE);
+	for(int i=0;i<num_points;i++)
+	{
+		for(int j=0;j<DEGREE;j++)
+		{
+			gsl_matrix_set(X, i, j, pow(i, j));
+		}
+		gsl_vector_set(y, i, points_[i]);
+	}
+	ws = gsl_multifit_linear_alloc(num_points, DEGREE);
+	gsl_multifit_linear(X, y, c, cov, &chisq, ws);
+	reshapeVector(coeff_, DEGREE);
+	for(int i=0;i<DEGREE;i++) { coeff_[i] = gsl_vector_get(c, i); }
+	reshapeVector(cov_, Sqr(DEGREE));
+	for(int i=0;i<Sqr(DEGREE);i++)
+	{
+		cov_[i] = gsl_matrix_get(cov, i/DEGREE, i%DEGREE);
+	}
+	gsl_multifit_linear_free(ws);
+	gsl_matrix_free(X);
+	gsl_matrix_free(cov);
+	gsl_vector_free(y);
+	gsl_vector_free(c);
+}
+
+void polyCurveFitPoint(
+	vector<point_t> points_,
+	vector<point_t> &points_est_,
+	vector<point_t> &coeffs_,
+	vector<point_t> &covs_,
+	bool est_)
+{
+	int num_points = points_.size();
+	vector<double> x(num_points);
+	vector<double> y(num_points);
+	vector<double> z(num_points);
+	vector<double> cx(DEGREE);
+	vector<double> cy(DEGREE);
+	vector<double> cz(DEGREE);
+	vector<double> covx(Sqr(DEGREE));
+	vector<double> covy(Sqr(DEGREE));
+	vector<double> covz(Sqr(DEGREE));
+	for(int i=0;i<num_points;i++)
+	{
+		x[i] = points_[i].x;
+		y[i] = points_[i].y;
+		z[i] = points_[i].z;
+	}
+	polyCurveFit(x,cx,covx);
+	polyCurveFit(y,cy,covy);
+	polyCurveFit(z,cz,covz);
+	reshapeVector(coeffs_,DEGREE);
+	for(int i=0;i<DEGREE;i++)
+	{
+		coeffs_[i].x = cx[i];
+		coeffs_[i].y = cy[i];
+		coeffs_[i].z = cz[i];
+	}
+	reshapeVector(covs_,Sqr(DEGREE));
+	for(int i=0;i<Sqr(DEGREE);i++)
+	{
+		covs_[i].x = covx[i];
+		covs_[i].y = covy[i];
+		covs_[i].z = covz[i];
+	}
+	int num_points2 = points_est_.size();
+	vector<double> x2(num_points2);
+	vector<double> y2(num_points2);
+	vector<double> z2(num_points2);
+	if(est_)
+	{
+		polyCurveFitEst(x2, num_points, cx, covx);
+		polyCurveFitEst(y2, num_points, cy, covy);
+		polyCurveFitEst(z2, num_points, cz, covz);
+		for(int i=0;i<num_points2;i++)
+		{
+			points_est_[i].x = x2[i];
+			points_est_[i].y = y2[i];
+			points_est_[i].z = z2[i];
+		}
+	}
+}
+
+void polyCurveLength(
+	double &length_,
+	double a_,
+	double b_,
+	vector<point_t> coeffs_)
+{
+	gsl_function F;
+	gsl_integration_glfixed_table *table;
+	double cc[DEGREE*3];
+	table = gsl_integration_glfixed_table_alloc ((DEGREE+1)/2);
+	for(int i=0;i<DEGREE;i++)
+	{
+		cc[i+(DEGREE*0)] = coeffs_[i].x;
+		cc[i+(DEGREE*1)] = coeffs_[i].y;
+		cc[i+(DEGREE*2)] = coeffs_[i].z;
+	}
+	F.function = &curveIntegral;
+	F.params = cc;
+	length_ = gsl_integration_glfixed (&F, a_, b_, table);
+	gsl_integration_glfixed_table_free (table);
+}
+
+void polyCurveFitEst(
+	vector<double> &points_,
+	int num_points_,
+	vector<double> coeffs_,
+	vector<double> covs_)
+{
+	gsl_matrix *cov, *X;
+	gsl_vector *c, *Xj;
+	double cc[DEGREE];
+	X  = gsl_matrix_alloc(num_points_, DEGREE);
+	Xj = gsl_vector_alloc(DEGREE);
+	c  = gsl_vector_alloc(DEGREE);
+	cov = gsl_matrix_alloc(DEGREE, DEGREE);
+	for(int i=0;i<DEGREE;i++) { cc[i] = coeffs_[i]; }
+	for(int i=0;i<points_.size();i++)
+	{
+		points_[i] =
+				gsl_poly_eval(
+						cc,
+						DEGREE,
+						(double)i/(points_.size()/num_points_));
+	}
+	gsl_matrix_free(X);
+	gsl_matrix_free(cov);
+	gsl_vector_free(Xj);
+	gsl_vector_free(c);
+}
+
+// ============================================================================
+// Surface
+// ============================================================================
+
+double surfaceRange(
+	point_t pos_,
+	point_t pos_surface_,
+	vector<double> surface_)
+{
+	vector<double> surface_tmp(3);
+	vector<double> surface_parallel_tmp;
+	vector<double> p_tmp;
+	double norm_tmp = 0.0;
+
+	surface_tmp[0] = surface_[0];
+	surface_tmp[1] = surface_[1];
+	surface_tmp[2] = surface_[2];
+
+	p_tmp = point2vector(minusPoint(pos_, pos_surface_));
+
+	// surface_parallel_tmp can be obtained at the beginning by just taking the normalized vector between 2 points on the surface
+	{
+		surface_parallel_tmp = crossProduct(surface_tmp, p_tmp);
+
+		for(int i=0;i<3;i++)
+			norm_tmp += Sqr(surface_parallel_tmp[i]);
+		norm_tmp = sqrt(norm_tmp);
+
+		for(int i=0;i<3;i++)
+			surface_parallel_tmp[i] /= norm_tmp;
+	}
+
+	return dotProduct(p_tmp, surface_parallel_tmp);
+}
+
+double surfaceDistance(
+	point_t pos_,
+	vector<double> surface_)
+{
+	return surface_[0]*pos_.x +
+		   surface_[1]*pos_.y +
+		   surface_[2]*pos_.z -
+		   surface_[3];
+}
+
+double surfaceAngle(
+	point_t vel_,
+	vector<double> surface_)
+{
+	vector<double> tmp(3);
+	tmp[0] = surface_[0];
+	tmp[1] = surface_[1];
+	tmp[2] = surface_[2];
+	return 	l2Norm(crossProduct(tmp,point2vector(vel_)))/
+			(l2Norm(tmp) * l2Norm(point2vector(vel_)));
 }

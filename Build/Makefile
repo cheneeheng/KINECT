@@ -204,6 +204,33 @@ src/dbscan.cpp.s:
 	$(MAKE) -f CMakeFiles/HMAR.dir/build.make CMakeFiles/HMAR.dir/src/dbscan.cpp.s
 .PHONY : src/dbscan.cpp.s
 
+src/labeling.o: src/labeling.cpp.o
+
+.PHONY : src/labeling.o
+
+# target to build an object file
+src/labeling.cpp.o:
+	$(MAKE) -f CMakeFiles/HMAR.dir/build.make CMakeFiles/HMAR.dir/src/labeling.cpp.o
+.PHONY : src/labeling.cpp.o
+
+src/labeling.i: src/labeling.cpp.i
+
+.PHONY : src/labeling.i
+
+# target to preprocess a source file
+src/labeling.cpp.i:
+	$(MAKE) -f CMakeFiles/HMAR.dir/build.make CMakeFiles/HMAR.dir/src/labeling.cpp.i
+.PHONY : src/labeling.cpp.i
+
+src/labeling.s: src/labeling.cpp.s
+
+.PHONY : src/labeling.s
+
+# target to generate assembly for a file
+src/labeling.cpp.s:
+	$(MAKE) -f CMakeFiles/HMAR.dir/build.make CMakeFiles/HMAR.dir/src/labeling.cpp.s
+.PHONY : src/labeling.cpp.s
+
 src/main.o: src/main.cpp.o
 
 .PHONY : src/main.o
@@ -230,6 +257,60 @@ src/main.s: src/main.cpp.s
 src/main.cpp.s:
 	$(MAKE) -f CMakeFiles/HMAR.dir/build.make CMakeFiles/HMAR.dir/src/main.cpp.s
 .PHONY : src/main.cpp.s
+
+src/prediction.o: src/prediction.cpp.o
+
+.PHONY : src/prediction.o
+
+# target to build an object file
+src/prediction.cpp.o:
+	$(MAKE) -f CMakeFiles/HMAR.dir/build.make CMakeFiles/HMAR.dir/src/prediction.cpp.o
+.PHONY : src/prediction.cpp.o
+
+src/prediction.i: src/prediction.cpp.i
+
+.PHONY : src/prediction.i
+
+# target to preprocess a source file
+src/prediction.cpp.i:
+	$(MAKE) -f CMakeFiles/HMAR.dir/build.make CMakeFiles/HMAR.dir/src/prediction.cpp.i
+.PHONY : src/prediction.cpp.i
+
+src/prediction.s: src/prediction.cpp.s
+
+.PHONY : src/prediction.s
+
+# target to generate assembly for a file
+src/prediction.cpp.s:
+	$(MAKE) -f CMakeFiles/HMAR.dir/build.make CMakeFiles/HMAR.dir/src/prediction.cpp.s
+.PHONY : src/prediction.cpp.s
+
+src/readWriteFile.o: src/readWriteFile.cpp.o
+
+.PHONY : src/readWriteFile.o
+
+# target to build an object file
+src/readWriteFile.cpp.o:
+	$(MAKE) -f CMakeFiles/HMAR.dir/build.make CMakeFiles/HMAR.dir/src/readWriteFile.cpp.o
+.PHONY : src/readWriteFile.cpp.o
+
+src/readWriteFile.i: src/readWriteFile.cpp.i
+
+.PHONY : src/readWriteFile.i
+
+# target to preprocess a source file
+src/readWriteFile.cpp.i:
+	$(MAKE) -f CMakeFiles/HMAR.dir/build.make CMakeFiles/HMAR.dir/src/readWriteFile.cpp.i
+.PHONY : src/readWriteFile.cpp.i
+
+src/readWriteFile.s: src/readWriteFile.cpp.s
+
+.PHONY : src/readWriteFile.s
+
+# target to generate assembly for a file
+src/readWriteFile.cpp.s:
+	$(MAKE) -f CMakeFiles/HMAR.dir/build.make CMakeFiles/HMAR.dir/src/readWriteFile.cpp.s
+.PHONY : src/readWriteFile.cpp.s
 
 src/util.o: src/util.cpp.o
 
@@ -330,9 +411,18 @@ help:
 	@echo "... src/dbscan.o"
 	@echo "... src/dbscan.i"
 	@echo "... src/dbscan.s"
+	@echo "... src/labeling.o"
+	@echo "... src/labeling.i"
+	@echo "... src/labeling.s"
 	@echo "... src/main.o"
 	@echo "... src/main.i"
 	@echo "... src/main.s"
+	@echo "... src/prediction.o"
+	@echo "... src/prediction.i"
+	@echo "... src/prediction.s"
+	@echo "... src/readWriteFile.o"
+	@echo "... src/readWriteFile.i"
+	@echo "... src/readWriteFile.s"
 	@echo "... src/util.o"
 	@echo "... src/util.i"
 	@echo "... src/util.s"

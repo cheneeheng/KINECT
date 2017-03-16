@@ -30,6 +30,7 @@ public:
 		point_t 		location,
 		double 			boundary,
 		int 			surface_num_,
+		double			surface_boundary_,
 		vector<data_t> 	data_);
 
 	void extendNode(
@@ -38,6 +39,9 @@ public:
 
 	bool checkNode(
 		unsigned int node_index_);
+
+	void updateNodeName(
+		vector<string> names_);
 
 	void initEdge(
 		int loc_int,
@@ -118,6 +122,8 @@ public:
 
 	vector<node_tt> getNodeList()
 	{return nodes;}
+
+	vector<string> getNodeName();
 
 	vector<double> getInitSector()
 	{return sector_zero;}

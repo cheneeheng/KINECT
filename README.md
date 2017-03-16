@@ -41,3 +41,6 @@
 - merged code with [13] of HMAR_LOCATION
 - added function to detect out of boundary
 
+[08] Merge
+- 15/3/2017
+- added a window for displaying results

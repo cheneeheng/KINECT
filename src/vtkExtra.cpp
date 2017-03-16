@@ -20,7 +20,7 @@ class customMouseInteractorStyle : public vtkInteractorStyleTrackballCamera
 
 		void setLeftButton(bool pick){pick_ = pick;}
 
-		void setColors(vector<unsigned char*> color){color_ = color;}
+		void setColors(vector<vector<unsigned char> > color){color_ = color;}
 
 		void setLabels(vector<string> label){LABEL = label;}
 
@@ -48,7 +48,7 @@ class customMouseInteractorStyle : public vtkInteractorStyleTrackballCamera
 		int 					num_locations;
 		bool 					pick_;
 		vector<string> 			LABEL;
-		vector<unsigned char*> 	color_;
+		vector<vector<unsigned char> > 	color_;
 
 		void writeText(
 			const char* text,
@@ -86,6 +86,7 @@ void customMouseInteractorStyle::OnLeftButtonDown()
 		}
 
 		for(int i = 0;i<num_locations;i++)
+		{
 			if (rgb[0]==color_[i+1][0] &&
 				rgb[1]==color_[i+1][1] &&
 				rgb[2]==color_[i+1][2])
@@ -94,7 +95,7 @@ void customMouseInteractorStyle::OnLeftButtonDown()
 				string mystr; getline (cin, mystr);
 				printf(">>>>> Label %02d : %s\n", i+1, mystr.c_str());
 
-				if (!LABEL[i+1].empty())
+				if (!LABEL[i].empty())
 				{
 					cout << ">>>>> [WARNING] : Label has been given. Do you wish to overwrite? [Y/N]" << endl;
 					while(1)
@@ -103,7 +104,7 @@ void customMouseInteractorStyle::OnLeftButtonDown()
 						if(!strcmp(mystr2.c_str(),"Y"))
 						{
 							cout << ">>>>> [WARNING] : Label has been overwritten. New label : " << mystr << endl;
-							LABEL[i+1] = mystr;
+							LABEL[i] = mystr;
 							writeText(mystr.c_str(), rgb, 10, 470-10*(i+1));
 							printf(">>>>> Pick a location...\n");
 							break;
@@ -118,28 +119,34 @@ void customMouseInteractorStyle::OnLeftButtonDown()
 				}
 				else
 				{
-					LABEL[i+1] = mystr;
+					LABEL[i] = mystr;
 					writeText(mystr.c_str(), rgb, 10, 470-10*(i+1));
 					printf(">>>>> Pick a location...\n");
 					break;
 				}
 			}
+		}
 
-		for(int i = 1;i<num_locations+1;i++)
+		for(int i=0;i<num_locations;i++)
 		{
 			// when there is no labeling at all
 			if (LABEL.empty()) break;
 			// check for completeness of labelling
 			if (LABEL[i].empty()) break;
 			// else
-			if (i==num_locations)
+			if (i==num_locations-1)
 			{
 				cout << ">>>>> [WARNING] : Label has been fully labeled. Proceed? [Y/N]" << endl;
 				string mystr3; getline (cin, mystr3);
 				if(!strcmp(mystr3.c_str(),"Y"))
+				{
 					this->GetInteractor()->TerminateApp();
+				}
 				else
+				{
 					printf(">>>>> Pick a location...\n");
+					break;
+				}
 			}
 		}
 		// Forward events, camera manipulation
@@ -173,8 +180,11 @@ vtkStandardNewMacro(customMouseInteractorStyle);
 // ============================================================================
 
 void colorCode(
-	vector<unsigned char*> &container_)
+	vector<vector<unsigned char> > &container_)
 {
+	int N = 1;
+	container_.clear();
+	container_.resize(N*12);
 	// Setup colors
 	unsigned char cw[]   = {255, 255, 255};
 	unsigned char cy[]   = {255, 255, 0};
@@ -188,36 +198,27 @@ void colorCode(
 	unsigned char cb[]   = {0, 0, 255};
 	unsigned char cpb[]  = {127, 0, 255};
 	unsigned char cpr[]  = {255, 0, 127};
-	copy(cw, 	cw+3, 	container_[0]);
-	copy(cy, 	cy+3, 	container_[1]);
-	copy(co, 	co+3, 	container_[2]);
-	copy(cr, 	cr+3, 	container_[3]);
-	copy(clg, 	clg+3,	container_[4]);
-	copy(cg, 	cg+3, 	container_[5]);
-	copy(cgb, 	cgb+3, 	container_[6]);
-	copy(cc, 	cc+3, 	container_[7]);
-	copy(clb, 	clb+3, 	container_[8]);
-	copy(cb, 	cb+3, 	container_[9]);
-	copy(cpb, 	cpb+3, 	container_[10]);
-	copy(cpr, 	cpr+3, 	container_[11]);
-	copy(cw, 	cw+3, 	container_[12]);
-	copy(cy, 	cy+3, 	container_[13]);
-	copy(co, 	co+3, 	container_[14]);
-	copy(cr, 	cr+3, 	container_[15]);
-	copy(clg, 	clg+3,	container_[16]);
-	copy(cg, 	cg+3, 	container_[17]);
-	copy(cgb, 	cgb+3, 	container_[18]);
-	copy(cc, 	cc+3, 	container_[19]);
-	copy(clb, 	clb+3, 	container_[20]);
-	copy(cb, 	cb+3, 	container_[21]);
-	copy(cpb, 	cpb+3, 	container_[22]);
-	copy(cpr, 	cpr+3, 	container_[23]);
+	for(int i=0;i<N;i++)
+	{
+		array2vector(cw,	3,	container_[12*i+0]);
+		array2vector(cy, 	3, 	container_[12*i+1]);
+		array2vector(co, 	3, 	container_[12*i+2]);
+		array2vector(cr, 	3, 	container_[12*i+3]);
+		array2vector(clg, 	3,	container_[12*i+4]);
+		array2vector(cg, 	3, 	container_[12*i+5]);
+		array2vector(cgb, 	3, 	container_[12*i+6]);
+		array2vector(cc, 	3, 	container_[12*i+7]);
+		array2vector(clb, 	3, 	container_[12*i+8]);
+		array2vector(cb, 	3, 	container_[12*i+9]);
+		array2vector(cpb, 	3, 	container_[12*i+10]);
+		array2vector(cpr, 	3, 	container_[12*i+11]);
+	}
 }
 
 vtkSmartPointer<vtkPolyDataMapper> dataPoints(
 	vector<point_t> points_,
 	int num_locations_,
-	vector<unsigned char*> color_,
+	vector<vector<unsigned char> > color_,
 	bool cluster_)
 {
 	int num_locations = num_locations_;
@@ -270,13 +271,23 @@ vtkSmartPointer<vtkPolyDataMapper> dataPoints(
 	{
 		colors->SetNumberOfComponents(3);
 		colors->SetName ("Colors");
+		vector<unsigned char*> color_tmp(color_.size());
+		for(int i=0;i<color_.size();i++)
+		{
+			color_tmp[i] = Calloc(unsigned char,3);
+			vector2array(color_[i], color_tmp[i]);
+		}
 		for(int i=0;i<points_.size();i++)
 		{
 			if (points_[i].cluster_id < num_locations &&
 				points_[i].cluster_id >= 0)
-				colors->InsertNextTypedTuple(color_[points_[i].cluster_id+1]);
+			{
+				colors->InsertNextTypedTuple(color_tmp[points_[i].cluster_id+1]);
+			}
 			else
-				colors->InsertNextTypedTuple(color_[0]);
+			{
+				colors->InsertNextTypedTuple(color_tmp[0]);
+			}
 		}
 		polydata->GetPointData()->SetScalars(colors);
 	}
@@ -293,11 +304,11 @@ vtkSmartPointer<vtkPolyDataMapper> dataPoints(
 void showData(
 	vector<point_t> points_,
 	vector<string> &labels_,
-	vector<unsigned char*> color_,
+	vector<vector<unsigned char> > color_,
 	bool cluster_,
 	bool labeling_)
 {
-	int num_locations = labels_.size() - 1;
+	int num_locations = labels_.size();
 
 	vtkSmartPointer<vtkPolyDataMapper>			mapper;
 	vtkSmartPointer<vtkActor> 					actor;
@@ -338,8 +349,7 @@ void showData(
 	}
 	else
 	{
-		style->setLeftButton(false);
-		for(int i=0;i<num_locations+1;i++)
+		for(int i=0;i<num_locations;i++)
 		{
 			if(labels_.empty()) continue;
 			if(labels_[i].empty()) continue;
@@ -348,9 +358,9 @@ void showData(
 			textActor->SetPosition(10, (WIN_HEIGHT-20)-i*FONT_SIZE);
 			textActor->GetTextProperty()->SetFontSize(FONT_SIZE);
 			textActor->GetTextProperty()
-					 ->SetColor((double)color_[i][0]/255,
-								(double)color_[i][1]/255,
-								(double)color_[i][2]/255);
+					 ->SetColor((double)color_[i+1][0]/255,
+								(double)color_[i+1][1]/255,
+								(double)color_[i+1][2]/255);
 			renderer->AddActor2D(textActor);
 		}
 	}
@@ -597,7 +607,7 @@ void showConnection(
 	vector<point_t> points_,
 	vector<string> &labels_,
 	Graph Graph_,
-	vector<unsigned char*> color_,
+	vector<vector<unsigned char> > color_,
 	bool show_points)
 {
 	// [VARIABLES]*************************************************************
@@ -990,7 +1000,7 @@ void showConnection(
 		style->setNumberOfLabels(num_locations);
 		style->setLabels(labels_);
 		style->setColors(color_);
-		for(int i=0;i<num_locations+1;i++)
+		for(int i=0;i<num_locations;i++)
 		{
 			textActor 	= vtkSmartPointer<vtkTextActor>::New();
 			if(labels_.empty()) continue;
@@ -999,9 +1009,9 @@ void showConnection(
 			textActor->SetPosition(10, (WIN_HEIGHT-20)-i*FONT_SIZE);
 			textActor->GetTextProperty()->SetFontSize(FONT_SIZE);
 			textActor->GetTextProperty()
-					 ->SetColor((double)color_[i][0]/255,
-								(double)color_[i][1]/255,
-								(double)color_[i][2]/255);
+					 ->SetColor((double)color_[i+1][0]/255,
+								(double)color_[i+1][1]/255,
+								(double)color_[i+1][2]/255);
 			renderer->AddActor2D(textActor);
 		}
 	}
@@ -1024,7 +1034,7 @@ void showConnectionTest(
 	vector<point_t> points_,
 	vector<string> &labels_,
 	Graph Graph_,
-	vector<unsigned char*> color_,
+	vector<vector<unsigned char> > color_,
 	bool show_points)
 {
 	vector<node_tt> nodes 			= Graph_.getNodeList();

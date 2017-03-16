@@ -49,20 +49,22 @@ void Graph::addNode(
 	string 			name_,
 	unsigned int 	index_,
 	int 			category_, //not used
-	point_t 		location,
-	double 			boundary,
+	point_t 		location_,
+	double 			boundary_,
 	int 			surface_num_,
+	double			surface_boundary_,
 	vector<data_t> 	data_)
 {
 	node = {};
 
-	node.name     	= name_;
-	node.index    	= index_;
-	node.category 	= category_;
-	node.location	= location;
-	node.boundary 	= boundary;
-	node.surface	= surface_num_;
-	node.data    	= data_;
+	node.name     			= name_;
+	node.index    			= index_;
+	node.category 			= category_;
+	node.location			= location_;
+	node.boundary 			= boundary_;
+	node.surface			= surface_num_;
+	node.surface_boundary	= surface_boundary_;
+	node.data    			= data_;
 
 	if (nodes.size() < index_+1)
 		nodes.resize(index_+1);
@@ -90,6 +92,23 @@ bool Graph::checkNode(
 	if(nodes.size() >= n1_+1)
 		check_flag = true;
 	return check_flag;
+}
+
+vector<string> Graph::getNodeName()
+{
+	vector<string> names(nodes.size());
+	for(int i=0;i<nodes.size();i++)
+		names[i] = nodes[i].name;
+	return names;
+}
+
+void Graph::updateNodeName(vector<string> names_)
+{
+	if(names_.size()!=nodes.size())
+		printf("[WARNING] : Number of names is not the same as the number of nodes in graph...");
+	else
+		for(int i=0;i<nodes.size();i++)
+			nodes[i].name = names_[i];
 }
 
 //=============================================================================

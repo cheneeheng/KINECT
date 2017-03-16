@@ -1,5 +1,85 @@
 #include "util2.h"
 
+// for location area
+void showPrediction(
+	Mat &imgHistogram,
+	vector<int>data,
+	vector<string>label)
+{
+	rectangle(
+			imgHistogram, 
+			Point(0,0), Point(640,480), Scalar(70,70,70),-1);
+	int sum = std::accumulate(data.begin(), data.end(), 0, absAdd);
+	int size = label.size(); 
+	for (int i = 0; i < size; ++i) 
+	{
+		double val = sum > 0 ? data[i]/sum : 0; 
+		double nor = 380 - val*330;
+		rectangle(
+				imgHistogram, 
+				Point(((float)(i+0.15)/size*0.8+0.1)*640, 380), 
+				Point(((float)(i+0.85)/size*0.8+0.1)*640, nor),
+				Scalar(0,val*255,(1-val)*255), -1);
+
+		if(val>0.0)
+			rectangle(
+					imgHistogram, 
+					Point(((float)(i+0.15)/size*0.8+0.1)*640, 380), 
+					Point(((float)(i+0.85)/size*0.8+0.1)*640, 50),
+					Scalar(0,255,255), 3);
+		putText(
+				imgHistogram, label[i].c_str(),
+				Point(((float)(i+0.17)/size*0.8+0.1)*640, 430), 
+				FONT_HERSHEY_SIMPLEX, 0.5, Scalar(255,255,255),1);
+		putText(
+				imgHistogram, to_string((int)(val*100)).c_str(),
+				Point(((float)(i+0.17)/size*0.8+0.1)*640, nor-5), 
+				FONT_HERSHEY_SIMPLEX, 0.5, Scalar(255,255,255),1,true);
+	}
+}
+
+// for edges
+void showPrediction(
+	Mat &imgHistogram,
+	vector<double>data,
+	vector<string>label)
+{
+	rectangle(
+			imgHistogram, 
+			Point(0,0), Point(640,480), Scalar(70,70,70),-1);						
+	int max_tmp =
+			distance(
+					data.begin(),
+					max_element( data.begin(), data.end()));
+	int size = label.size(); 
+	for (int i = 0; i < size; ++i) 
+	{
+		double val = data[i]; 
+		double nor = 380 - val*330;
+		rectangle(
+				imgHistogram, 
+				Point(((float)(i+0.15)/size*0.8+0.1)*640, 380), 
+				Point(((float)(i+0.85)/size*0.8+0.1)*640, nor),
+				Scalar(0,val*255,(1-val)*255), -1);
+		if(i==max_tmp)
+			rectangle(
+					imgHistogram, 
+					Point(((float)(i+0.15)/size*0.8+0.1)*640, 380), 
+					Point(((float)(i+0.85)/size*0.8+0.1)*640, 50),
+					Scalar(0,255,255), 3);
+		putText(
+				imgHistogram, label[i].c_str(),
+				Point(((float)(i+0.17)/size*0.8+0.1)*640, 430), 
+				FONT_HERSHEY_SIMPLEX, 0.5, Scalar(255,255,255),1);
+		putText(
+				imgHistogram, to_string((int)(val*100)).c_str(),
+				Point(((float)(i+0.17)/size*0.8+0.1)*640, nor-5), 
+				FONT_HERSHEY_SIMPLEX, 0.5, Scalar(255,255,255),1,true);
+	}
+}
+
+
+
 void depthImaging(
 	Mat &depth_image, 
 	Mat depth_global)
