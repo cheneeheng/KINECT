@@ -16,7 +16,7 @@ Mat rgb_global2 = Mat::zeros(480,640,CV_8UC3);
 Mat rgb_global3 = Mat::zeros(480,640,CV_8UC3);
 Mat rgb_global4 = Mat::zeros(480,640,CV_8UC3);
 
-Mat depth_global,cloud_global;
+Mat depth_global,cloud_global1,cloud_global2,cloud_global3;
 
 Mat mask_hand_global = Mat::zeros(480,640,CV_8UC1);
 Mat mask_obj_global  = Mat::zeros(480,640,CV_8UC1);
@@ -27,13 +27,14 @@ Rect face_global(0,0,0,0);
 bool contact_obj = false;
 
 Vec3f single_point_obj_global;
+Vec3f single_point_face_global;
 
 float frame_number_global = 0.0;
 
 vector<vector<double> > plane_global;
 
 // threads
-int MAX = 4;
+int MAX = 5;
 sem_t mutex1,mutex2,mutex3,mutex4,mutex5,mutex6,mutex7;
 sem_t lock_t1,lock_t2,lock_t3,lock_t4,lock_t5,lock_t6;
 
@@ -44,10 +45,11 @@ sem_t lock_t1,lock_t2,lock_t3,lock_t4,lock_t5,lock_t6;
 //#define FLAG_PLANE // detecting planes
 //#define FLAG_HSV // determines the hsv values 
 #define FLAG_OBJECT // shows window for object detection
-//#define FLAG_HAND // shows window for hand detection
+#define FLAG_HAND // shows window for hand detection
 //#define FLAG_FACE // shows window for face detection
-//#define FLAG_CONTACT //shows contact value
-//#define FLAG_WRITE //records data
+#define FLAG_CONTACT //shows contact value
+#define FLAG_WRITE //records data
+//#define FLAG_HISTOGRAM //shows result as histogram
 
 //#define FREQ
 
@@ -57,7 +59,7 @@ sem_t lock_t1,lock_t2,lock_t3,lock_t4,lock_t5,lock_t6;
 string scene  = "Kitchen";
 string object = "04";
 
-int freq_rate = 15;
+int freq_rate = 30;
 
 // ============================================================================
 // THREAD 1 : KINECT 
@@ -89,6 +91,7 @@ void* kinectGrab(void* v_kinect)
 		sem_wait(&lock_t1);
 		sem_wait(&lock_t1);
 		sem_wait(&lock_t1);
+		sem_wait(&lock_t1);
 		sem_wait(&mutex1);
 
 		kinect->grab();
@@ -99,7 +102,9 @@ void* kinectGrab(void* v_kinect)
 		rgb_global4 = rgb_global1.clone();
 
 		kinect->retrieve(depth_global,CV_CAP_OPENNI_DEPTH_MAP);
-		kinect->retrieve(cloud_global,CV_CAP_OPENNI_POINT_CLOUD_MAP);
+		kinect->retrieve(cloud_global1,CV_CAP_OPENNI_POINT_CLOUD_MAP);
+		cloud_global2 = cloud_global1.clone();
+		cloud_global3 = cloud_global1.clone();
 
 		frame_number_global =
 			kinect->get(CV_CAP_OPENNI_IMAGE_GENERATOR+CV_CAP_PROP_POS_FRAMES);
@@ -134,7 +139,7 @@ void* kinectGrab(void* v_kinect)
  
 #ifdef FLAG_PLANE
 		// [SURFACE DETECTION]*************************************************
-		tmp_cloud = cloud_global.clone();
+		tmp_cloud = cloud_global1.clone();
 		while(flag_tmp)
 		{       
 			Rect box;
@@ -206,6 +211,7 @@ void* kinectGrab(void* v_kinect)
 		sem_post(&mutex1);
 		sem_post(&lock_t2);
 		sem_post(&lock_t3);
+		sem_post(&lock_t4);
 		sem_post(&lock_t5);
 		sem_post(&lock_t6);
 
@@ -242,10 +248,11 @@ void* objectDetector(void* arg)
 //  sat_range_obj[0] = 199; sat_range_obj[1] = 255;
 
 	int hs[4]; // hue max/min, sat max/min
-	hs[0] = 98; hs[1] = 77; hs[2] = 214; hs[3] = 76;
-//	hs[0] = 100; hs[1] = 63; hs[2] = 153; hs[3] = 92;
+//	hs[0] = 98; hs[1] = 77; hs[2] = 214; hs[3] = 76; // green cup
+	hs[0] = 107; hs[1] = 72; hs[2] = 204; hs[3] = 102; // yellow sponge
+//	hs[0] = 100; hs[1] = 63; hs[2] = 153; hs[3] = 92; // yellow sponge
 	//hs[0] = 102; hs[1] = 80; hs[2] = 255; hs[3] = 135;
-	//hs[0] = 134; hs[1] = 116; hs[2] = 255; hs[3] = 166; // red spannar
+//	hs[0] = 134; hs[1] = 116; hs[2] = 255; hs[3] = 166; // red spannar
 
 	while(true)
 	{
@@ -317,31 +324,35 @@ void* faceDetector(void* arg)
 	if(!face_cascade.load(face_cascade_name))
 	printf("--(!)Error loading face cascade\n");
 
-	Mat img_tmp;
-	int c = 0;
+	Mat img_depth_def, mask_obj_def, img_sub, cloud_mask, cloud_mask2, img_tmp;
+
 	while(true)
 	{
+		sem_wait(&lock_t4);
 		sem_wait(&mutex4);
-/*
-		bool testing1 = rgb_global4.empty();
-		bool testing2 = img_tmp.empty();
-		//if(c%freq_rate==0)
-		//	cout << testing1 << testing2 ;
-		//c++;
 
-		bool eq = countNonZero(rgb_global4!=img_tmp) == 0;
-		if (!eq)
+		if (frame_number_global<100)
 		{
-			img_tmp.release();
-			img_tmp = rgb_global4.clone();
-			face_global = detectFaceAndEyes(rgb_global4, face_cascade);
-		}
+			if (!(countNonZero(rgb_global4!=img_tmp) == 0))
+			{
+				img_tmp.release();
+				img_tmp = rgb_global4.clone();
+				face_global = detectFaceAndEyes(rgb_global4, face_cascade);
+				//[OBJECT POINT]***************************************************
+				cloud_global2(face_global).copyTo(cloud_mask); // reducing the search area
+				pointCloudTrajectory(cloud_mask, single_point_face_global);
+				cloud_mask.release(); 
+				// **************************************************[OBJECT POINT]
+			}
 
 #ifdef FLAG_FACE
-		imshow("face",rgb_global4); cvWaitKey(1);
+			imshow("face",rgb_global4); cvWaitKey(1);
 #endif
-*/
+		}
+
 		sem_post(&mutex4);
+		sem_post(&lock_t6);
+		sem_post(&lock_t1);
 	}
 	return 0;
 }
@@ -352,7 +363,7 @@ void* faceDetector(void* arg)
 void* contactDetector(void* arg)
 {
 	Mat img_depth_def, mask_obj_def, img_sub, cloud_mask,cloud_mask2;
-	float contact_sub;
+	double contact_val;
 	bool flag_contact_init	= true;
 	bool flag_contact_obj	= false;
 	int c = 0;
@@ -372,7 +383,7 @@ void* contactDetector(void* arg)
 		// *****************************************************[DEFAULT SCENE]
 
 		//[OBJECT POINT]*******************************************************
-		cloud_global.copyTo(cloud_mask,mask_obj_global); //taking the obj only
+		cloud_global3.copyTo(cloud_mask,mask_obj_global); //taking the obj only
 		cloud_mask(box_obj_global).copyTo(cloud_mask2); // reducing the search area
 		pointCloudTrajectory(cloud_mask2, single_point_obj_global);
 		cloud_mask.release(); 
@@ -387,9 +398,9 @@ void* contactDetector(void* arg)
 			{
 				depth_global.copyTo(img_sub,mask_obj_def);			
 				absdiff(img_depth_def,img_sub,img_sub);
-				contact_sub = sum(img_sub)[0] / sum(mask_obj_def)[0];
+				contact_val = sum(img_sub)[0] / sum(mask_obj_def)[0];
 
-				if(contact_sub > 0 && contact_sub < 250)
+				if(contact_val > 0 && contact_val < 250)
 				{
 					contact_obj 		= true;
 					flag_contact_obj 	= true;
@@ -403,6 +414,7 @@ void* contactDetector(void* arg)
 			flag_contact_init 	= true;
 			flag_contact_obj 	= false;
 			contact_obj 		= false;
+			contact_val			= 0.0;
 		}
 		// face prevention
 		if(box_obj_global.y < 161) 
@@ -410,6 +422,7 @@ void* contactDetector(void* arg)
 			flag_contact_init	= false;
 			flag_contact_obj	= true;
 			contact_obj 		= true;
+			contact_val			= -1.0;
 		} 
 		// ****************************************************[OBJECT CONTACT]
 
@@ -418,7 +431,7 @@ void* contactDetector(void* arg)
 		if(c%freq_rate==0)
 		{
 			//printf("c %d\n", contact_obj);
-			//printf("CONTACT : %d , CONTACTVAL : %f\n", contact_obj, contact_sub);
+			printf("CONTACT : %d , CONTACTVAL : %f\n", contact_obj, contact_val);
 		}
 #endif
 
@@ -451,6 +464,7 @@ void* writeData(void* arg)
 	{
 		sem_wait(&lock_t6);
 		sem_wait(&lock_t6);
+		sem_wait(&lock_t6);
 		sem_wait(&mutex6);
 		if(frame_number_global>100)
 		{
@@ -460,7 +474,10 @@ void* writeData(void* arg)
 						<< contact_obj 					<< ","
 						<< single_point_obj_global[0]	<< ","
 						<< single_point_obj_global[1]	<< ","
-						<< single_point_obj_global[2]           
+						<< single_point_obj_global[2]	<< ","
+						<< single_point_face_global[0]	<< ","
+						<< single_point_face_global[1]	<< ","
+						<< single_point_face_global[2]
 						<< "\n";
 		}
 		sem_post(&mutex6);
@@ -468,7 +485,11 @@ void* writeData(void* arg)
 	}
 // ***************************************************************[RECORD DATA]
 
+
+
 #else
+
+
 
 // [PREDICTION]****************************************************************
 	// [VARIABLES]*************************************************************
@@ -763,9 +784,10 @@ int main(int argc, char *argv[])
 #ifdef FLAG_FACE
   namedWindow("face");
 #endif
-
+#ifdef FLAG_HISTOGRAM
   namedWindow("hist");
   moveWindow("hist",0,0);
+#endif
 
 	pthread_t 	thread_kinectGrab,
 				thread_objDetector,
