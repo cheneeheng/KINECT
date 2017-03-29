@@ -248,8 +248,8 @@ void* objectDetector(void* arg)
 //  sat_range_obj[0] = 199; sat_range_obj[1] = 255;
 
 	int hs[4]; // hue max/min, sat max/min
-//	hs[0] = 98; hs[1] = 77; hs[2] = 214; hs[3] = 76; // green cup
-	hs[0] = 107; hs[1] = 72; hs[2] = 204; hs[3] = 102; // yellow sponge
+	hs[0] = 98; hs[1] = 77; hs[2] = 214; hs[3] = 76; // green cup
+//	hs[0] = 107; hs[1] = 72; hs[2] = 204; hs[3] = 102; // yellow sponge
 //	hs[0] = 100; hs[1] = 63; hs[2] = 153; hs[3] = 92; // yellow sponge
 	//hs[0] = 102; hs[1] = 80; hs[2] = 255; hs[3] = 135;
 //	hs[0] = 134; hs[1] = 116; hs[2] = 255; hs[3] = 166; // red spannar
@@ -285,7 +285,8 @@ void* handDetector(void* arg)
 
 	int hs[4]; // hue max/min, sat max/min
 	//hs[0] = 122; hs[1] = 102; hs[2] = 150; hs[3] = 69;
-	hs[0] = 118; hs[1] = 104; hs[2] = 128; hs[3] = 77;
+	//hs[0] = 118; hs[1] = 104; hs[2] = 128; hs[3] = 77;
+	hs[0] = 116; hs[1] = 98; hs[2] = 140; hs[3] = 64;
 
 	Mat img_no_head = Mat::zeros(480,640,CV_8UC3);
 
