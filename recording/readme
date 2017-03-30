@@ -2,11 +2,11 @@
 2: shelf coffee drink move wash move shelf (0-5 without going back to shelf)
 3
 4
-5
-6
-7
-8
-9
-10
-11
+5: shelf clean table clean wash move shelf
+6: shelf clean wash move shelf (0-10 without going back to shelf) (0-5/15-20 horizontal) (6-10/21-25 vertical) (11-15 no clean only move and no back to shelf)
+7: shelf clean table clean throw
+8: shelf clean throw  (0-5 horizontal) (6-10 vertical)  (11-15 no clean only move)
+9: EMPTY but exp. was: shelf cut table cut wash move shelf (not enough space) 
+10: shelf cut wash move shelf (6-10 no back to shelf)
+11: shelf scan throw
 12

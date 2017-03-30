@@ -43,7 +43,6 @@ sem_t lock_t1,lock_t2,lock_t3,lock_t4,lock_t5,lock_t6;
 //#define FLAG_RGB // shows window for rgb
 //#define FLAG_DEPTH // shows window for depth
 //#define FLAG_PLANE // detecting planes
-//#define FLAG_HSV // determines the hsv values 
 #define FLAG_OBJECT // shows window for object detection
 #define FLAG_HAND // shows window for hand detection
 //#define FLAG_FACE // shows window for face detection
@@ -58,6 +57,9 @@ sem_t lock_t1,lock_t2,lock_t3,lock_t4,lock_t5,lock_t6;
 
 string scene  = "Kitchen";
 string object = "04";
+
+int object_arg = 0;
+bool hsv_arg = false;
 
 int freq_rate = 30;
 
@@ -119,8 +121,7 @@ void* kinectGrab(void* v_kinect)
 		imshow("rgb",rgb_global1); cvWaitKey(1);
 #endif
 
-#ifdef FLAG_HSV
-		while(true)
+		while(hsv_arg)
 		{
 			imwrite( "../test.png" , rgb_global1 );
 			int hue_range[2], sat_range[2];
@@ -135,7 +136,6 @@ void* kinectGrab(void* v_kinect)
 			if (keypress == 'q') 
 				break; 
 		}
-#endif
  
 #ifdef FLAG_PLANE
 		// [SURFACE DETECTION]*************************************************
@@ -248,12 +248,21 @@ void* objectDetector(void* arg)
 //  sat_range_obj[0] = 199; sat_range_obj[1] = 255;
 
 	int hs[4]; // hue max/min, sat max/min
-	hs[0] = 98; hs[1] = 77; hs[2] = 214; hs[3] = 76; // green cup
-//	hs[0] = 107; hs[1] = 72; hs[2] = 204; hs[3] = 102; // yellow sponge
-//	hs[0] = 100; hs[1] = 63; hs[2] = 153; hs[3] = 92; // yellow sponge
-	//hs[0] = 102; hs[1] = 80; hs[2] = 255; hs[3] = 135;
-//	hs[0] = 134; hs[1] = 116; hs[2] = 255; hs[3] = 166; // red spannar
-
+	switch(object_arg)
+	{
+		case 0:
+			hs[0] = 98; hs[1] = 77; hs[2] = 214; hs[3] = 76; // green cup
+			break;
+		case 1:
+			hs[0] = 107; hs[1] = 72; hs[2] = 204; hs[3] = 102; // yellow sponge
+			break;
+		case 2:
+			hs[0] = 143; hs[1] = 107; hs[2] = 255; hs[3] = 128; // red knife
+			break;
+		default:
+			hs[0] = 98; hs[1] = 77; hs[2] = 214; hs[3] = 76; // green cup
+			break;
+	}
 	while(true)
 	{
 		sem_wait(&lock_t2);
@@ -755,8 +764,25 @@ if(frame_number_global>100)
 // ============================================================================
 // >>>>> MAIN <<<<<
 // ============================================================================
+
+//struct cmp_str
+//{
+//   bool operator()(char const *a, char const *b)
+//   {
+//	  return std::strcmp(a, b) < 0;
+//   }
+//};
+
 int main(int argc, char *argv[])
 {
+	map<string,int> mapper;
+	mapper["green_cup"] 	= 0;
+	mapper["yellow_sponge"]	= 1;
+	mapper["red_knife"] 	= 2;
+
+	if		(strcmp(argv[1],"-obj")==0) { object_arg = mapper[string(argv[2])]; }
+	else if	(strcmp(argv[1],"-hsv")==0) { hsv_arg = true; }
+
 	VideoCapture kinect(CV_CAP_OPENNI2); 
 	printf("Starting Kinect ...\n");
 
