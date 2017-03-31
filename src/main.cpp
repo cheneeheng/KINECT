@@ -60,6 +60,7 @@ string object = "04";
 
 int object_arg = 0;
 bool hsv_arg = false;
+bool face_arg = false;
 
 int freq_rate = 30;
 
@@ -254,13 +255,17 @@ void* objectDetector(void* arg)
 			hs[0] = 98; hs[1] = 77; hs[2] = 214; hs[3] = 76; // green cup
 			break;
 		case 1:
-			hs[0] = 107; hs[1] = 72; hs[2] = 204; hs[3] = 102; // yellow sponge
+			hs[0] = 107; hs[1] = 90; hs[2] = 204; hs[3] = 140;
+			//hs[0] = 107; hs[1] = 72; hs[2] = 204; hs[3] = 102; // yellow sponge
 			break;
 		case 2:
-			hs[0] = 143; hs[1] = 107; hs[2] = 255; hs[3] = 128; // red knife
+			hs[0] = 125; hs[1] = 116; hs[2] = 255; hs[3] = 179; // red knife
+			break;
+		case 3:
+			hs[0] = 116; hs[1] = 98; hs[2] = 255; hs[3] = 204; // orange
 			break;
 		default:
-			hs[0] = 98; hs[1] = 77; hs[2] = 214; hs[3] = 76; // green cup
+			hs[0] = 107; hs[1] = 90; hs[2] = 204; hs[3] = 140; 
 			break;
 	}
 	while(true)
@@ -295,7 +300,9 @@ void* handDetector(void* arg)
 	int hs[4]; // hue max/min, sat max/min
 	//hs[0] = 122; hs[1] = 102; hs[2] = 150; hs[3] = 69;
 	//hs[0] = 118; hs[1] = 104; hs[2] = 128; hs[3] = 77;
+
 	hs[0] = 116; hs[1] = 98; hs[2] = 140; hs[3] = 64;
+	hs[0] = 125; hs[1] = 98; hs[2] = 140; hs[3] = 77;
 
 	Mat img_no_head = Mat::zeros(480,640,CV_8UC3);
 
@@ -354,10 +361,23 @@ void* faceDetector(void* arg)
 				cloud_mask.release(); 
 				// **************************************************[OBJECT POINT]
 			}
+		}
 
-#ifdef FLAG_FACE
-			imshow("face",rgb_global4); cvWaitKey(1);
-#endif
+		if (face_arg)
+		{
+			if (!(countNonZero(rgb_global4!=img_tmp) == 0))
+			{
+				img_tmp.release();
+				img_tmp = rgb_global4.clone();
+				face_global = detectFaceAndEyes(rgb_global4, face_cascade);
+				//[OBJECT POINT]***************************************************
+				cloud_global2(face_global).copyTo(cloud_mask); // reducing the search area
+				pointCloudTrajectory(cloud_mask, single_point_face_global);
+				cloud_mask.release(); 
+				// **************************************************[OBJECT POINT]
+			}
+			imshow("face",rgb_global4);
+			cvWaitKey(1);
 		}
 
 		sem_post(&mutex4);
@@ -410,7 +430,7 @@ void* contactDetector(void* arg)
 				absdiff(img_depth_def,img_sub,img_sub);
 				contact_val = sum(img_sub)[0] / sum(mask_obj_def)[0];
 
-				if(contact_val > 0 && contact_val < 250)
+				if(contact_val > 0 && contact_val < 500)
 				{
 					contact_obj 		= true;
 					flag_contact_obj 	= true;
@@ -779,9 +799,11 @@ int main(int argc, char *argv[])
 	mapper["green_cup"] 	= 0;
 	mapper["yellow_sponge"]	= 1;
 	mapper["red_knife"] 	= 2;
+	mapper["orange"] 		= 3;
 
 	if		(strcmp(argv[1],"-obj")==0) { object_arg = mapper[string(argv[2])]; }
 	else if	(strcmp(argv[1],"-hsv")==0) { hsv_arg = true; }
+	else if	(strcmp(argv[1],"-face")==0) { face_arg = true; }
 
 	VideoCapture kinect(CV_CAP_OPENNI2); 
 	printf("Starting Kinect ...\n");
