@@ -13,6 +13,9 @@
 #include "Graph.h"
 
 void writeSurfaceFile(
+	vector<vector<double> > surface_);
+
+void writeSurfaceFile(
 	Graph Graph_);
 
 void writeLabelFile(

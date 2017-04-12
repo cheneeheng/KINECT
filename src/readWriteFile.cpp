@@ -24,7 +24,7 @@ void writeSurfaceFile(
 		for(int i=0;i<surface_.size();i++)
 		{
 			write_file << i;
-			for(int ii=0;ii<4;ii++)
+			for(int ii=0;ii<surface_[i].size();ii++)
 			{
 				write_file << ",";
 				write_file << surface_[i][ii];

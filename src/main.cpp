@@ -55,12 +55,34 @@ sem_t lock_t1,lock_t2,lock_t3,lock_t4,lock_t5,lock_t6;
 
 //====================================================================================================================================
 
+static inline vector<double> cvVector2vector(Vec4f A)
+{
+	vector<double> B(4);
+	B[0]=A[0];
+	B[1]=A[1];
+	B[2]=A[2];
+	B[3]=A[3];
+	return B;
+}
+
+static inline vector<double> cvVector2vector(Vec3f A)
+{
+	vector<double> B(3);
+	B[0]=A[0];
+	B[1]=A[1];
+	B[2]=A[2];
+	return B;
+}
+
+//====================================================================================================================================
+
 string scene  = "Kitchen";
 string object = "04";
 
 int object_arg = 0;
 bool hsv_arg = false;
 bool face_arg = false;
+bool surface_arg = false;
 
 int freq_rate = 30;
 
@@ -134,14 +156,16 @@ void* kinectGrab(void* v_kinect)
 			imshow("rgb",img);
 			cout << "press <s> to exit.\n";
 			keypress = waitKey(0);
-			if (keypress == 'q') 
-				break; 
+			if (keypress == 'q')
+			{
+				hsv_arg = false;
+				break;
+			}
 		}
  
-#ifdef FLAG_PLANE
 		// [SURFACE DETECTION]*************************************************
 		tmp_cloud = cloud_global1.clone();
-		while(flag_tmp)
+		while(surface_arg)
 		{       
 			Rect box;
 			plane_tmp  = Mat::zeros(480,640,CV_8UC1);
@@ -193,7 +217,8 @@ void* kinectGrab(void* v_kinect)
 			else if (keypress == 'q')
 			{
 				writeSurfaceFile(plane_global);
-				flag_tmp = false;
+				surface_arg = false;
+				break;
 			}
 			else if (keypress == 'd')
 			{
@@ -207,7 +232,6 @@ void* kinectGrab(void* v_kinect)
 		destroyWindow("plane");
 		destroyWindow("plane_reduced");
 		// *************************************************[SURFACE DETECTION]
-#endif
 
 		sem_post(&mutex1);
 		sem_post(&lock_t2);
@@ -801,9 +825,37 @@ int main(int argc, char *argv[])
 	mapper["red_knife"] 	= 2;
 	mapper["orange"] 		= 3;
 
-	if		(strcmp(argv[1],"-obj")==0) { object_arg = mapper[string(argv[2])]; }
-	else if	(strcmp(argv[1],"-hsv")==0) { hsv_arg = true; }
-	else if	(strcmp(argv[1],"-face")==0) { face_arg = true; }
+	if (strcmp(argv[1],"-obj")==0)
+	{
+		if (strcmp(argv[2],"green_cup") &&
+			strcmp(argv[2],"yellow_sponge") &&
+			strcmp(argv[2],"red_knife") &&
+			strcmp(argv[2],"orange"))
+		{
+			cerr << "Object name is invalid..." << endl;
+			return 0;
+		}
+		else
+		{
+			object_arg = mapper[string(argv[2])];
+		}
+	}
+	else if	(strcmp(argv[1],"-hsv")==0)
+	{
+		if (!strcmp(argv[2],"true")) hsv_arg = true;
+		else 						 hsv_arg = false;
+	}
+	else if	(strcmp(argv[1],"-face")==0)
+	{
+		if (!strcmp(argv[2],"true")) face_arg = true;
+		else 						 face_arg = false;
+	}
+	else if	(strcmp(argv[1],"-surface")==0)
+	{
+		if (!strcmp(argv[2],"true")) surface_arg = true;
+		else 						 surface_arg = false;
+	}
+
 
 	VideoCapture kinect(CV_CAP_OPENNI2); 
 	printf("Starting Kinect ...\n");
