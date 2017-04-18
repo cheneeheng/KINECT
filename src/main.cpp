@@ -79,10 +79,14 @@ static inline vector<double> cvVector2vector(Vec3f A)
 string scene  = "Kitchen";
 string object = "04";
 
-int object_arg = 0;
+int object_num_arg = 0;
 bool hsv_arg = false;
 bool face_arg = false;
 bool surface_arg = false;
+bool rgb_arg = false;
+bool depth_arg = false;
+bool object_arg = false;
+bool hand_arg = false;
 
 int freq_rate = 30;
 
@@ -134,15 +138,19 @@ void* kinectGrab(void* v_kinect)
 		frame_number_global =
 			kinect->get(CV_CAP_OPENNI_IMAGE_GENERATOR+CV_CAP_PROP_POS_FRAMES);
 
-#ifdef FLAG_DEPTH
-		Mat depth_image = Mat::zeros(480,640,CV_8UC3);
-		depthImaging(depth_image,depth_global);
-		imshow("depth",depth_image); cvWaitKey(1);
-#endif
+		if(depth_arg)
+		{
+			Mat depth_image = Mat::zeros(480,640,CV_8UC3);
+			depthImaging(depth_image,depth_global);
+			imshow("depth",depth_image);
+			cvWaitKey(1);
+		}
 
-#ifdef FLAG_RGB
-		imshow("rgb",rgb_global1); cvWaitKey(1);
-#endif
+		if(rgb_arg)
+		{
+			imshow("rgb",rgb_global1);
+			cvWaitKey(1);
+		}
 
 		while(hsv_arg)
 		{
@@ -156,7 +164,7 @@ void* kinectGrab(void* v_kinect)
 			imshow("rgb",img);
 			cout << "press <s> to exit.\n";
 			keypress = waitKey(0);
-			if (keypress == 'q')
+			if (keypress == 'q' || keypress == 's')
 			{
 				hsv_arg = false;
 				break;
@@ -273,25 +281,30 @@ void* objectDetector(void* arg)
 //  sat_range_obj[0] = 199; sat_range_obj[1] = 255;
 
 	int hs[4]; // hue max/min, sat max/min
-	switch(object_arg)
+	switch(object_num_arg)
 	{
 		case 0:
 			hs[0] = 98; hs[1] = 77; hs[2] = 214; hs[3] = 76; // green cup
+			hs[0] = 99; hs[1] = 36; hs[2] = 153; hs[3] = 51; // green cup
 			break;
 		case 1:
 			hs[0] = 107; hs[1] = 90; hs[2] = 204; hs[3] = 140;
+			hs[0] = 107; hs[1] = 90; hs[2] = 255; hs[3] = 140;
 			//hs[0] = 107; hs[1] = 72; hs[2] = 204; hs[3] = 102; // yellow sponge
 			break;
 		case 2:
 			hs[0] = 125; hs[1] = 116; hs[2] = 255; hs[3] = 179; // red knife
+			hs[0] = 125; hs[1] = 98; hs[2] = 255; hs[3] = 166; // red knife
 			break;
 		case 3:
-			hs[0] = 116; hs[1] = 98; hs[2] = 255; hs[3] = 204; // orange
+			hs[0] = 111; hs[1] = 98; hs[2] = 255; hs[3] = 153; // orange
+			//hs[0] = 116; hs[1] = 98; hs[2] = 255; hs[3] = 204; // orange
 			break;
 		default:
 			hs[0] = 107; hs[1] = 90; hs[2] = 204; hs[3] = 140; 
 			break;
 	}
+
 	while(true)
 	{
 		sem_wait(&lock_t2);
@@ -299,15 +312,18 @@ void* objectDetector(void* arg)
 
 		segmentHSV(rgb_global2, hs, mask_obj_global, box_obj_global);
 
-#ifdef FLAG_OBJECT
-		Mat rgb_tmp = Mat::zeros(480,640, CV_8UC3);
-		rgb_global1.copyTo(rgb_tmp, mask_obj_global);
-		imshow("rgb_o",rgb_tmp); cvWaitKey(1);
-#endif
+		if(object_arg)
+		{
+			Mat rgb_tmp = Mat::zeros(480,640, CV_8UC3);
+			rgb_global1.copyTo(rgb_tmp, mask_obj_global);
+			imshow("rgb_o",rgb_tmp);
+			cvWaitKey(1);
+		}
 
 		sem_post(&mutex2);
 		sem_post(&lock_t1);
 	}
+
 	return 0;
 }
 
@@ -339,18 +355,20 @@ void* handDetector(void* arg)
 		face_global.height = face_global.height * 1.3;
 		rgb_global3(face_global) = 0;
 */
-      	rgb_global3.clone().rowRange(160,480).copyTo(img_no_head.rowRange(160,480));
+      	rgb_global3.clone().rowRange(200,480).copyTo(img_no_head.rowRange(200,480));
 		segmentHSV(img_no_head, hs, mask_hand_global, box_hand_global);
 
-#ifdef FLAG_HAND
-		Mat rgb_tmp = Mat::zeros(480,640, CV_8UC3);
-		rgb_global1.copyTo(rgb_tmp, mask_hand_global);
-		imshow("rgb_h",rgb_tmp); cvWaitKey(1);
-#endif
+		if(hand_arg)
+		{
+			Mat rgb_tmp = Mat::zeros(480,640, CV_8UC3);
+			rgb_global1.copyTo(rgb_tmp, mask_hand_global);
+			imshow("rgb_h",rgb_tmp); cvWaitKey(1);
+		}
 
 		sem_post(&mutex3);
 		sem_post(&lock_t1);
 	}
+
 	return 0;
 }
 
@@ -367,12 +385,15 @@ void* faceDetector(void* arg)
 
 	Mat img_depth_def, mask_obj_def, img_sub, cloud_mask, cloud_mask2, img_tmp;
 
+	bool NANflag = true;
+
 	while(true)
 	{
 		sem_wait(&lock_t4);
 		sem_wait(&mutex4);
 
-		if (frame_number_global<100)
+		// just to flush out some frames
+		if (frame_number_global<50 || NANflag)
 		{
 			if (!(countNonZero(rgb_global4!=img_tmp) == 0))
 			{
@@ -382,12 +403,15 @@ void* faceDetector(void* arg)
 				//[OBJECT POINT]***************************************************
 				cloud_global2(face_global).copyTo(cloud_mask); // reducing the search area
 				pointCloudTrajectory(cloud_mask, single_point_face_global);
+				NANflag = 
+					(isnan(single_point_face_global[0]) ||
+					 isnan(single_point_face_global[1]) ||
+					 isnan(single_point_face_global[2]));
 				cloud_mask.release(); 
 				// **************************************************[OBJECT POINT]
 			}
 		}
-
-		if (face_arg)
+		else if (face_arg)
 		{
 			if (!(countNonZero(rgb_global4!=img_tmp) == 0))
 			{
@@ -471,7 +495,7 @@ void* contactDetector(void* arg)
 			contact_val			= 0.0;
 		}
 		// face prevention
-		if(box_obj_global.y < 161) 
+		if(box_obj_global.tl().y < 201) 
 		{
 			flag_contact_init	= false;
 			flag_contact_obj	= true;
@@ -520,7 +544,7 @@ void* writeData(void* arg)
 		sem_wait(&lock_t6);
 		sem_wait(&lock_t6);
 		sem_wait(&mutex6);
-		if(frame_number_global>100)
+		if(frame_number_global>50)
 		{
 			// write values into data.txt
 			ofstream write_file(file_name.c_str(), std::ios::app);
@@ -819,72 +843,123 @@ if(frame_number_global>100)
 
 int main(int argc, char *argv[])
 {
+	argc-=1;
+
 	map<string,int> mapper;
 	mapper["green_cup"] 	= 0;
 	mapper["yellow_sponge"]	= 1;
 	mapper["red_knife"] 	= 2;
 	mapper["orange"] 		= 3;
 
-	if (strcmp(argv[1],"-obj")==0)
+	if(argc%2==1)
 	{
-		if (strcmp(argv[2],"green_cup") &&
-			strcmp(argv[2],"yellow_sponge") &&
-			strcmp(argv[2],"red_knife") &&
-			strcmp(argv[2],"orange"))
-		{
-			cerr << "Object name is invalid..." << endl;
-			return 0;
-		}
-		else
-		{
-			object_arg = mapper[string(argv[2])];
-		}
-	}
-	else if	(strcmp(argv[1],"-hsv")==0)
-	{
-		if (!strcmp(argv[2],"true")) hsv_arg = true;
-		else 						 hsv_arg = false;
-	}
-	else if	(strcmp(argv[1],"-face")==0)
-	{
-		if (!strcmp(argv[2],"true")) face_arg = true;
-		else 						 face_arg = false;
-	}
-	else if	(strcmp(argv[1],"-surface")==0)
-	{
-		if (!strcmp(argv[2],"true")) surface_arg = true;
-		else 						 surface_arg = false;
+		printf("Wrong number of input arguments...\n");
+		return 0;
 	}
 
+	for(int i=0;i<argc;i++)
+	{
+		if(i%2==1) { continue; }
+
+		if (strcmp(argv[i+1],"-object_type")==0)
+		{
+			if (strcmp(argv[i+2],"green_cup") &&
+				strcmp(argv[i+2],"yellow_sponge") &&
+				strcmp(argv[i+2],"red_knife") &&
+				strcmp(argv[i+2],"orange"))
+			{
+				cerr << "Object name is invalid..." << endl;
+				return 0;
+			}
+			else
+			{
+				object_num_arg = mapper[string(argv[i+2])];
+			}
+		}
+		else if	(strcmp(argv[i+1],"-hsv")==0)
+		{
+			if (!strcmp(argv[i+2],"true"))	hsv_arg = true;
+			else 						 	hsv_arg = false;
+		}
+		else if	(strcmp(argv[i+1],"-face")==0)
+		{
+			if (!strcmp(argv[i+2],"true"))	face_arg = true;
+			else 						 	face_arg = false;
+		}
+		else if	(strcmp(argv[i+1],"-surface")==0)
+		{
+			if (!strcmp(argv[i+2],"true"))	surface_arg = true;
+			else 						 	surface_arg = false;
+		}
+		else if	(strcmp(argv[i+1],"-rgb")==0)
+		{
+			if (!strcmp(argv[i+2],"true"))	rgb_arg = true;
+			else 						 	rgb_arg = false;
+		}
+		else if	(strcmp(argv[i+1],"-depth")==0)
+		{
+			if (!strcmp(argv[i+2],"true"))	depth_arg = true;
+			else 						 	depth_arg = false;
+		}
+		else if	(strcmp(argv[i+1],"-hand")==0)
+		{
+			if (!strcmp(argv[i+2],"true"))	hand_arg = true;
+			else 						 	hand_arg = false;
+		}
+		else if	(strcmp(argv[i+1],"-object")==0)
+		{
+			if (!strcmp(argv[i+2],"true"))	object_arg = true;
+			else 						 	object_arg = false;
+		}
+	}
 
 	VideoCapture kinect(CV_CAP_OPENNI2); 
 	printf("Starting Kinect ...\n");
 
   // Run the visualization
-#ifdef FLAG_DEPTH
-  namedWindow("depth");
-#endif
-#ifdef FLAG_RGB
-  namedWindow("rgb");
-#endif
-#ifdef FLAG_HAND
-  namedWindow("rgb_h");
-  moveWindow("rgb_h",0,0);
-#endif
-#ifdef FLAG_OBJECT
-  namedWindow("rgb_o");
-  moveWindow("rgb_o",0,490);  
-#endif
-#ifdef FLAG_PLANE
-  namedWindow("plane");
-  namedWindow("plane_reduced");
-#endif
+
+	if(depth_arg)
+	{
+		namedWindow("depth");
+		moveWindow("depth",0,0);
+	}
+
+	if(rgb_arg)
+	{
+		namedWindow("rgb");
+		moveWindow("rgb",0,550);  
+	}
+
+	if(surface_arg)
+	{
+		namedWindow("plane");
+		moveWindow("plane",0,0);
+		namedWindow("plane_reduced");
+		moveWindow("plane_reduced",0,550);  
+	}
+
+	if(hand_arg)
+	{
+	  namedWindow("rgb_h");
+	  moveWindow("rgb_h",0,0);
+	}
+
+	if(object_arg)
+	{
+	  namedWindow("rgb_o");
+	  moveWindow("rgb_o",0,550);  
+	}
+
+	if(face_arg)
+	{
+		namedWindow("face");
+		moveWindow("face",0,0);
+	}
+
 #ifdef FLAG_MARKER
   namedWindow("rgb_m");
 #endif
-#ifdef FLAG_FACE
-  namedWindow("face");
-#endif
+
 #ifdef FLAG_HISTOGRAM
   namedWindow("hist");
   moveWindow("hist",0,0);

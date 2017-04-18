@@ -16,8 +16,7 @@
 void writeSurfaceFile(
 	vector<vector<double> > surface_)
 {
-	directoryCheck(SCENE + string("Kitchen"));
-	string path = SCENE + "Kitchen/surface.txt";
+	string path = "../surface.txt";
 	if (!ifstream(path))
 	{
 		ofstream write_file(path, std::ios::app);
