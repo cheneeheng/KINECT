@@ -68,3 +68,7 @@
 - readjusted the scene.
 - recorded sample experimets.
 - recorded surface data.
+
+[14] New Data
+- 18/4/2017
+- added some static location for labeling
