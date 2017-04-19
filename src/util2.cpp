@@ -244,6 +244,7 @@ void segmentHSV(
 	vector<Rect> box2(contours.size());
 	double biggest_box = 0;
 	int big1 = 0;
+
 	for (int j=0;j<(int)contours.size();j++)
 	{
 		approxPolyDP(Mat(contours[j]), contours_poly[j], 3, true);
@@ -255,9 +256,31 @@ void segmentHSV(
 		}
 	}
 	Mat tmp_img = Mat::zeros(seg_mask.size(), CV_8UC1);
-	drawContours( tmp_img, contours, big1, 1, -1);
+	drawContours(tmp_img, contours, big1, 1, -1);
 	seg_mask_noisefree = tmp_img;
 	box = box2[0];
+
+/*
+	for (int j=0;j<(int)contours.size();j++)
+	{
+		Mat tmp_img = Mat::zeros(seg_mask.size(), CV_8UC1);
+		Mat seg_mask2 = Mat::zeros(seg_mask.size(), CV_8UC1);
+		approxPolyDP(Mat(contours[j]), contours_poly[j], 3, true);
+		drawContours(tmp_img, contours, j, 1, -1);
+		seg_mask.copyTo(seg_mask2, tmp_img);
+		if (biggest_box < sum(seg_mask2)[0])
+		{
+			biggest_box = sum(seg_mask2)[0];
+			box2[0] = boundingRect(Mat(contours_poly[j]));
+			big1 = j;
+		}
+	}
+	Mat tmp_img = Mat::zeros(seg_mask.size(), CV_8UC1);
+	drawContours(tmp_img, contours, big1, 1, -1);
+	seg_mask_noisefree = tmp_img;
+	box = box2[0];
+	imshow("rgb_m",tmp_img*255);
+*/
 }
 
 void segmentHSV(cv::Mat src_hsv, cv::Mat src_rgb,

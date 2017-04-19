@@ -286,19 +286,24 @@ void* objectDetector(void* arg)
 		case 0:
 			hs[0] = 98; hs[1] = 77; hs[2] = 214; hs[3] = 76; // green cup
 			hs[0] = 99; hs[1] = 36; hs[2] = 153; hs[3] = 51; // green cup
+			//hs[0] = 90; hs[1] = 72; hs[2] = 140; hs[3] = 56; // green cup
 			break;
 		case 1:
 			hs[0] = 107; hs[1] = 90; hs[2] = 204; hs[3] = 140;
 			hs[0] = 107; hs[1] = 90; hs[2] = 255; hs[3] = 140;
 			//hs[0] = 107; hs[1] = 72; hs[2] = 204; hs[3] = 102; // yellow sponge
+			//hs[0] = 98; hs[1] = 90; hs[2] = 230; hs[3] = 140; // yellow sponge
 			break;
 		case 2:
 			hs[0] = 125; hs[1] = 116; hs[2] = 255; hs[3] = 179; // red knife
 			hs[0] = 125; hs[1] = 98; hs[2] = 255; hs[3] = 166; // red knife
+			hs[0] = 134; hs[1] = 113; hs[2] = 255; hs[3] = 143; // red knife
+			//hs[0] = 125; hs[1] = 116; hs[2] = 237; hs[3] = 184; // red knife
 			break;
 		case 3:
 			hs[0] = 111; hs[1] = 98; hs[2] = 255; hs[3] = 153; // orange
 			//hs[0] = 116; hs[1] = 98; hs[2] = 255; hs[3] = 204; // orange
+			//hs[0] = 107; hs[1] = 100; hs[2] = 255; hs[3] = 204; // orange
 			break;
 		default:
 			hs[0] = 107; hs[1] = 90; hs[2] = 204; hs[3] = 140; 
@@ -955,6 +960,7 @@ int main(int argc, char *argv[])
 		namedWindow("face");
 		moveWindow("face",0,0);
 	}
+
 
 #ifdef FLAG_MARKER
   namedWindow("rgb_m");
