@@ -87,6 +87,7 @@ bool rgb_arg = false;
 bool depth_arg = false;
 bool object_arg = false;
 bool hand_arg = false;
+bool freq_arg = false;
 
 int freq_rate = 30;
 
@@ -112,9 +113,13 @@ void* kinectGrab(void* v_kinect)
 	while(true)
 	{
 
-#ifdef FREQ
-		if(c%freq_rate==0) gettimeofday(&start_time, NULL);
-#endif
+		if(freq_arg)
+		{
+			if(c%freq_rate==0)
+			{
+				gettimeofday(&start_time, NULL);
+			}
+		}
 
 		sem_wait(&lock_t1);
 		sem_wait(&lock_t1);
@@ -182,13 +187,59 @@ void* kinectGrab(void* v_kinect)
 				RANSAC3DPlane(tmp_cloud, plane_tmp, box, 1000, ratio, 0.003);
 			imshow("plane", plane_tmp*255);
 
-			printf("NR: %.4f %.4f %.4f %.4f \n", plane_eq[0], plane_eq[1], plane_eq[2], plane_eq[3]);
+			vector<double> tmpeq = cvVector2vector(plane_eq);
+			vector<double> tmpmp = 
+				cvVector2vector(
+					tmp_cloud.at<Vec3f>((box.br().y+box.tl().y)/2,
+										(box.br().x+box.tl().x)/2));
 
+			vector<double> boxmin; boxmin.resize(3);
+			vector<double> boxmax; boxmax.resize(3);
+			vector<double> boxtmp;
+			bool flagfirst = true;
 			for(int y=0;y<480;y++)
+			{
 				for(int x=0;x<640;x++)
+				{
 					if (norm(tmp_cloud.at<Vec3f>(y,x))!=0) 
-						plane_tmp2.data[(y*640)+x] = 1;  
+					{
+						plane_tmp2.data[(y*640)+x] = 1;  /*
+						boxtmp = cvVector2vector(tmp_cloud.at<Vec3f>(y,x));
+						if(flagfirst)
+						{
+							flagfirst = false;
+							boxmin=boxmax=tmpmp;
+						}
+						else
+						{
+							if (boxtmp[0]>boxmax[0] && boxtmp[0]<1.0 && 
+								boxtmp[1]>boxmax[1] && boxtmp[1]<1.0 && 
+								boxtmp[2]>boxmax[2]&&boxtmp[2]<2.0)
+								boxmax = boxtmp;
+							if (boxtmp[0]<boxmin[0] && boxtmp[0]>-1.0 &&
+								boxtmp[1]<boxmin[1] &&
+								boxtmp[2]<boxmin[2])
+								boxmin = boxtmp;
+						}*/
+					}
+				}
+			}
 			imshow("plane_reduced", plane_tmp2*255);
+
+			boxmax = 
+				cvVector2vector(
+					tmp_cloud.at<Vec3f>(box.tl().y + ((box.br().y-box.tl().y)*0.2),
+										box.tl().x + ((box.br().x-box.tl().x)*0.2)));
+			boxmin = 
+				cvVector2vector(
+					tmp_cloud.at<Vec3f>(box.br().y - ((box.br().y-box.tl().y)*0.2),
+										box.br().x - ((box.br().x-box.tl().x)*0.2)));
+
+			printf(" %.4f %.4f %.4f \n %.4f %.4f %.4f \n %.4f %.4f %.4f \n %.4f %.4f %.4f %.4f \n",
+					boxmin[0], boxmin[1], boxmin[2],
+					tmpmp[0], tmpmp[1], tmpmp[2],
+					boxmax[0], boxmax[1], boxmax[2],
+					plane_eq[0], plane_eq[1], plane_eq[2], plane_eq[3]);
 
 			if (countNonZero(plane_tmp) < 1) 
 				printf("NO PLANE FOUND... \n\n");
@@ -198,13 +249,9 @@ void* kinectGrab(void* v_kinect)
 			keypress = waitKey(0); 
 			if (keypress == 'y') 
 			{
-				vector<double> tmpeq = 
-					cvVector2vector(plane_eq);
-				vector<double> tmpmp = 
-					cvVector2vector(
-						tmp_cloud.at<Vec3f>((box.br().y+box.tl().y)/2,
-											(box.br().x+box.tl().x)/2));
 				tmpeq.insert(tmpeq.end(),tmpmp.begin(),tmpmp.end());
+				tmpeq.insert(tmpeq.end(),boxmin.begin(),boxmin.end());
+				tmpeq.insert(tmpeq.end(),boxmax.begin(),boxmax.end());
 				plane_global.push_back(tmpeq);
 				for(int y=0;y<480;y++)
 					for(int x=0;x<640;x++)
@@ -213,12 +260,6 @@ void* kinectGrab(void* v_kinect)
 			} 
 			else if (keypress == 'x') 
 			{
-				vector<double> tmpeq = 
-					cvVector2vector(plane_eq);
-				vector<double> tmpmp = 
-					cvVector2vector(
-						tmp_cloud.at<Vec3f>((box.br().y+box.tl().y)/2,
-											(box.br().x+box.tl().x)/2));
 				tmpeq.insert(tmpeq.end(),tmpmp.begin(),tmpmp.end());
 				plane_global.push_back(tmpeq);
 			} 
@@ -248,18 +289,19 @@ void* kinectGrab(void* v_kinect)
 		sem_post(&lock_t5);
 		sem_post(&lock_t6);
 
-#ifdef FREQ
-		c++;
-		if(c%freq_rate==0)
+		if(freq_arg)
 		{
-			c = 0;
-			gettimeofday(&end_time, NULL);
-			cout << freq_rate/ ((end_time.tv_sec - start_time.tv_sec) + 
-					(end_time.tv_usec- start_time.tv_usec) * 1e-6) 
-				 << " [Hz]"<< endl;
+			c++;
+			if(c%freq_rate==0)
+			{
+				c = 0;
+				gettimeofday(&end_time, NULL);
+				printf("Frequency : %f [Hz]",
+						freq_rate /
+						((end_time.tv_sec - start_time.tv_sec) + 
+						 (end_time.tv_usec- start_time.tv_usec) * 1e-6));
+			}
 		}
-#endif
-
 	}
 	return 0;
 }
@@ -286,24 +328,24 @@ void* objectDetector(void* arg)
 		case 0:
 			hs[0] = 98; hs[1] = 77; hs[2] = 214; hs[3] = 76; // green cup
 			hs[0] = 99; hs[1] = 36; hs[2] = 153; hs[3] = 51; // green cup
-			//hs[0] = 90; hs[1] = 72; hs[2] = 140; hs[3] = 56; // green cup
+			hs[0] = 90; hs[1] = 72; hs[2] = 140; hs[3] = 56; // green cup
 			break;
 		case 1:
 			hs[0] = 107; hs[1] = 90; hs[2] = 204; hs[3] = 140;
 			hs[0] = 107; hs[1] = 90; hs[2] = 255; hs[3] = 140;
 			//hs[0] = 107; hs[1] = 72; hs[2] = 204; hs[3] = 102; // yellow sponge
-			//hs[0] = 98; hs[1] = 90; hs[2] = 230; hs[3] = 140; // yellow sponge
+			hs[0] = 98; hs[1] = 90; hs[2] = 230; hs[3] = 140; // yellow sponge
 			break;
 		case 2:
 			hs[0] = 125; hs[1] = 116; hs[2] = 255; hs[3] = 179; // red knife
 			hs[0] = 125; hs[1] = 98; hs[2] = 255; hs[3] = 166; // red knife
 			hs[0] = 134; hs[1] = 113; hs[2] = 255; hs[3] = 143; // red knife
-			//hs[0] = 125; hs[1] = 116; hs[2] = 237; hs[3] = 184; // red knife
+			hs[0] = 125; hs[1] = 116; hs[2] = 237; hs[3] = 184; // red knife
 			break;
 		case 3:
 			hs[0] = 111; hs[1] = 98; hs[2] = 255; hs[3] = 153; // orange
 			//hs[0] = 116; hs[1] = 98; hs[2] = 255; hs[3] = 204; // orange
-			//hs[0] = 107; hs[1] = 100; hs[2] = 255; hs[3] = 204; // orange
+			hs[0] = 107; hs[1] = 100; hs[2] = 255; hs[3] = 204; // orange
 			break;
 		default:
 			hs[0] = 107; hs[1] = 90; hs[2] = 204; hs[3] = 140; 
@@ -866,55 +908,57 @@ int main(int argc, char *argv[])
 	{
 		if(i%2==1) { continue; }
 
-		if (strcmp(argv[i+1],"-object_type")==0)
+		if (!strcmp(argv[i+1],"-object"))
 		{
-			if (strcmp(argv[i+2],"green_cup") &&
-				strcmp(argv[i+2],"yellow_sponge") &&
-				strcmp(argv[i+2],"red_knife") &&
-				strcmp(argv[i+2],"orange"))
+			if (!strcmp(argv[i+2],"true"))
 			{
-				cerr << "Object name is invalid..." << endl;
-				return 0;
+				object_arg = true;
 			}
 			else
 			{
-				object_num_arg = mapper[string(argv[i+2])];
+				if (strcmp(argv[i+2],"green_cup") &&
+					strcmp(argv[i+2],"yellow_sponge") &&
+					strcmp(argv[i+2],"red_knife") &&
+					strcmp(argv[i+2],"orange"))
+				{
+					cerr << "Object name is invalid..." << endl;
+					return 0;
+				}
+				else
+				{
+					object_num_arg = mapper[string(argv[i+2])];
+				}
 			}
 		}
-		else if	(strcmp(argv[i+1],"-hsv")==0)
+		else if(!strcmp(argv[i+1],"-hsv") &&
+				!strcmp(argv[i+2],"true"))
 		{
-			if (!strcmp(argv[i+2],"true"))	hsv_arg = true;
-			else 						 	hsv_arg = false;
+			hsv_arg = true;
 		}
-		else if	(strcmp(argv[i+1],"-face")==0)
+		else if(!strcmp(argv[i+1],"-face") &&
+				!strcmp(argv[i+2],"true"))
 		{
-			if (!strcmp(argv[i+2],"true"))	face_arg = true;
-			else 						 	face_arg = false;
+			face_arg = true;
 		}
-		else if	(strcmp(argv[i+1],"-surface")==0)
+		else if(!strcmp(argv[i+1],"-surface") &&
+				!strcmp(argv[i+2],"true"))
 		{
-			if (!strcmp(argv[i+2],"true"))	surface_arg = true;
-			else 						 	surface_arg = false;
+			surface_arg = true;
 		}
-		else if	(strcmp(argv[i+1],"-rgb")==0)
+		else if(!strcmp(argv[i+1],"-rgb") &&
+				!strcmp(argv[i+2],"true"))
 		{
-			if (!strcmp(argv[i+2],"true"))	rgb_arg = true;
-			else 						 	rgb_arg = false;
+			rgb_arg = true;
 		}
-		else if	(strcmp(argv[i+1],"-depth")==0)
+		else if(!strcmp(argv[i+1],"-depth") &&
+				!strcmp(argv[i+2],"true"))
 		{
-			if (!strcmp(argv[i+2],"true"))	depth_arg = true;
-			else 						 	depth_arg = false;
+			depth_arg = true;
 		}
-		else if	(strcmp(argv[i+1],"-hand")==0)
+		else if(!strcmp(argv[i+1],"-hand") &&
+				!strcmp(argv[i+2],"true"))
 		{
-			if (!strcmp(argv[i+2],"true"))	hand_arg = true;
-			else 						 	hand_arg = false;
-		}
-		else if	(strcmp(argv[i+1],"-object")==0)
-		{
-			if (!strcmp(argv[i+2],"true"))	object_arg = true;
-			else 						 	object_arg = false;
+			hand_arg = true;
 		}
 	}
 

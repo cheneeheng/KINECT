@@ -36,6 +36,7 @@
 #include <dirent.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <sys/time.h>
 
 #include <vtkVersion.h>
 #include <vtkSmartPointer.h>
