@@ -1,0 +1,9 @@
+%YAML:1.0
+depth_image_topic: /camera/depth/image
+camera_info_topic: /camera/depth/camera_info 
+downsampling_factor: 4
+
+resolution:
+  width: 640
+  height: 480
+

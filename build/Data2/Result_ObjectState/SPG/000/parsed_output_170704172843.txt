@@ -1,0 +1,9 @@
+70 nothing is happening .
+645 you have grabbed the SPG that was stored .
+704 i think you are going to clean TABLE1 .
+710 No,i think you are going to clean SHELF .
+730 you are cleaning SHELF .
+867 i think you are going to store the SPG .
+894 you are storing the SPG .
+925 the SPG has been released .
+927 nothing is happening .

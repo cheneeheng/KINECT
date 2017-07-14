@@ -1,1 +1,0 @@
-/home/chen/HMAR/KINECT/Build/CMakeFiles/HMAR.dir

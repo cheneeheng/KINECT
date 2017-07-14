@@ -1,0 +1,20 @@
+68 nothing is happening .
+547 you have grabbed the APP that was stored .
+610 i think you are going to eat the APP .
+623 nothing is happening .
+626 you are storing the APP .
+632 i think you are going to eat the APP .
+643 you are eating the APP .
+707 i think you are going to place the APP .
+738 you are placing the APP on TABLE1 .
+773 the APP has been released .
+775 nothing is happening .
+833 you have grabbed the APP that was placed .
+907 i think you are going to eat the APP .
+938 you are eating the APP .
+1016 i think you are going to throw the APP .
+1029 No,i think you are going to place the APP .
+1035 No,i think you are going to throw the APP .
+1048 you are throwing the APP .
+1080 the APP has been released .
+1082 nothing is happening .

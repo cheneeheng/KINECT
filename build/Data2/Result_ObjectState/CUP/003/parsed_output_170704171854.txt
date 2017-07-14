@@ -1,0 +1,14 @@
+73 nothing is happening .
+500 you have grabbed the CUP that was stored .
+544 i think you are going to fill up the CUP .
+590 you are filling up the CUP .
+676 i think you are going to drink .
+705 you are drinking .
+832 i think you are going to wash the CUP .
+842 No,i think you are going to place the CUP .
+871 you are placing the CUP on TABLE1 .
+894 you have placed the CUP on TABLE1 .
+897 you are placing the CUP on TABLE1 .
+904 you have placed the CUP on TABLE1 .
+910 the CUP has been released .
+912 nothing is happening .

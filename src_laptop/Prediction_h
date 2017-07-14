@@ -1,0 +1,69 @@
+/*
+joi * Prediction.h
+ *
+ *  Created on: Apr 7, 2017
+ *      Author: chen
+ */
+
+#ifndef PREDICTION_H_
+#define PREDICTION_H_
+
+#include "dataDeclaration.h"
+#include "algo.h"
+
+class Prediction {
+public:
+	Prediction();
+
+	virtual ~Prediction();
+
+	void Init(
+			string path_,
+			string obj_,
+			map<string,pair<int,int> > ac_,
+			vector<string> al_,
+			map<string,map<string,string> > ol_,
+			int delay_);
+	string Decode(string obj_, string loc_, string msg_);
+
+	void Delay_(state_t s_);
+	void Parse(state_t s_);
+	void DT0();
+	void DT1();
+	void DT2_1();
+	void DT2_2();
+	void DT3_1();
+	void DT3_2();
+	void DT4_1(double x_);
+	void DT4_2(vector<double> x_);
+	void Display(string filename_);
+
+private:
+	map<string,pair<int,int> > 		ac;
+	vector<string> 					al;
+	map<string,map<string,string> > ol;
+
+	vector<string> 		message;
+	vector<int> 		message_num;
+
+	string 				obj;
+	string 				loc;
+	int					delay_factor;
+	vector<state_t>		state_mem;
+	string 				output;
+	string 				output_mem;
+	string 				label;
+	string 				label_mem;
+	string 				repeat;
+	bool				grasp_flag;
+	bool				start_loc;
+
+
+	string o;
+	string l;
+	string a;
+
+	string ob_ac;
+};
+
+#endif /* PREDICTION_H_ */

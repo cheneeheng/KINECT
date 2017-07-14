@@ -6,514 +6,617 @@
  */
 
 
-#include "dataDeclaration.h"
+#include <Eigen/Core>
+#include <Eigen/Dense>
+#include <fstream>
+#include <memory>
+#include <iostream>
+#include <pthread.h>
+#include <vector>
+#include <semaphore.h>
+#include <sstream>
+#include <string>
+
+#include <opencv2/opencv.hpp>
+
+//#include "dataDeclaration.h"
+#include "PFTracker.h"
+#include "ObjectDetection.h"
+
+#include "Test.h"
+#include "VTKExtra.h"
+#include "ReadFile.h"
+#include "WriteFile.h"
+#include "DataParser.h"
+#include "DataFilter.h"
+#include "ActionParser.h"
+#include "ActionPrediction.h"
+
+#include "OpenGLViewer.h"
 #include "util.h"
-#include "util2.h"
 
-// image variables
-Mat rgb_global1 = Mat::zeros(480,640,CV_8UC3);
-Mat rgb_global2 = Mat::zeros(480,640,CV_8UC3);
-Mat rgb_global3 = Mat::zeros(480,640,CV_8UC3);
-Mat rgb_global4 = Mat::zeros(480,640,CV_8UC3);
+#include "TestCase.h"
+#include "festival.h"
 
-Mat depth_global,cloud_global1,cloud_global2,cloud_global3;
+// for viewer
+vec3 gPosition1;
+quat myQuat;
 
-Mat mask_hand_global = Mat::zeros(480,640,CV_8UC1);
-Mat mask_obj_global  = Mat::zeros(480,640,CV_8UC1);
+// thread locks
+sem_t mutex_contactdetector, mutex_tracker, mutex_viewer, mutex_actionrecognition, mutex_tts;
+sem_t lock_contactdetector, lock_tracker, lock_viewer, lock_actionrecognition, lock_facedetector;
 
-Rect box_obj_global, box_hand_global;
-Rect face_global(0,0,0,0);
+std::string obj_model, obj_name;
+std::string phrase;
 
-bool contact_obj = false;
+cv::Mat img_rgb_global   = cv::Mat::zeros(480,640,CV_8UC3);
+cv::Mat img_rgb_global_o = cv::Mat::zeros(480,640,CV_8UC3);
+cv::Mat img_rgb_global_h = cv::Mat::zeros(480,640,CV_8UC3);
+cv::Mat img_rgb_global_f = cv::Mat::zeros(480,640,CV_8UC3);
+cv::Mat img_depth_global = cv::Mat::zeros(480,640,CV_16UC1);
+cv::Mat img_cloud_global = cv::Mat::zeros(480,640,CV_32FC3);
+cv::Mat img_cloud_global_c = cv::Mat::zeros(480,640,CV_32FC3);
 
-Vec3f single_point_obj_global;
-Vec3f single_point_face_global;
+cv::Mat mask_hand_global = cv::Mat::zeros(480,640,CV_8UC1);
+cv::Mat mask_obj_global  = cv::Mat::zeros(480,640,CV_8UC1);
 
-float frame_number_global = 0.0;
+cv::Rect box_obj_global, box_hand_global;
 
-vector<vector<double> > plane_global;
+bool contact_obj { false };
+bool object_only { false };
+int THRESHOLD = 200;
 
-// threads
-int MAX = 5;
-sem_t mutex1,mutex2,mutex3,mutex4,mutex5,mutex6,mutex7;
-sem_t lock_t1,lock_t2,lock_t3,lock_t4,lock_t5,lock_t6;
+std::string PARENT		= "Data2";
+std::string KB_DIR		= "kb";
+std::string DATA_DIR	= "recording";
+std::string EVAL		= "Scene_Moveface";
+std::string RESULT		= "Result_ObjectState";
 
+float frame_number_global { 0.0 };
+cv::Vec3f single_point_face_global;
 
-// option flags
-//#define FLAG_RGB // shows window for rgb
-//#define FLAG_DEPTH // shows window for depth
-//#define FLAG_PLANE // detecting planes
-#define FLAG_OBJECT // shows window for object detection
-#define FLAG_HAND // shows window for hand detection
-//#define FLAG_FACE // shows window for face detection
-#define FLAG_CONTACT //shows contact value
-#define FLAG_WRITE //records data
-//#define FLAG_HISTOGRAM //shows result as histogram
+// =============================================================================
+// Tracker
+// =============================================================================
+void* dbotthread(void* arg)
+{ 
 
-//#define FREQ
+	std::string obj_name_ = obj_name;
 
+	// Tracker initialization
+	auto PFT = std::make_shared<PFTracker>();
+	PFT->Build("..");
 
-//====================================================================================================================================
+    Eigen::Vector3d p(0.0, 0.0, 0.0);
+    Eigen::Quaternion<double> q(1.0, 0.0, 0.0, 0.0);
 
-static inline vector<double> cvVector2vector(Vec4f A)
-{
-	vector<double> B(4);
-	B[0]=A[0];
-	B[1]=A[1];
-	B[2]=A[2];
-	B[3]=A[3];
-	return B;
-}
+    dbot::PoseVelocityVector pose;
+    pose.position() = p;
+    pose.orientation().quaternion(q);
 
-static inline vector<double> cvVector2vector(Vec3f A)
-{
-	vector<double> B(3);
-	B[0]=A[0];
-	B[1]=A[1];
-	B[2]=A[2];
-	return B;
-}
+	// image variables
+	cv::Mat img_rgb 		= cv::Mat::zeros(480,640,CV_8UC3);
+	cv::Mat img_depth_rgb	= cv::Mat::zeros(480,640,CV_8UC3);
+	cv::Mat img_depth		= cv::Mat::zeros(480,640,CV_16UC1);
+	cv::Mat img_cloud		= cv::Mat::zeros(480,640,CV_32FC3);
 
-//====================================================================================================================================
+	cv::Vec3f single_point_obj;
 
-string scene  = "Kitchen";
-string object = "04";
+	int counter = 30;
+	int x, y, z;
 
-int object_num_arg = 0;
-bool hsv_arg = false;
-bool face_arg = false;
-bool surface_arg = false;
-bool rgb_arg = false;
-bool depth_arg = false;
-bool object_arg = false;
-bool hand_arg = false;
-bool freq_arg = false;
+	std::string OUTPUT_RES1;
+	std::string OUTPUT_RES2;
+	std::string RESULT_DIR	=  PARENT + "/" + RESULT + "/" + obj_name_ + "/";
+	directoryCheck(RESULT_DIR);
 
-int freq_rate = 30;
+    time_t now = time(0);
+    struct tm tstruct;
+    char buf[80];
+    tstruct = *localtime(&now);
+    strftime(buf, sizeof(buf), "%y%m%d%H%M%S", &tstruct);
+	OUTPUT_RES1 = "example_";
+	OUTPUT_RES1 += buf;
+	OUTPUT_RES1 += ".txt";
+	OUTPUT_RES2 = "recording_";
+	OUTPUT_RES2 += buf;
+	OUTPUT_RES2 += ".txt";
+	OUTPUT_RES1 = RESULT_DIR + OUTPUT_RES1;
+	OUTPUT_RES2 = RESULT_DIR + OUTPUT_RES2;
 
-// ============================================================================
-// THREAD 1 : KINECT 
-// ============================================================================
-void* kinectGrab(void* v_kinect)
-{
-	VideoCapture *kinect = reinterpret_cast<VideoCapture *>(v_kinect);
+	cv::VideoCapture kinect(CV_CAP_OPENNI2); 
+	printf("Starting Kinect ...\n");
 
-	struct timeval start_time, end_time;
-	int c = 0;
+	std::ofstream myfile, write_file;
+	myfile.open     (OUTPUT_RES1.c_str(), std::ios::out | std::ios::app);
+	write_file.open (OUTPUT_RES2.c_str(), std::ios::out | std::ios::app);
 
-	float ratio[2]; ratio[0] = 0.00005; ratio[1] = 0.5;
-	char keypress;
-    
-	Mat plane_tmp = Mat::zeros(480,640,CV_8UC1);
-	Mat plane_tmp2 = Mat::zeros(480,640,CV_8UC1);
-	Mat tmp_cloud,tmp_cloud2,img;
-
-	bool flag_tmp = true;
-
-	while(true)
+	while(1)
 	{
-
-		if(freq_arg)
-		{
-			if(c%freq_rate==0)
-			{
-				gettimeofday(&start_time, NULL);
-			}
-		}
-
-		sem_wait(&lock_t1);
-		sem_wait(&lock_t1);
-		sem_wait(&lock_t1);
-		sem_wait(&lock_t1);
-		sem_wait(&lock_t1);
-		sem_wait(&mutex1);
-
-		kinect->grab();
-
-		kinect->retrieve(rgb_global1,CV_CAP_OPENNI_BGR_IMAGE);
-		rgb_global2 = rgb_global1.clone();
-		rgb_global3 = rgb_global1.clone();
-		rgb_global4 = rgb_global1.clone();
-
-		kinect->retrieve(depth_global,CV_CAP_OPENNI_DEPTH_MAP);
-		kinect->retrieve(cloud_global1,CV_CAP_OPENNI_POINT_CLOUD_MAP);
-		cloud_global2 = cloud_global1.clone();
-		cloud_global3 = cloud_global1.clone();
-
-		frame_number_global =
-			kinect->get(CV_CAP_OPENNI_IMAGE_GENERATOR+CV_CAP_PROP_POS_FRAMES);
-
-		if(depth_arg)
-		{
-			Mat depth_image = Mat::zeros(480,640,CV_8UC3);
-			depthImaging(depth_image,depth_global);
-			imshow("depth",depth_image);
-			cvWaitKey(1);
-		}
-
-		if(rgb_arg)
-		{
-			imshow("rgb",rgb_global1);
-			cvWaitKey(1);
-		}
-
-		while(hsv_arg)
-		{
-			imwrite( "../test.png" , rgb_global1 );
-			int hue_range[2], sat_range[2];
-			Mat img = imread("../test.png");
-			getColorThreshold(img, hue_range, sat_range);
-			printf("Final Calibration values:\nhue = %d %d\nsat = %d %d\n",
-					hue_range[0],hue_range[1],
-					sat_range[0],sat_range[1]);
-			imshow("rgb",img);
-			cout << "press <s> to exit.\n";
-			keypress = waitKey(0);
-			if (keypress == 'q' || keypress == 's')
-			{
-				hsv_arg = false;
-				break;
-			}
-		}
- 
-		// [SURFACE DETECTION]*************************************************
-		tmp_cloud = cloud_global1.clone();
-		while(surface_arg)
-		{       
-			Rect box;
-			plane_tmp  = Mat::zeros(480,640,CV_8UC1);
-			plane_tmp2 = Mat::zeros(480,640,CV_8UC1);
-			Vec4f plane_eq = 
-				RANSAC3DPlane(tmp_cloud, plane_tmp, box, 1000, ratio, 0.003);
-			imshow("plane", plane_tmp*255);
-
-			vector<double> tmpeq = cvVector2vector(plane_eq);
-			vector<double> tmpmp = 
-				cvVector2vector(
-					tmp_cloud.at<Vec3f>((box.br().y+box.tl().y)/2,
-										(box.br().x+box.tl().x)/2));
-
-			vector<double> boxmin; boxmin.resize(3);
-			vector<double> boxmax; boxmax.resize(3);
-			vector<double> boxtmp;
-			bool flagfirst = true;
-			for(int y=0;y<480;y++)
-			{
-				for(int x=0;x<640;x++)
-				{
-					if (norm(tmp_cloud.at<Vec3f>(y,x))!=0) 
-					{
-						plane_tmp2.data[(y*640)+x] = 1;  /*
-						boxtmp = cvVector2vector(tmp_cloud.at<Vec3f>(y,x));
-						if(flagfirst)
-						{
-							flagfirst = false;
-							boxmin=boxmax=tmpmp;
-						}
-						else
-						{
-							if (boxtmp[0]>boxmax[0] && boxtmp[0]<1.0 && 
-								boxtmp[1]>boxmax[1] && boxtmp[1]<1.0 && 
-								boxtmp[2]>boxmax[2]&&boxtmp[2]<2.0)
-								boxmax = boxtmp;
-							if (boxtmp[0]<boxmin[0] && boxtmp[0]>-1.0 &&
-								boxtmp[1]<boxmin[1] &&
-								boxtmp[2]<boxmin[2])
-								boxmin = boxtmp;
-						}*/
-					}
-				}
-			}
-			imshow("plane_reduced", plane_tmp2*255);
-
-			boxmax = 
-				cvVector2vector(
-					tmp_cloud.at<Vec3f>(box.tl().y + ((box.br().y-box.tl().y)*0.2),
-										box.tl().x + ((box.br().x-box.tl().x)*0.2)));
-			boxmin = 
-				cvVector2vector(
-					tmp_cloud.at<Vec3f>(box.br().y - ((box.br().y-box.tl().y)*0.2),
-										box.br().x - ((box.br().x-box.tl().x)*0.2)));
-
-			printf(" %.4f %.4f %.4f \n %.4f %.4f %.4f \n %.4f %.4f %.4f \n %.4f %.4f %.4f %.4f \n",
-					boxmin[0], boxmin[1], boxmin[2],
-					tmpmp[0], tmpmp[1], tmpmp[2],
-					boxmax[0], boxmax[1], boxmax[2],
-					plane_eq[0], plane_eq[1], plane_eq[2], plane_eq[3]);
-
-			if (countNonZero(plane_tmp) < 1) 
-				printf("NO PLANE FOUND... \n\n");
-			else			
-				printf("SAVE NORMAL VECTOR OF PLANE : [Y/N] \n\n");
-
-			keypress = waitKey(0); 
-			if (keypress == 'y') 
-			{
-				tmpeq.insert(tmpeq.end(),tmpmp.begin(),tmpmp.end());
-				tmpeq.insert(tmpeq.end(),boxmin.begin(),boxmin.end());
-				tmpeq.insert(tmpeq.end(),boxmax.begin(),boxmax.end());
-				plane_global.push_back(tmpeq);
-				for(int y=0;y<480;y++)
-					for(int x=0;x<640;x++)
-						tmp_cloud.at<Vec3f>(y,x) *= 
-							(int)(plane_tmp.data[(y*640)+x]==0);
-			} 
-			else if (keypress == 'x') 
-			{
-				tmpeq.insert(tmpeq.end(),tmpmp.begin(),tmpmp.end());
-				plane_global.push_back(tmpeq);
-			} 
-			else if (keypress == 'q')
-			{
-				writeSurfaceFile(plane_global);
-				surface_arg = false;
-				break;
-			}
-			else if (keypress == 'd')
-			{
-				for(int y=0;y<480;y++)
-					for(int x=0;x<640;x++)
-						tmp_cloud.at<Vec3f>(y,x) *= 
-							(int)(plane_tmp.data[(y*640)+x]==0);
-			}
-		}
+		sem_wait(&lock_tracker);
+		sem_wait(&lock_tracker);
+		sem_wait(&lock_tracker);
+		sem_wait(&mutex_tracker);
 		
-		destroyWindow("plane");
-		destroyWindow("plane_reduced");
-		// *************************************************[SURFACE DETECTION]
+		kinect.grab();
+		kinect.retrieve(img_rgb,CV_CAP_OPENNI_BGR_IMAGE);
+		kinect.retrieve(img_depth,CV_CAP_OPENNI_DEPTH_MAP);
+		kinect.retrieve(img_cloud,CV_CAP_OPENNI_POINT_CLOUD_MAP);
+		frame_number_global = kinect.get(CV_CAP_OPENNI_IMAGE_GENERATOR+CV_CAP_PROP_POS_FRAMES);
+		img_rgb_global		= img_rgb.clone();
+		img_rgb_global_o	= img_rgb.clone();
+		img_rgb_global_h	= img_rgb.clone();
+		img_rgb_global_f	= img_rgb.clone();
+		img_depth_global	= img_depth.clone();
+		img_cloud_global	= img_cloud.clone();
+		img_cloud_global_c	= img_cloud.clone();
 
-		sem_post(&mutex1);
-		sem_post(&lock_t2);
-		sem_post(&lock_t3);
-		sem_post(&lock_t4);
-		sem_post(&lock_t5);
-		sem_post(&lock_t6);
+		sem_post(&lock_facedetector);
 
-		if(freq_arg)
+		if(0)
 		{
-			c++;
-			if(c%freq_rate==0)
+			cv::Mat depth_image = cv::Mat::zeros(480,640,CV_8UC3);
+			depthImaging(img_depth_rgb, img_depth);
+			imshow("depth",img_depth_rgb);
+			imshow("rgb",img_rgb);
+			cvWaitKey(1);
+		}
+
+		if(counter > 0)
+		{
+			counter--;
+
+			if(counter == 0)
 			{
-				c = 0;
-				gettimeofday(&end_time, NULL);
-				printf("Frequency : %f [Hz]",
-						freq_rate /
-						((end_time.tv_sec - start_time.tv_sec) + 
-						 (end_time.tv_usec- start_time.tv_usec) * 1e-6));
+
+				#ifdef NEVER
+				p[0] = single_point_obj[0];
+				p[1] = single_point_obj[1];
+				p[2] = single_point_obj[2];
+				#endif
+
+				std::vector<std::vector<std::string> > data_full;
+				readFile(
+						std::string(
+								"../config/pose_cache_" +
+								obj_model + ".txt").c_str(),
+								data_full, ' ');
+
+				p[0]  = std::stof(data_full[0][0]);
+				p[1]  = std::stof(data_full[0][1]);
+				p[2]  = std::stof(data_full[0][2]);
+				q.w() = std::stof(data_full[0][3]);
+				q.x() = std::stof(data_full[0][4]);
+				q.y() = std::stof(data_full[0][5]);
+				q.z() = std::stof(data_full[0][6]);
+
+				pose.position() = p;
+   				pose.orientation().quaternion(q);
+
+				auto initial_poses = PFT->InitialPoses();
+				initial_poses[0].component(0) = pose;
+				PFT->InitialPoses(initial_poses);
+
+				PFT->Initialize();
+				printf("===================================================\n");
+			}
+
+			sem_post(&lock_tracker);
+			sem_post(&lock_tracker);
+		}
+		else
+		{
+			auto poses = PFT->Track(img_depth);
+			auto row =
+					(PFT->ObjectIndex() / (640/PFT->DownsamplingFactor())) *
+							PFT->DownsamplingFactor();
+			auto col =
+					(PFT->ObjectIndex() % (640/PFT->DownsamplingFactor())) *
+							PFT->DownsamplingFactor();
+
+			auto pp = poses.component(0).position();
+			auto rm = poses.component(0).orientation().rotation_matrix();
+
+			auto qu = poses.component(0).orientation().quaternion();
+
+			auto ea = PFT->EulerAngle(rm);
+
+			myQuat.w = qu.w();
+			myQuat.x = qu.x();
+			myQuat.y = qu.y();
+			myQuat.z = qu.z();
+			gPosition1.x = -(float)pp[0]*1.f;
+			gPosition1.y = -(float)pp[1]*1.f;
+			gPosition1.z =  (float)pp[2]*1.f;
+
+			if (obj_name_ == "CUP")
+			{
+				z = 80;
+				if(row>360) 	 y = 20;
+				else 			 y = 15;
+				if(col>480) 	 x = 18;
+				else if(col<160) x = 8;
+				else 			 x = 13;
+			}
+			else if (obj_name_ == "SPG")
+			{
+				z = 80;
+				if(row>360) 	 y = 20;
+				else 			 y = 15;
+				if(col>480) 	 x = 15;
+				else if(col<160) x = 5;
+				else 			 x = 10;
+
+			/*	z = 60;
+				if(row>360) 	 y = 18;
+				else 			 y = 13;
+				if(col>480) 	 x = 13;
+				else if(col<160) x = 3;
+				else 			 x = 8;*/
+			}
+			else if (obj_name_ == "APP")
+			{
+				z = 80;
+				if(row>360) 	 y = 20;
+				else 			 y = 15;
+				if(col>480) 	 x = 18;
+				else if(col<160) x = 8;
+				else 			 x = 13;
+			}
+
+			box_obj_global.x =
+					col-(PFT->DownsamplingFactor()*x) < 0 ?
+							0: col-(PFT->DownsamplingFactor()*x);
+			box_obj_global.y =
+					row-(PFT->DownsamplingFactor()*y) < 0 ?
+							0: row-(PFT->DownsamplingFactor()*y);
+			box_obj_global.width = box_obj_global.height = z;
+
+			// [WRITE] *********************************************************************
+			if(frame_number_global>50.0)
+			{
+				myfile	<< pp[0]	<< " " << pp[1]	  << " " << pp[2]	<< " "
+					 	<< rm(0,0)	<< " " << rm(0,1) << " " << rm(0,2) << " "
+					 	<< rm(1,0)	<< " " << rm(1,1) << " " << rm(1,2) << " "
+					 	<< rm(2,0)	<< " " << rm(2,1) << " " << rm(2,2) << " "
+					 	<< ea[0]	<< " " << ea[1]	  << " " << ea[2] 	<< " "
+					 	<< qu.w()	<< " " << qu.x()  << " " << qu.y() 	<< " " << qu.z() << " "
+					 	<< contact_obj	<< "\n";
+
+				write_file 	<< frame_number_global << ","
+							<< contact_obj << ","
+							<< pp[0]   << ","
+							<< pp[1]   << ","
+							<< pp[2]   << ","
+							<< single_point_face_global[0] << ","
+							<< single_point_face_global[1] << ","
+							<< single_point_face_global[2] << ","
+							<< rm(0,0) << "," << rm(0,1) << "," << rm(0,2) << ","
+							<< rm(1,0) << "," << rm(1,1) << "," << rm(1,2) << ","
+							<< rm(2,0) << "," << rm(2,1) << "," << rm(2,2) << ","
+							<< ea[0]   << "," << ea[1]   << "," << ea[2]   << ","
+							<< qu.w()  << "," << qu.x()  << "," << qu.y()  << "," << qu.z()
+							<< "\n";
+			}
+			// ********************************************************************* [WRITE]
+
+			sem_post(&lock_contactdetector);
+			sem_post(&lock_actionrecognition);
+		}
+
+		sem_post(&mutex_tracker);
+		sem_post(&lock_viewer);
+	}
+
+	return 0;
+}
+
+// =============================================================================
+// VIEWER
+// =============================================================================
+void* openglthread(void* arg)
+{ 
+	OpenGLViewer viewer;
+ 	GLFWwindow* window;
+ 	GLuint VertexArrayID, vertexbuffer, colorbuffer;
+	GLuint vertexbufferAxes, colorbufferAxes;
+	GLuint programID, MatrixID, ViewMatrixID, ModelMatrixID;
+	glm::mat4 ViewMatrix, ProjectionMatrix, ModelMatrix, MVP;
+	std::vector<glm::vec3> vertices;
+
+	// Create Window
+	if (1)
+	{	
+		// Initialise GLFW
+		if( !glfwInit() )
+		{
+			fprintf( stderr, "Failed to initialize GLFW\n" );
+			getchar();
+			return 0;
+		}
+
+		glfwWindowHint(GLFW_SAMPLES, 4);
+		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+		glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); 
+		glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+		// Open a window and create its OpenGL context
+		window = glfwCreateWindow(640, 480, "viewer", NULL, NULL);
+		if( window == NULL ){
+			fprintf(
+					stderr,
+					"Failed to open GLFW window. ");
+			fprintf(
+					stderr,
+					"If you have an Intel GPU, they are not 3.3 compatible. ");
+			fprintf(
+					stderr,
+					"Try the 2.1 version of the tutorials.\n" );
+			getchar();
+			glfwTerminate();
+			return 0;
+		}
+
+		glfwSetWindowPos(window,700,0);
+
+		glfwMakeContextCurrent(window);
+
+		// Ensure we can capture the escape key being pressed below
+		glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
+	
+		// Enable depth test
+		glEnable(GL_DEPTH_TEST);
+
+		// Accept fragment if it closer to the camera than the former one
+		glDepthFunc(GL_LESS); 
+
+		// Dark blue background
+		glClearColor(1.0f, 1.0f, 1.0f, 0.0f);
+	}
+
+	viewer.Initialize(VertexArrayID, vertexbuffer, colorbuffer,
+		vertexbufferAxes, colorbufferAxes, programID,
+		MatrixID, ViewMatrixID, ModelMatrixID, ViewMatrix, ProjectionMatrix,
+		vertices, obj_model.c_str());
+
+	GLuint vertexbufferscene, colorbufferscene;
+	glGenBuffers(1, &vertexbufferscene);
+	glGenBuffers(1, &colorbufferscene);
+
+	 // Check if the ESC key was pressed or the window was closed
+	//while( glfwGetKey(window, GLFW_KEY_ESCAPE ) != GLFW_PRESS &&
+	//	   glfwWindowShouldClose(window) == 0 )
+	while(1)	
+	{
+		sem_wait(&lock_viewer);
+		sem_wait(&mutex_viewer);
+
+		// Clear the screen. 
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		// Use our shader
+		glUseProgram(programID);
+		glEnable(GL_PROGRAM_POINT_SIZE);
+		
+if (!object_only)
+{
+		// [SCENE] *********************************************************
+		std::vector<glm::vec3> vertices2, verticesC;
+		for(int i=0;i<img_cloud_global.size().height;i++)
+		{
+			for(int ii=0;ii<img_cloud_global.size().width;ii++)
+			{
+				glm::vec3 vertice(
+						-img_cloud_global.at<cv::Vec3f>(i,ii)[0],
+						 img_cloud_global.at<cv::Vec3f>(i,ii)[1],
+						 img_cloud_global.at<cv::Vec3f>(i,ii)[2]);
+				vertices2.push_back(vertice);
 			}
 		}
+		for(int i=0;i<img_rgb_global.size().height;i++)
+		{
+			for(int ii=0;ii<img_rgb_global.size().width;ii++)
+			{
+				glm::vec3 vertice(
+						(float)img_rgb_global.at<cv::Vec3b>(i,ii)[2]/255.0,
+						(float)img_rgb_global.at<cv::Vec3b>(i,ii)[1]/255.0,
+						(float)img_rgb_global.at<cv::Vec3b>(i,ii)[0]/255.0);
+				verticesC.push_back(vertice);
+			}
+		}
+
+		//FOR THE object
+		glBindBuffer(GL_ARRAY_BUFFER, vertexbufferscene);
+		glBufferData(GL_ARRAY_BUFFER, vertices2.size() * sizeof(glm::vec3), &vertices2[0], GL_STATIC_DRAW);
+
+		//For the Color
+		glBindBuffer(GL_ARRAY_BUFFER, colorbufferscene);
+		glBufferData(GL_ARRAY_BUFFER, verticesC.size() * sizeof(glm::vec3), &verticesC[0], GL_STATIC_DRAW);
+
+		// 1rst attribute buffer : vertices
+		glEnableVertexAttribArray(0);
+		glBindBuffer(GL_ARRAY_BUFFER, vertexbufferscene);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+
+		// 2nd attribute buffer : colors
+		glEnableVertexAttribArray(1);
+		glBindBuffer(GL_ARRAY_BUFFER, colorbufferscene);
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+
+		ModelMatrix = 
+				scale(mat4(), vec3(1.f, 1.f, 1.f));
+		MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
+
+		glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
+		glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
+		glUniformMatrix4fv(ViewMatrixID, 1, GL_FALSE, &ViewMatrix[0][0]);
+
+		// Draw the triangle !
+		glDrawArrays(GL_POINTS, 0, vertices2.size() );
+		// ********************************************************* [SCENE]
+}
+
+		// [OBJ] ***********************************************************
+		// 1rst attribute buffer : vertices
+		glEnableVertexAttribArray(0);
+		glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+
+		// 2nd attribute buffer : colors
+		glEnableVertexAttribArray(1);
+		glBindBuffer(GL_ARRAY_BUFFER, colorbuffer);
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+
+		ModelMatrix =
+				glm::translate(mat4(), gPosition1) * 
+				glm::toMat4(myQuat) *
+				scale(mat4(), vec3(1.f, 1.f, 1.f));
+		MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
+
+		glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
+		glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
+		glUniformMatrix4fv(ViewMatrixID, 1, GL_FALSE, &ViewMatrix[0][0]);
+
+		// Draw the triangle !
+		glDrawArrays(GL_TRIANGLES, 0, vertices.size() );
+		// *********************************************************** [OBJ]
+
+		// [LINE] **********************************************************
+		// 1rst attribute buffer : vertices
+		glEnableVertexAttribArray(0);
+		glBindBuffer(GL_ARRAY_BUFFER, vertexbufferAxes);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+
+		// 2nd attribute buffer : colors
+		glEnableVertexAttribArray(1);
+		glBindBuffer(GL_ARRAY_BUFFER, colorbufferAxes);
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+
+		glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
+		glDrawArrays(GL_LINES, 0, 6*3);
+		// ********************************************************** [LINE]
+
+		glDisableVertexAttribArray(0);
+		glDisableVertexAttribArray(1);
+	
+		// Swap buffers
+		glfwSwapBuffers(window);
+		glfwPollEvents();
+
+		sem_post(&mutex_viewer);
+		sem_post(&lock_tracker);
 	}
 	return 0;
 }
 
 // ============================================================================
-// THREAD 2 : OBJECT DETECTOR
+// OBJECT DETECTOR
 // ============================================================================
 void* objectDetector(void* arg)
 {
-//	int hue_range_obj[2], sat_range_obj[2];
-//	// yellow plyers
-//	hue_range_obj[0] = 80; hue_range_obj[1] = 102;
-//	sat_range_obj[0] = 135; sat_range_obj[1] = 255;
-//	// green cup
-//	hue_range_obj[0] = 77; hue_range_obj[1] = 98;
-//	sat_range_obj[0] = 76; sat_range_obj[1] = 214;
-//red bar
-//  hue_range_obj[0] = 116; hue_range_obj[1] = 138;
-//  sat_range_obj[0] = 199; sat_range_obj[1] = 255;
-
 	int hs[4]; // hue max/min, sat max/min
-	switch(object_num_arg)
-	{
-		case 0:
-			hs[0] = 98; hs[1] = 77; hs[2] = 214; hs[3] = 76; // green cup
-			hs[0] = 99; hs[1] = 36; hs[2] = 153; hs[3] = 51; // green cup
-			hs[0] = 90; hs[1] = 72; hs[2] = 140; hs[3] = 56; // green cup
-			break;
-		case 1:
-			hs[0] = 107; hs[1] = 90; hs[2] = 204; hs[3] = 140;
-			hs[0] = 107; hs[1] = 90; hs[2] = 255; hs[3] = 140;
-			//hs[0] = 107; hs[1] = 72; hs[2] = 204; hs[3] = 102; // yellow sponge
-			hs[0] = 98; hs[1] = 90; hs[2] = 230; hs[3] = 140; // yellow sponge
-			break;
-		case 2:
-			hs[0] = 125; hs[1] = 116; hs[2] = 255; hs[3] = 179; // red knife
-			hs[0] = 125; hs[1] = 98; hs[2] = 255; hs[3] = 166; // red knife
-			hs[0] = 134; hs[1] = 113; hs[2] = 255; hs[3] = 143; // red knife
-			hs[0] = 125; hs[1] = 116; hs[2] = 237; hs[3] = 184; // red knife
-			break;
-		case 3:
-			hs[0] = 111; hs[1] = 98; hs[2] = 255; hs[3] = 153; // orange
-			//hs[0] = 116; hs[1] = 98; hs[2] = 255; hs[3] = 204; // orange
-			hs[0] = 107; hs[1] = 100; hs[2] = 255; hs[3] = 204; // orange
-			break;
-		default:
-			hs[0] = 107; hs[1] = 90; hs[2] = 204; hs[3] = 140; 
-			break;
-	}
+	hs[0] = 98; hs[1] = 90; hs[2] = 230; hs[3] = 140; // yellow sponge
+	hs[0] = 27; hs[1] =  0; hs[2] = 186; hs[3] = 105; // blue cup
+	hs[0] = 18; hs[1] =  0; hs[2] = 122; hs[3] =  59; // blue cup
+	hs[0] = 90; hs[1] = 72; hs[2] = 179; hs[3] = 84; // green cup
 
 	while(true)
 	{
-		sem_wait(&lock_t2);
-		sem_wait(&mutex2);
+		sem_wait(&lock3);
+		sem_wait(&mutex3);
 
-		segmentHSV(rgb_global2, hs, mask_obj_global, box_obj_global);
+		segmentHSV(img_rgb_global_o, hs, mask_obj_global, box_obj_global);
 
-		if(object_arg)
+		if(0)
 		{
-			Mat rgb_tmp = Mat::zeros(480,640, CV_8UC3);
-			rgb_global1.copyTo(rgb_tmp, mask_obj_global);
-			imshow("rgb_o",rgb_tmp);
+			cv::Mat rgb_tmp = cv::Mat::zeros(480,640, CV_8UC3);
+			img_rgb_global_o.copyTo(rgb_tmp, mask_obj_global);
+			cv::imshow("rgb_o",rgb_tmp);
 			cvWaitKey(1);
 		}
 
-		sem_post(&mutex2);
-		sem_post(&lock_t1);
+		sem_post(&mutex3);
+		sem_post(&lock1);
+		sem_post(&lock5);
 	}
 
 	return 0;
 }
 
 // ============================================================================
-// THREAD 3 : HAND DETECTOR
+// HAND DETECTOR
 // ============================================================================
 void* handDetector(void* arg)
 { 
-//	// Crop Threshold
-//	int hue_range_hand[2], sat_range_hand[2];
-//	hue_range_hand[0] = 102; hue_range_hand[1] = 122;
-//	sat_range_hand[0] = 69 ; sat_range_hand[1] = 150;
-
 	int hs[4]; // hue max/min, sat max/min
-	//hs[0] = 122; hs[1] = 102; hs[2] = 150; hs[3] = 69;
-	//hs[0] = 118; hs[1] = 104; hs[2] = 128; hs[3] = 77;
-
-	hs[0] = 116; hs[1] = 98; hs[2] = 140; hs[3] = 64;
+	hs[0] = 107; hs[1] = 90; hs[2] = 107; hs[3] = 66;
 	hs[0] = 125; hs[1] = 98; hs[2] = 140; hs[3] = 77;
+	hs[0] = 107; hs[1] = 98; hs[2] = 140; hs[3] = 77;
 
-	Mat img_no_head = Mat::zeros(480,640,CV_8UC3);
-
-	while(true)
-	{
-		sem_wait(&lock_t3);
-		sem_wait(&mutex3);
-/*
-		face_global.y     -= face_global.height * 0.1;
-		face_global.height = face_global.height * 1.3;
-		rgb_global3(face_global) = 0;
-*/
-      	rgb_global3.clone().rowRange(200,480).copyTo(img_no_head.rowRange(200,480));
-		segmentHSV(img_no_head, hs, mask_hand_global, box_hand_global);
-
-		if(hand_arg)
-		{
-			Mat rgb_tmp = Mat::zeros(480,640, CV_8UC3);
-			rgb_global1.copyTo(rgb_tmp, mask_hand_global);
-			imshow("rgb_h",rgb_tmp); cvWaitKey(1);
-		}
-
-		sem_post(&mutex3);
-		sem_post(&lock_t1);
-	}
-
-	return 0;
-}
-
-// ============================================================================
-// THREAD 4 : FACE DETECTOR
-// ============================================================================
-void* faceDetector(void* arg)
-{
-	//Load the cascade for face detector
-	string face_cascade_name = "../cascade/lbpcascade_frontalface.xml";
-	CascadeClassifier face_cascade;
-	if(!face_cascade.load(face_cascade_name))
-	printf("--(!)Error loading face cascade\n");
-
-	Mat img_depth_def, mask_obj_def, img_sub, cloud_mask, cloud_mask2, img_tmp;
-
-	bool NANflag = true;
+	cv::Mat img_no_head = cv::Mat::zeros(480,640,CV_8UC3);
 
 	while(true)
 	{
-		sem_wait(&lock_t4);
+		sem_wait(&lock4);
 		sem_wait(&mutex4);
 
-		// just to flush out some frames
-		if (frame_number_global<50 || NANflag)
+      	//rgb_global3.clone().rowRange(200,480).copyTo(img_no_head.rowRange(200,480));
+		segmentHSV(img_rgb_global_h, hs, mask_hand_global, box_hand_global);
+
+		if(0)
 		{
-			if (!(countNonZero(rgb_global4!=img_tmp) == 0))
-			{
-				img_tmp.release();
-				img_tmp = rgb_global4.clone();
-				face_global = detectFaceAndEyes(rgb_global4, face_cascade);
-				//[OBJECT POINT]***************************************************
-				cloud_global2(face_global).copyTo(cloud_mask); // reducing the search area
-				pointCloudTrajectory(cloud_mask, single_point_face_global);
-				NANflag = 
-					(isnan(single_point_face_global[0]) ||
-					 isnan(single_point_face_global[1]) ||
-					 isnan(single_point_face_global[2]));
-				cloud_mask.release(); 
-				// **************************************************[OBJECT POINT]
-			}
-		}
-		else if (face_arg)
-		{
-			if (!(countNonZero(rgb_global4!=img_tmp) == 0))
-			{
-				img_tmp.release();
-				img_tmp = rgb_global4.clone();
-				face_global = detectFaceAndEyes(rgb_global4, face_cascade);
-				//[OBJECT POINT]***************************************************
-				cloud_global2(face_global).copyTo(cloud_mask); // reducing the search area
-				pointCloudTrajectory(cloud_mask, single_point_face_global);
-				cloud_mask.release(); 
-				// **************************************************[OBJECT POINT]
-			}
-			imshow("face",rgb_global4);
+			cv::Mat rgb_tmp = cv::Mat::zeros(480,640, CV_8UC3);
+			img_rgb_global_h.copyTo(rgb_tmp, mask_hand_global);
+			cv::imshow("rgb_h",rgb_tmp);
 			cvWaitKey(1);
 		}
 
 		sem_post(&mutex4);
-		sem_post(&lock_t6);
-		sem_post(&lock_t1);
+		sem_post(&lock1);
+		sem_post(&lock5);
 	}
+
 	return 0;
 }
 
 // ============================================================================
-// THREAD 5 : CONTACT DETECTOR
+// CONTACT DETECTOR
 // ============================================================================
 void* contactDetector(void* arg)
 {
-	Mat img_depth_def, mask_obj_def, img_sub, cloud_mask,cloud_mask2;
+	while(1)
+	{
+		sem_wait(&lock_contactdetector);
+		sem_wait(&mutex_contactdetector);
+		cv::Mat img_rgb_tmp = cv::Mat::zeros(480,640,CV_8UC3);
+		img_rgb_global_o(box_obj_global).copyTo(img_rgb_tmp); // reducing the search area
+		contact_obj = contactCheckBox(img_rgb_tmp, "rgb_c", THRESHOLD, false);
+		sem_post(&mutex_contactdetector);
+		sem_post(&lock_tracker);
+	}
+
+
+	cv::Mat img_depth_def, mask_obj_def, img_sub, cloud_mask,cloud_mask2;
 	double contact_val;
 	bool flag_contact_init	= true;
 	bool flag_contact_obj	= false;
 	int c = 0;
 	while(true)
 	{
-		sem_wait(&lock_t5);
+		sem_wait(&lock5);
+		sem_wait(&lock5);
 		sem_wait(&mutex5);
 
 		// [DEFAULT SCENE]*****************************************************
 		if(flag_contact_init)
 		{
 			mask_obj_def = mask_obj_global.clone();
-			depth_global.copyTo(img_depth_def,mask_obj_def);
+			img_depth_global.copyTo(img_depth_def,mask_obj_def);
 			if(box_obj_global.x > 0 && box_obj_global.y > 0) 
 				flag_contact_init = false;
 		}
 		// *****************************************************[DEFAULT SCENE]
-
-		//[OBJECT POINT]*******************************************************
-		cloud_global3.copyTo(cloud_mask,mask_obj_global); //taking the obj only
-		cloud_mask(box_obj_global).copyTo(cloud_mask2); // reducing the search area
-		pointCloudTrajectory(cloud_mask2, single_point_obj_global);
-		cloud_mask.release(); 
-		cloud_mask2.release();
-		// ******************************************************[OBJECT POINT]
 
 		// [OBJECT CONTACT]****************************************************
 		if(contactCheck(mask_hand_global, mask_obj_global,
@@ -521,8 +624,8 @@ void* contactDetector(void* arg)
 		{
 			if(!flag_contact_obj)
 			{
-				depth_global.copyTo(img_sub,mask_obj_def);			
-				absdiff(img_depth_def,img_sub,img_sub);
+				img_depth_global.copyTo(img_sub,mask_obj_def);			
+				absdiff(img_depth_def, img_sub, img_sub);
 				contact_val = sum(img_sub)[0] / sum(mask_obj_def)[0];
 
 				if(contact_val > 0 && contact_val < 500)
@@ -542,7 +645,7 @@ void* contactDetector(void* arg)
 			contact_val			= 0.0;
 		}
 		// face prevention
-		if(box_obj_global.tl().y < 201) 
+		if(box_obj_global.tl().x > 320) 
 		{
 			flag_contact_init	= false;
 			flag_contact_obj	= true;
@@ -551,490 +654,293 @@ void* contactDetector(void* arg)
 		} 
 		// ****************************************************[OBJECT CONTACT]
 
-#ifdef FLAG_CONTACT
-		c++;
-		if(c%freq_rate==0)
-		{
-			//printf("c %d\n", contact_obj);
-			printf("CONTACT : %d , CONTACTVAL : %f\n", contact_obj, contact_val);
-		}
-#endif
-
 		sem_post(&mutex5);
-		sem_post(&lock_t6);
-		sem_post(&lock_t1);
+		sem_post(&lock1);
+	}
+
+	return 0;
+}
+
+// ============================================================================
+// FACE DETECTOR
+// ============================================================================
+void* faceDetector(void* arg)
+{
+	//Load the cascade for face detector
+	std::string face_cascade_name = "../cascade/lbpcascade_frontalface.xml";
+	cv::CascadeClassifier face_cascade;
+	if(!face_cascade.load(face_cascade_name))
+	printf("--(!)Error loading face cascade\n");
+
+	cv::Mat cloud_mask, img_tmp;
+	cv::Rect face;
+
+	bool NANflag = true;
+
+	while(true)
+	{
+		sem_wait(&lock_facedetector);
+		sem_wait(&mutex6);
+
+		// just to flush out some frames
+		if (frame_number_global < 50.0 || NANflag)
+		{
+			if (!(countNonZero(img_rgb_global_f!=img_tmp) == 0))
+			{	
+				img_tmp.release();
+				img_tmp = img_rgb_global_f.clone();
+				face = detectFaceAndEyes(img_rgb_global_f, face_cascade);
+				//[OBJECT POINT]***************************************************
+				img_cloud_global_c(face).copyTo(cloud_mask); // reducing the search area
+				pointCloudTrajectory(cloud_mask, single_point_face_global);
+				NANflag = 
+					(isnan(single_point_face_global[0]) ||
+					 isnan(single_point_face_global[1]) ||
+					 isnan(single_point_face_global[2]));
+				cloud_mask.release(); 
+				// **************************************************[OBJECT POINT]
+			}
+		}
+		else continue;
+
+		sem_post(&mutex6);
 	}
 	return 0;
 }
 
 // ============================================================================
-// THREAD 6 : WRITE DATA
+// ACTION RECOGNITION
 // ============================================================================
-void* writeData(void* arg)
+void* actionRecognition(void* arg)
 {
+	// [VARIABLE] **************************************************************
+	std::shared_ptr<CKB> KB = std::make_shared<CKB>();
+	std::shared_ptr<COS> OS = std::make_shared<COS>();
+	std::shared_ptr<std::vector<std::string> > message = std::make_shared<std::vector<std::string> >();
 
-#ifdef FLAG_WRITE
+	std::string phrase_now	= "";
+	std::string path;
+	std::string PARSED_RES;
+	std::string OUTPUT_RES;
+	std::string object		= obj_name;
+	std::string RESULT_DIR	=  PARENT + "/" + RESULT + "/" + object + "/";
+	directoryCheck(RESULT_DIR);
 
-// [RECORD DATA]***************************************************************
-	ofstream write_file;
     time_t now = time(0);
     struct tm tstruct;
     char buf[80];
     tstruct = *localtime(&now);
     strftime(buf, sizeof(buf), "%y%m%d%H%M%S", &tstruct);
-	string file_name = "../recording/";
-	file_name += buf;
-	file_name += ".txt";
-	while(true)
-	{
-		sem_wait(&lock_t6);
-		sem_wait(&lock_t6);
-		sem_wait(&lock_t6);
-		sem_wait(&mutex6);
-		if(frame_number_global>50)
-		{
-			// write values into data.txt
-			ofstream write_file(file_name.c_str(), std::ios::app);
-			write_file 	<< frame_number_global			<< ","
-						<< contact_obj 					<< ","
-						<< single_point_obj_global[0]	<< ","
-						<< single_point_obj_global[1]	<< ","
-						<< single_point_obj_global[2]	<< ","
-						<< single_point_face_global[0]	<< ","
-						<< single_point_face_global[1]	<< ","
-						<< single_point_face_global[2]
-						<< "\n";
-		}
-		sem_post(&mutex6);
-		sem_post(&lock_t1);
-	}
-// ***************************************************************[RECORD DATA]
+	PARSED_RES = "parsed_output_";
+	PARSED_RES += buf;
+	PARSED_RES += ".txt";
+	OUTPUT_RES = "output_";
+	OUTPUT_RES += buf;
+	OUTPUT_RES += ".txt";
 
+	int loc_int = 100;
+	int sec_int = 36;
+	int filter_w = 5;
 
+	bool nolabel = false;
+	bool gauss = true;
 
-#else
+	ReadFile RF;
+	// ************************************************************** [VARIABLE] 
 
+	/* Reading surface
+	 * Reading action labels
+	 * - reads the labels and initializes a zero list prediction/filter with the same length as the label
+	 * Reading object specific labels
+	 * - reads the object specific labels and saves them */
+	path = PARENT + "/" + KB_DIR + "/";
+	if (RF.ReadFileKB(path, KB)==EXIT_FAILURE)
+	{return 0;}
 
+	/* read object state if needed */
+	path = PARENT + "/" + KB_DIR + "/";
+	if (RF.ReadFileOS(path, OS)==EXIT_FAILURE)
+	{return 0;}
 
-// [PREDICTION]****************************************************************
-	// [VARIABLES]*************************************************************
-	Graph Graph_(scene, object);
+	/* read parse message */
+	path = PARENT + "/" + KB_DIR + "/";
+	if (RF.ReadMsg(path, message)==EXIT_FAILURE)
+	{return 0;}
 
-	int num_points 			= 0;
-	int num_locations		= 0;
-	int num_surfaces		= 0;
-	int file_num 			= 0;
-	int minpts 				= 10;
-	double epsilon 			= 0.015; 	// if datasets are merged these 2 values can be increased.
+	// directory to parsed message
+	path = PARENT + "/" + RESULT + "/" + object + "/";
+	directoryCheck(path);
 
-	limit_t LIMIT;
-	LIMIT.vel 				= 0.005;
-	LIMIT.sur_dis 			= 0.075;
-	LIMIT.sur_ang 			= 0.95;
+	auto T =
+			std::make_shared<Test>(
+					object, loc_int, sec_int, filter_w, KB, OS, message,
+					path, true);
 
-	point_t 				curr_point;
-	vector<point_t>			pos_vel_acc_avg(3); // motion
+	// directory of learned data of a subject
+	std::string dir_s = PARENT + "/" + EVAL + "/" + object + "/0";
 
-	bool flag_motion      	= false;
-	bool flag_predict      	= false;
-	bool flag_predict_last 	= false;
-	bool learn 				= false;
-	bool slide 				= false;
-	int loc_last 			= 0;
-	int surface_num_tmp 	= 0;
-	double pow_dec 			= 1;
+	// read available location areas
+	path  = dir_s + "/location_area.txt";
+	if (T->ReadLA(path)==EXIT_FAILURE) {return 0;}
 
-	string path;	
-	vector<vector<string> > data;
+	// read available sector map
+	path = 	dir_s + "/graph.txt";
+	if (T->ReadGraph(path)==EXIT_FAILURE) {return 0;}
 
-	pred_t prediction;
+	// apply gauss filter
+	if (gauss) { T->ApplyGauss(5,5); }
 
-	label_t LABEL;
-	vector<string> label;
+	// write window constraint
+	path = 	dir_s + "/window.txt";
+	if (T->WriteWindow(path)==EXIT_FAILURE) {return 0;}
 
-	msg_t MSG, MSG_last;
+	// Initialize
+	T->TestInit();
 
-	vector<int> 				loc_last_idxs;
-	vector<double> 				t_val;
-	vector<vector< point_t > > 	pos_vel_acc_mem; // motion->length
-	vector<vector< point_t > > 	pva_avg;
-	// *************************************************************[VARIABLES]
-
-	// [READ FILE]*************************************************************
-	readSurfaceFile(Graph_);
-	printf("Reading test data......Complete\n");
-	// *************************************************************[READ FILE]
-
-	// [LEARNED DATA]**********************************************************
-	// [NODES]*****************************************************************
-	data.clear();
-	path =  "../Scene/" + scene + "/" + object + "/data_mov.txt";
-	readFile(path.c_str(), data , ',');
-	readMovement (Graph_, data);
-	label.clear(); label = Graph_.getMovLabel();
-	if (replaceLabel(label))
-	{
-		remove(path.c_str());
-		Graph_.updateMovLabel(label);
-		writeLabelFile(Graph_, path, 1);
-	}
-	data.clear();
-	path =  "../Scene/" + scene + "/" + object + "/data_loc.txt";
-	readFile(path.c_str(), data , ',');
-	readLocation_(Graph_, data);
-	label.clear(); label = Graph_.getNodeName();
-	if (replaceLabel(label))
-	{
-		remove(path.c_str());
-		Graph_.updateNodeName(label);
-		writeLabelFile(Graph_, path, 0);
-	}
-	printf("Creating nodes for the clusters (action locations)......Complete\n");
-	// *****************************************************************[NODES]
-	readSectorFile  (Graph_, 0);
-	readSectorFile  (Graph_, 1);
-	readLocationFile(Graph_, 0);
-	readLocationFile(Graph_, 1);
-	readLocationFile(Graph_, 2);
-	readLocationFile(Graph_, 3);
-	readLocationFile(Graph_, 4);
-	readCounterFile (Graph_, 0);
-	num_locations = Graph_.getNodeList().size();
-	num_surfaces  = Graph_.getSurface ().size();
-	// **********************************************************[LEARNED DATA]
-
-	// [PREDICTION VARIABLES]**************************************************
-	reshapeVector(prediction.pred, 			num_locations);
-	reshapeVector(prediction.pred_in,		num_locations);
-	reshapeVector(prediction.pred_in_last, 	num_locations);
-	reshapeVector(prediction.pred_err,		num_locations);
-//	reshapeVector(pos_vel_acc_avg, 			num_points);
-	reshapeVector(pos_vel_acc_mem, 			3);
-	reshapeVector(loc_last_idxs, 			num_locations);
-	reshapeVector(LABEL.loc, 				num_locations);
-	reshapeVector(LABEL.sur, 				num_surfaces);
-	LABEL.mov   = -1;
-	MSG.num_loc = num_locations;
-	MSG.num_sur = num_surfaces;
-	// **************************************************[PREDICTION VARIABLES]
-
-	printf("\n\n>>>>> SYSTEM START <<<<<\n\n");
-
-	Mat imgHistogram(480,640,CV_8UC3);	
-
-	int step = -1;
 	int c = 0;
-	bool zeros = false;
+	bool flag = true;
 	while(true)
 	{
-		sem_wait(&lock_t6);
-		sem_wait(&lock_t6);
-		sem_wait(&mutex6);
+		sem_wait(&lock_actionrecognition);
+		sem_wait(&mutex_actionrecognition);
 
-if(frame_number_global>100)
-{
-
-		step++;
-
-		//[PREPROCESS DATA]****************************************************
-		curr_point.x = single_point_obj_global[0];
-		curr_point.y = single_point_obj_global[1];
-		curr_point.z = single_point_obj_global[2];
-		curr_point.cluster_id = UNCLASSIFIED;
-		preprocessDataLive(curr_point, pos_vel_acc_mem,
-						   pos_vel_acc_avg, FILTER_WIN);
-		//****************************************************[PREPROCESS DATA]
-
-// ============================================================================
-// PREDICTION STARTS
-// ============================================================================
-		zeros 		= false;
-		slide 	  	= false;
-		LABEL.mov 	= -1;
-		MSG.idx   	= step;
-		reshapeVector(LABEL.loc, num_locations);
-		reshapeVector(LABEL.sur, num_surfaces);
-
-		// 1. Contact trigger
-		// 1.1 Check if the object is within a sphere volume of the location areas
-		triggerContact(pos_vel_acc_avg[0], Graph_);
-
-		// 2. Prediction during motion
-		if (pos_vel_acc_avg[0].cluster_id < 0)
+		if ( isnan(single_point_face_global[0])==false &&
+			 isnan(single_point_face_global[1])==false &&
+			 isnan(single_point_face_global[2])==false && flag)
 		{
-			pva_avg.push_back(pos_vel_acc_avg);
-			flag_motion = true;
-
-			predictionEdge(prediction, Graph_,
-					pos_vel_acc_avg[0], pos_vel_acc_avg[1],
-					loc_last, loc_last_idxs, LIMIT, LABEL,
-					flag_predict, flag_predict_last, pow_dec);
-
-			zeros =
-					all_of(
-							prediction.pred_err.begin(),
-							prediction.pred_err.end(),
-							[](double ii) { return ii==0.0; });
-
-			if (!zeros)
-			{
-				MSG.msg 	= 1;
-				MSG.label 	= LABEL;
-				MSG.loc_idx = pos_vel_acc_avg[0].cluster_id;
-				MSG.pred	= prediction;
-
-				if(c%freq_rate==0)
-				outputMsg(MSG, Graph_);
-
-				showPrediction(imgHistogram, MSG.pred.pred_err, label);
-				imshow("hist", imgHistogram);
-				waitKey(1);
-			}
-			else
-			{
-				MSG 		= MSG_last;
-				cout << "Outside : ";
-				for(int i=0;i<6;i++)
-				cout << MSG.label.loc[i];
-				cout << endl;
-				MSG.msg		= 2;		
-				MSG.idx   	= step;		
-				if(c%freq_rate==0)
-				outputMsg(MSG, Graph_);
-				showPrediction(imgHistogram, MSG.label.loc, label);
-				imshow("hist", imgHistogram);
-				waitKey(1);
-			}
+			Eigen::Vector4d face_parser(
+					 single_point_face_global[0],
+					-single_point_face_global[1],
+					 single_point_face_global[2],
+					 0.0);
+			//if (object=="CUP")
+			face_parser += Eigen::Vector4d(-0.1, 0, 0.1, -1);
+			T->TestFaceAdjust(face_parser);
+			flag = false;
 		}
 
-		// 3. Prediction within location area
-		else
-		{
-			flag_predict      = false;
-			flag_predict_last = false;
-			reshapeVector(loc_last_idxs,num_locations);
+		// 1. Filter
+		T->FilterData(
+				Eigen::Vector4d(-gPosition1.x, -gPosition1.y, gPosition1.z, -2.0),
+				(int)contact_obj);
 
-			predictionNode(
-					pva_avg, pos_vel_acc_avg[0], pos_vel_acc_avg[1],
-					loc_last, pos_vel_acc_avg[0].cluster_id,
-					Graph_, LIMIT, LABEL,
-					flag_motion, learn);
+		// 2. Prediction
+		T->Predict();
 
-			loc_last 	= pos_vel_acc_avg[0].cluster_id;
-			flag_motion = false;
+		// 3. Get Data
+		T->GetData((int)frame_number_global);
 
-			pva_avg.clear();
-
-			MSG.msg 	= 2;
-			MSG.label 	= LABEL;
-			MSG.loc_idx = pos_vel_acc_avg[0].cluster_id;
-			MSG.pred 	= prediction;
-			if(c%freq_rate==0)
-			outputMsg(MSG, Graph_);
-
-			showPrediction(imgHistogram, MSG.label.loc, label);
-			imshow("hist", imgHistogram);
-			waitKey(1);
-		}
-
-		MSG_last = MSG;
-
-		MSG.msg 	= 3;
-		if (pos_vel_acc_avg[0].cluster_id < 0)
-		{
-			if (!zeros)
-			{
-				MSG.label 	= LABEL;
-				MSG.loc_idx = pos_vel_acc_avg[0].cluster_id;
-				MSG.pred 	= prediction;
-			}
-		}
-		else
-		{
-			MSG.label 	= LABEL;
-			MSG.loc_idx = pos_vel_acc_avg[0].cluster_id;
-			MSG.pred 	= prediction;
-		}
-		if(c%freq_rate==0)
-		outputMsg(MSG, Graph_);
-
-// ============================================================================
-// PREDICTION ENDS
-// ============================================================================
+		// 4. Parse Data
+		T->Parser(PARSED_RES, (int)frame_number_global, phrase_now);		
+		phrase = phrase_now;
 
 		c++;
+		if (c==30)
+		{
+			c = 0;
+			// 5. Write Results
+			T->WriteResult(OUTPUT_RES, RESULT_DIR, true);
+		}
 
-
-}
-		sem_post(&mutex6);
-		sem_post(&lock_t1);
+		sem_post(&mutex_actionrecognition);
+		sem_post(&lock_tracker);
 	}
-// ****************************************************************[PREDICTION]
-
-#endif
-
-  return 0;
+	return 0;
 }
 
 // ============================================================================
-// >>>>> MAIN <<<<<
+// TTS
 // ============================================================================
+void* tts(void* arg)
+{
+	std::string phrase_last	= "";
+	int heap_size = 210000;  // default scheme heap size
+	int load_init_files = 1; // we want the festival init files loaded
+	festival_initialize(load_init_files,heap_size);
+	festival_eval_command("(voice_ked_diphone)");
 
-//struct cmp_str
-//{
-//   bool operator()(char const *a, char const *b)
-//   {
-//	  return std::strcmp(a, b) < 0;
-//   }
-//};
+	while(1)
+	{
+		sem_wait(&mutex_tts);
+		if (phrase != phrase_last)
+		{
+			phrase_last = phrase;
+			std::cout << phrase_last << std::endl;
+			festival_say_text(phrase_last.c_str());
+		}
+		sem_post(&mutex_tts);
+	}
+	return 0;
+}
+
+// =============================================================================
+// >>>>> MAIN <<<<<
+// =============================================================================
 
 int main(int argc, char *argv[])
 {
-	argc-=1;
 
-	map<string,int> mapper;
-	mapper["green_cup"] 	= 0;
-	mapper["yellow_sponge"]	= 1;
-	mapper["red_knife"] 	= 2;
-	mapper["orange"] 		= 3;
-
-	if(argc%2==1)
+	if (argc==1)
 	{
-		printf("Wrong number of input arguments...\n");
+		std::cerr << "Object file not given." << std::endl;
+		std::cerr << "Exiting..............." << std::endl;
+		return 0;
+	}
+	else if (argc==2)
+	{
+		std::cerr << "Object model file not given.                  " << std::endl;
+		std::cerr << "File should be in ../config/pose_cache_xxx.txt" << std::endl;
+		std::cerr << "Exiting......................................." << std::endl;
+		return 0;
+	}
+	else if (argc==3)
+	{
+		std::cerr << "Threshold for hand contact not given. (200-500)" << std::endl;
+		std::cerr << "Exiting........................................" << std::endl;
+		return 0;
+	}
+	else if (argc==4)
+	{
+		obj_model = std::string(argv[1]);
+		obj_name  = std::string(argv[2]);
+		std::cout << "Using object model file : " << obj_model << std::endl;
+		THRESHOLD = std::stoi(argv[3]);
+	}
+	else
+	{
+		std::cerr << "Too much arguments given." << std::endl;
+		std::cerr << "Exiting.................." << std::endl;
 		return 0;
 	}
 
-	for(int i=0;i<argc;i++)
-	{
-		if(i%2==1) { continue; }
+//	if (obj_name == "CUP") 	 	THRESHOLD = 250;
+//	else if (obj_name == "SPG")	THRESHOLD = 200;
+//	else if (obj_name == "APP")	THRESHOLD = 300;
 
-		if (!strcmp(argv[i+1],"-object"))
-		{
-			if (!strcmp(argv[i+2],"true"))
-			{
-				object_arg = true;
-			}
-			else
-			{
-				if (strcmp(argv[i+2],"green_cup") &&
-					strcmp(argv[i+2],"yellow_sponge") &&
-					strcmp(argv[i+2],"red_knife") &&
-					strcmp(argv[i+2],"orange"))
-				{
-					cerr << "Object name is invalid..." << endl;
-					return 0;
-				}
-				else
-				{
-					object_num_arg = mapper[string(argv[i+2])];
-				}
-			}
-		}
-		else if(!strcmp(argv[i+1],"-hsv") &&
-				!strcmp(argv[i+2],"true"))
-		{
-			hsv_arg = true;
-		}
-		else if(!strcmp(argv[i+1],"-face") &&
-				!strcmp(argv[i+2],"true"))
-		{
-			face_arg = true;
-		}
-		else if(!strcmp(argv[i+1],"-surface") &&
-				!strcmp(argv[i+2],"true"))
-		{
-			surface_arg = true;
-		}
-		else if(!strcmp(argv[i+1],"-rgb") &&
-				!strcmp(argv[i+2],"true"))
-		{
-			rgb_arg = true;
-		}
-		else if(!strcmp(argv[i+1],"-depth") &&
-				!strcmp(argv[i+2],"true"))
-		{
-			depth_arg = true;
-		}
-		else if(!strcmp(argv[i+1],"-hand") &&
-				!strcmp(argv[i+2],"true"))
-		{
-			hand_arg = true;
-		}
-	}
+//	cv::namedWindow("rgb");		cv::moveWindow("rgb",0,550);  
+//	cv::namedWindow("depth");	cv::moveWindow("depth",0,0);
+//	cv::namedWindow("rgb_o");	cv::moveWindow("rgb_o",0,550);  
+//	cv::namedWindow("rgb_h");	cv::moveWindow("rgb_h",0,0);
+//	cv::namedWindow("rgb_c");	cv::moveWindow("rgb_c",0,0);
 
-	VideoCapture kinect(CV_CAP_OPENNI2); 
-	printf("Starting Kinect ...\n");
+	sem_init(&lock_tracker, 0, 3);
+	sem_init(&lock_viewer, 0, 0);
+	sem_init(&lock_contactdetector, 0, 0);
+	sem_init(&lock_actionrecognition, 0, 0);
+	sem_init(&lock_facedetector, 0, 0);
 
-  // Run the visualization
+	sem_init(&mutex_tracker, 0, 1);
+	sem_init(&mutex_viewer, 0, 1);
+	sem_init(&mutex_contactdetector, 0, 1);
+	sem_init(&mutex_actionrecognition, 0, 1);
+	sem_init(&mutex_tts, 0, 1);
 
-	if(depth_arg)
-	{
-		namedWindow("depth");
-		moveWindow("depth",0,0);
-	}
-
-	if(rgb_arg)
-	{
-		namedWindow("rgb");
-		moveWindow("rgb",0,550);  
-	}
-
-	if(surface_arg)
-	{
-		namedWindow("plane");
-		moveWindow("plane",0,0);
-		namedWindow("plane_reduced");
-		moveWindow("plane_reduced",0,550);  
-	}
-
-	if(hand_arg)
-	{
-	  namedWindow("rgb_h");
-	  moveWindow("rgb_h",0,0);
-	}
-
-	if(object_arg)
-	{
-	  namedWindow("rgb_o");
-	  moveWindow("rgb_o",0,550);  
-	}
-
-	if(face_arg)
-	{
-		namedWindow("face");
-		moveWindow("face",0,0);
-	}
-
-
-#ifdef FLAG_MARKER
-  namedWindow("rgb_m");
-#endif
-
-#ifdef FLAG_HISTOGRAM
-  namedWindow("hist");
-  moveWindow("hist",0,0);
-#endif
-
-	pthread_t 	thread_kinectGrab,
-				thread_objDetector,
-				thread_handDetector,
+	pthread_t 	thread_dbot,
+				thread_opengl,
 				thread_faceDetector,
 				thread_contactDetector,
-				thread_writeData;
-
-	sem_init(&lock_t1, 0, MAX);
-	sem_init(&lock_t2, 0, 0);
-	sem_init(&lock_t3, 0, 0);
-	sem_init(&lock_t4, 0, 0);
-	sem_init(&lock_t5, 0, 0);
-	sem_init(&lock_t6, 0, 0);
-	sem_init(&mutex1, 0, 1);
-	sem_init(&mutex2, 0, 1);
-	sem_init(&mutex3, 0, 1);
-	sem_init(&mutex4, 0, 1);
-	sem_init(&mutex5, 0, 1);
-	sem_init(&mutex6, 0, 1);
-	sem_init(&mutex7, 0, 1);
+				thread_actionrecognition,
+				thread_tts;
 
 	pthread_attr_t attr;
 	cpu_set_t cpus;
@@ -1043,17 +949,27 @@ int main(int argc, char *argv[])
 	CPU_ZERO(&cpus);
 	CPU_SET(1, &cpus);
 	pthread_attr_setaffinity_np(&attr, sizeof(cpu_set_t), &cpus);
-	pthread_create(&thread_kinectGrab, &attr, kinectGrab, &kinect);
+	pthread_create(&thread_dbot, &attr, dbotthread, NULL);
 
 	CPU_ZERO(&cpus);
 	CPU_SET(2, &cpus);
 	pthread_attr_setaffinity_np(&attr, sizeof(cpu_set_t), &cpus);
-	pthread_create(&thread_objDetector, &attr, objectDetector, NULL);
+	pthread_create(&thread_opengl, &attr, openglthread, NULL);
+
+//	CPU_ZERO(&cpus);
+//	CPU_SET(3, &cpus);
+//	pthread_attr_setaffinity_np(&attr, sizeof(cpu_set_t), &cpus);
+//	pthread_create(&thread_obj, &attr, objectDetector, NULL);
+
+//	CPU_ZERO(&cpus);
+//	CPU_SET(4, &cpus);
+//	pthread_attr_setaffinity_np(&attr, sizeof(cpu_set_t), &cpus);
+//	pthread_create(&thread_hand, &attr, handDetector, NULL);
 
 	CPU_ZERO(&cpus);
 	CPU_SET(3, &cpus);
 	pthread_attr_setaffinity_np(&attr, sizeof(cpu_set_t), &cpus);
-	pthread_create(&thread_handDetector, &attr, handDetector, NULL);
+	pthread_create(&thread_contactDetector, &attr, contactDetector, NULL);
 
 	CPU_ZERO(&cpus);
 	CPU_SET(4, &cpus);
@@ -1063,21 +979,22 @@ int main(int argc, char *argv[])
 	CPU_ZERO(&cpus);
 	CPU_SET(5, &cpus);
 	pthread_attr_setaffinity_np(&attr, sizeof(cpu_set_t), &cpus);
-	pthread_create(&thread_contactDetector, &attr, contactDetector, NULL);
+	pthread_create(&thread_actionrecognition, &attr, actionRecognition, NULL);
 
 	CPU_ZERO(&cpus);
 	CPU_SET(6, &cpus);
 	pthread_attr_setaffinity_np(&attr, sizeof(cpu_set_t), &cpus);
-	pthread_create(&thread_writeData, &attr, writeData, NULL);
+	pthread_create(&thread_tts, &attr, tts, NULL);
 
-	pthread_join(thread_kinectGrab, NULL);
-	pthread_join(thread_objDetector, NULL);
-	pthread_join(thread_handDetector, NULL);
-	pthread_join(thread_faceDetector, NULL);
+	pthread_join(thread_dbot, NULL);
+	pthread_join(thread_opengl, NULL);
+//	pthread_join(thread_obj, NULL);
+//	pthread_join(thread_hand, NULL);
 	pthread_join(thread_contactDetector, NULL);
-	pthread_join(thread_writeData, NULL);
+	pthread_join(thread_faceDetector, NULL);
+	pthread_join(thread_actionrecognition, NULL);
+	pthread_join(thread_tts, NULL);
 
-	//printf("MAIN THREAD ON CORE : %d\n",sched_getcpu()); 
 
 	return 0;
 }

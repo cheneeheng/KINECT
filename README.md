@@ -80,3 +80,7 @@
 [16] New Data
 - 10/5/2017
 - 2 datasets for constrained motion.
+
+[17] Final
+- 14/7/2017
+- final update merging with HMAR_Location

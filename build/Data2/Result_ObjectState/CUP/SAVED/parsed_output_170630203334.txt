@@ -1,0 +1,18 @@
+73 nothing is happening .
+93 you have grabbed the CUP that was stored .
+95 the CUP has been released .
+97 nothing is happening .
+434 you have grabbed the CUP that was stored .
+435 the CUP has been released .
+437 nothing is happening .
+449 you have grabbed the CUP that was stored .
+454 i think you are going to fill up the CUP .
+462 i think you are going to fill up the CUP . but you have stopped .
+472 i think you are going to fill up the CUP .
+529 you are filling up the CUP .
+646 i think you are going to drink .
+679 you are drinking .
+766 i think you are going to wash the CUP .
+826 you are washing the CUP .
+868 the CUP has been released .
+870 nothing is happening .

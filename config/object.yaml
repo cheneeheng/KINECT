@@ -1,0 +1,6 @@
+%YAML:1.0
+object:
+  package:    object_meshes
+  directory:  object_models
+  meshes:     [ mug_mean.obj ]
+

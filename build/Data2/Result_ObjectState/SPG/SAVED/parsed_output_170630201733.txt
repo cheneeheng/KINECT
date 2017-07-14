@@ -1,0 +1,9 @@
+71 nothing is happening .
+388 you have grabbed the SPG that was stored .
+442 i think you are going to clean TABLE1 .
+449 No,i think you are going to clean SHELF .
+478 you are cleaning SHELF .
+557 i think you are going to store the SPG .
+584 you are storing the SPG .
+617 the SPG has been released .
+619 nothing is happening .

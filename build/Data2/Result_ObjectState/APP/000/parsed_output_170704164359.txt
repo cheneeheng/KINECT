@@ -1,0 +1,8 @@
+66 nothing is happening .
+881 you have grabbed the APP that was stored .
+919 i think you are going to eat the APP .
+959 you are eating the APP .
+1033 i think you are going to place the APP .
+1062 you are placing the APP on TABLE1 .
+1097 the APP has been released .
+1098 nothing is happening .

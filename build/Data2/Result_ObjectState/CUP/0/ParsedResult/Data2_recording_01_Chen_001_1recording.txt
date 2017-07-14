@@ -1,0 +1,18 @@
+nothing is happening .
+you have grabbed the CUP that was storeed .
+i think you are going to fill up the CUP .
+you are filling up the CUP .
+i think you are going to drink .
+you are drinking .
+i think you are going to wash the CUP .
+No,i think you are going to place the CUP .
+you are placeing the CUP on TABLE1 .
+the CUP has been released .
+nothing is happening .
+you have grabbed the CUP that was placeed .
+i think you are going to drink .
+you are drinking .
+i think you are going to wash the CUP .
+you are washing the CUP .
+the CUP has been released .
+nothing is happening .

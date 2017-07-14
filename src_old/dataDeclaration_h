@@ -1,0 +1,238 @@
+/*
+ * dataDeclaration.h
+ *
+ *  Created on: Jan 11, 2017
+ *      Author: chen
+ */
+
+#ifndef DATADECLARATION_H_
+#define DATADECLARATION_H_
+
+//#define PC
+
+#include <iostream>
+#include <pthread.h>
+#include <signal.h>
+#include <list>
+#include <algorithm>
+#include <math.h>
+#include <numeric>
+#include <string>
+#include <vector>
+#include <stack>
+#include <map>
+#include <semaphore.h>
+#include <fstream>
+#include <sstream>
+#include <stdlib.h>
+#include <stdio.h>
+#include <ctype.h>
+#include <errno.h>
+#include <limits.h>
+#include <iterator>
+#include <dirent.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+
+//#include <vtkCellData.h>
+//#include <vtkCellArray.h>
+//#include <vtkUnsignedCharArray.h>
+//#include <vtkVertexGlyphFilter.h>
+//#include <vtkCamera.h>
+//#include <vtkInteractorStyleTrackballCamera.h>
+//#include <vtkSphereSource.h>
+//#include <vtkPointPicker.h>
+//#include <vtkTextActor.h>
+//#include <vtkTextProperty.h>
+//#include <vtkLineSource.h>
+//#include <vtkDoubleArray.h>
+//#include <vtkChartXY.h>
+//#include <vtkTable.h>
+//#include <vtkPlot.h>
+//#include <vtkFloatArray.h>
+//#include <vtkContextView.h>
+//#include <vtkContextScene.h>
+//#include <vtkPen.h>
+//#include <vtkSmartPointer.h>
+//#include <vtkTubeFilter.h>
+//#include <vtkDoubleArray.h>
+//#include <vtkPoints.h>
+//#include <vtkPolyData.h>
+//#include <vtkPolyDataMapper.h>
+//#include <vtkActor.h>
+//#include <vtkRenderWindow.h>
+//#include <vtkRenderer.h>
+//#include <vtkRenderWindowInteractor.h>
+//#include <vtkPolygon.h>
+//#include <vtkRect.h>
+//#include <vtkAxis.h>
+//#include <vtkProperty.h>
+//#include <vtkPointData.h>
+//#include <vtkGL2PSExporter.h>
+
+//#include <gsl/gsl_integration.h>
+//#include <gsl/gsl_bspline.h>
+//#include <gsl/gsl_multifit.h>
+//#include <gsl/gsl_poly.h>
+//#include <gsl/gsl_rng.h>
+//#include <gsl/gsl_randist.h>
+//#include <gsl/gsl_statistics.h>
+//#include <gsl/gsl_linalg.h>
+
+#include <Eigen/Eigen>
+
+using namespace std;
+using namespace Eigen;
+
+#ifdef PC
+	// For backward compatibility with new VTK generic data arrays
+	#define InsertNextTypedTuple InsertNextTupleValue
+	#include <opencv2/opencv.hpp>
+	using namespace cv;
+	#define SCN "../Scene/"
+#else
+	#define SCN "Scene/"
+#endif
+
+#define CRED "\x1B[31m"
+#define CGRN "\x1B[32m"
+#define CYEL "\x1B[33m"
+#define CBLU "\x1B[34m"
+#define CMAG "\x1B[35m"
+#define CCYN "\x1B[36m"
+#define CWHT "\x1B[37m"
+#define CNOR "\x1B[0m"
+
+#define Sqr(x) ((x)*(x))
+#define Malloc(type,n) (type *)malloc((n)*sizeof(type))
+#define Calloc(type,n) (type *)calloc( n, sizeof(type))
+
+#define	TRN 0
+#define	TST 1
+#define	LBL 2
+#define	DPL 3
+
+//#define RELEASE			0
+//#define GRABBED			1
+//#define RELEASE_CLOSE	2
+//#define GRABBED_CLOSE	3
+
+
+#define FILTER_WIN 5
+
+//#define BOUNDARY_VAR 0.1
+//#define P_WIN_VAR 0.001
+//#define P_ERR_VAR 0.01
+
+//#define DBSCAN_EPS 0.015
+//#define DBSCAN_MIN 5
+
+//#define	LOC_INT 100
+//#define	SEC_INT 36
+
+//// number of fit coefficients
+//// nbreak = ncoeffs + 2 - k = ncoeffs - 2 since k = 4 (for cubic b-spline)
+//#define NCOEFFS	15
+//#define NBREAK 	(NCOEFFS - 2)
+//#define DEGREE 10 //k+1
+
+//#define RANGE_EXCEED	3
+//#define RANGE_OUT		2
+//#define	RANGE_IN		1
+//#define RANGE_NULL		0
+
+//#define WIN_HEIGHT		800
+//#define WIN_WIDTH 		1280
+//#define FONT_SIZE 		20
+
+//#define CLICK_EMPTY		0
+//#define CLICK_LABEL		1
+//#define CLICK_DELETE 	2
+
+//typedef struct node_ss node_tt;
+//struct node_ss
+//{
+//	string 	 name;
+//	int		 index; // used to check for new nodes
+//	int		 contact;
+//	Vector4d centroid; // Sphere
+//	int		 surface_flag; // Surface
+//	Vector3d cuboid_max;
+//	Vector3d cuboid_min;
+//};
+//
+//typedef struct edge_ss edge_tt;
+//struct edge_ss
+//{
+//	string				name;
+//	unsigned int 		index1; //start node
+//	unsigned int 		index2; // end node
+//	vector<double> 		sector_map; // locations int * sectors int
+//	vector<Vector3d> 	tan; // locations int
+//	vector<Vector3d> 	nor; // locations int
+//	vector<Vector4d> 	loc_mid; // locations int
+//	vector<double>  	loc_len; // locations int
+//	double 				total_len;
+//	int 				counter;
+//	vector<int> 		mov_const; // 0/1 activation of the mov_const labels
+//	vector<double> 		loc_mem; // to calculate d2(loc)
+//	vector<double> 		sec_mem; // to calculate d2(sec)
+//	vector<double> 		err_mem; // to calculate d2(err)
+//};
+
+//// prediction for node
+//typedef struct predict_sn predict_n;
+//struct predict_sn
+//{
+//	double 			acc; // acc
+//	double 			vel; // velocity limit 0/1
+//	double 			surface_dist; // surface distance
+//	double 			curvature; // curvature value : 1 for line
+//};
+//
+//// prediction for edge
+//typedef struct predict_se predict_e;
+//struct predict_se
+//{
+//	double 			acc; // acc
+//	double 			vel; // velocity limit 0/1
+//	double 			curvature; // curvature value : 1 for line
+//	vector<double>	range; // in or outside
+//	vector<double> 	err; // prediction error = diff from the sectormap
+//	vector<double> 	pct_err; // prob shared between multiple predictions of inside
+//	vector<double>	err_diff; // change in the error compared to original
+//	vector<double>	pct_err_diff; // change in the error compared to original
+//	vector<double>	window; // knot in trajectory
+//};
+
+//typedef struct kb_s kb_t;
+//struct kb_s
+//{
+//	vector<Vector4d>		 		surface_eq;
+//	vector<Vector3d> 				surface_mid;
+//	vector<Vector3d> 				surface_min; // from mid
+//	vector<Vector3d> 				surface_max; // from mid
+//	vector<Matrix3d> 				surface_rot;
+//	vector<double> 					surface_lim;
+//	map<int,vector<string> > 		label;
+//	map<string,pair<int,int> > 		ac;
+//	vector<string> 					al;
+//	map<string,map<string,string> >	ol;
+//};
+
+//typedef struct state_s state_t;
+//struct state_s
+//{
+//	int grasp;					// if it is grasped
+//	int label1;					// last node
+//	int label2;					// next node
+//	double vel;					// velocity
+//	double pct_err;				// highest probability
+//	int surface_flag;			// which surface
+//	string surface_name;		// which surface
+//	double surface_dist;		// surface distance
+//	map<string,double> goal;	// probabilities
+//	map<string,double> window;	// window radius
+//};
+
+#endif /* DATADECLARATION_H_ */

@@ -1,0 +1,15 @@
+67 nothing is happening .
+531 you have grabbed the CUP that was stored .
+576 i think you are going to fill up the CUP .
+630 you are filling up the CUP .
+722 i think you are going to drink .
+749 you are drinking .
+750 the CUP has been released .
+752 nothing is happening .
+757 you have grabbed the CUP that was drinked .
+762 i think you are going to wash the CUP .
+767 you are drinking .
+975 i think you are going to wash the CUP .
+1038 you are washing the CUP .
+1079 the CUP has been released .
+1080 nothing is happening .

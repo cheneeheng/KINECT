@@ -1,0 +1,3 @@
+SPG,SHELF,clean location,TABLE1,clean location,TABLE2,store the object
+APP,BOWL,store the object,FACE,eat the object,TABLE1,place the object,BIN,throw the object
+CUP,SHELF,store the object,FACE,drink,SINK,fill up the object,TABLE1,place the object,DISHWASHER,wash the object

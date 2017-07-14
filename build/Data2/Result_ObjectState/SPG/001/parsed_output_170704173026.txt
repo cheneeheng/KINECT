@@ -1,0 +1,8 @@
+64 nothing is happening .
+588 you have grabbed the SPG that was stored .
+659 i think you are going to clean TABLE1 .
+740 you are cleaning TABLE1 on TABLE1 .
+820 i think you are going to store the SPG .
+871 you are storing the SPG .
+905 the SPG has been released .
+907 nothing is happening .

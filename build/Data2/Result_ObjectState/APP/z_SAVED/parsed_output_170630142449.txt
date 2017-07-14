@@ -1,0 +1,14 @@
+68 nothing is happening .
+505 you have grabbed the APP that was stored .
+579 i think you are going to eat the APP .
+619 you are eating the APP .
+734 i think you are going to throw the APP .
+759 you are throwing the APP .
+802 the APP has been released .
+803 nothing is happening .
+808 you have grabbed the APP that was throwed .
+823 the APP has been released .
+825 nothing is happening .
+834 you have grabbed the APP that was throwed .
+844 the APP has been released .
+846 nothing is happening .

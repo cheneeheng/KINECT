@@ -1,0 +1,11 @@
+69 nothing is happening .
+464 you have grabbed the APP that was stored .
+505 i think you are going to eat the APP .
+524 nothing is happening .
+527 you are storing the APP .
+532 i think you are going to eat the APP .
+541 you are eating the APP .
+693 i think you are going to throw the APP .
+724 you are throwing the APP .
+769 the APP has been released .
+771 nothing is happening .

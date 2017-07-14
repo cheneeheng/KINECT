@@ -1,0 +1,13 @@
+78 you have grabbed the APP that was stored .
+80 the APP has been released .
+81 nothing is happening .
+124 you have grabbed the APP that was stored .
+131 the APP has been released .
+133 nothing is happening .
+522 you have grabbed the APP that was stored .
+567 i think you are going to eat the APP .
+617 you are eating the APP .
+710 i think you are going to throw the APP .
+739 you are throwing the APP .
+775 the APP has been released .
+777 nothing is happening .

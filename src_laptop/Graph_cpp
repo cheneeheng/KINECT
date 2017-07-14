@@ -1,0 +1,77 @@
+/*
+ * Graph.cpp
+ *
+ *  Created on: Jan 11, 2017
+ *      Author: chen
+ */
+
+#include "Graph.h"
+
+
+Graph::Graph(
+	string object_,
+	int loc_int_,
+	int sec_int_) :	OBJECT(object_),
+					LOC_INT(loc_int_),
+					SEC_INT(sec_int_),
+					action_state{}
+{
+}
+
+/******************************************************************************
+ * Nodes
+ *****************************************************************************/
+
+vector<Vector4d> Graph::GetCentroidList()
+{
+	vector<Vector4d> tmp;
+	tmp.resize(node_list.size());
+	for(int i=0;i<node_list.size();i++)
+	{
+		tmp[i] = node_list[i].centroid;
+	}
+	return tmp;
+}
+
+vector<int> Graph::GetSurfaceFlagList()
+{
+	vector<int> tmp;
+	tmp.resize(node_list.size());
+	for(int i=0;i<node_list.size();i++)
+	{
+		tmp[i] = node_list[i].surface_flag;
+	}
+	return tmp;
+}
+
+/******************************************************************************
+ * Edges
+ *****************************************************************************/
+
+void Graph::addEmptyEdgeForNewNode(
+	int idx_)
+{
+	if(edge_list.size()<idx_+1)
+	{
+		edge_list.resize(idx_+1);
+		for(int i=0;i<edge_list.size();i++)
+		{
+			if(edge_list[i].size()<=GetNumberOfNodes())
+			{
+				edge_list[i].resize(GetNumberOfNodes());
+				for(int ii=0;ii<edge_list[i].size();ii++)
+				{
+					if (edge_list[i][ii].size()==0)
+						edge_list[i][ii].push_back({});
+					edge_list[i][ii][0].tan.resize(LOC_INT);
+					edge_list[i][ii][0].nor.resize(LOC_INT);
+					edge_list[i][ii][0].loc_mid.resize(LOC_INT);
+					edge_list[i][ii][0].loc_len.resize(LOC_INT);
+					edge_list[i][ii][0].sector_map.resize(LOC_INT*SEC_INT);
+					edge_list[i][ii][0].mov_const.resize(2);
+				}
+			}
+		}
+	}
+}
+

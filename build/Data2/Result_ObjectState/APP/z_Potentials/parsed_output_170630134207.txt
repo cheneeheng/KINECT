@@ -1,0 +1,8 @@
+68 nothing is happening .
+120 you have grabbed the APP that was stored .
+177 i think you are going to eat the APP .
+214 you are eating the APP .
+286 i think you are going to throw the APP .
+314 you are throwing the APP .
+343 the APP has been released .
+345 nothing is happening .
