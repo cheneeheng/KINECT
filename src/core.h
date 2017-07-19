@@ -3,6 +3,8 @@
  *
  *  Created on: Mar 26, 2017
  *      Author: chen
+ *      Detail: Core functions that are used by various classes.
+ *              A list of free functions.
  */
 
 #ifndef CORE_H_

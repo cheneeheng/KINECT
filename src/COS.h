@@ -3,6 +3,7 @@
  *
  *  Created on: May 22, 2017
  *      Author: chen
+ *      Detail: Object state container.
  */
 
 #ifndef COS_H_
@@ -15,26 +16,26 @@
 #include <vector>
 #include <map>
 
+/**
+ * Container for object states.
+ */
 class COS
 {
 private:
 	using mSmSI_t = std::map<std::string, std::map<std::string, int> >;
 	using mSvvD_t = std::map<std::string, std::vector<std::vector<double> > >;
 
-	int label_os;
-	std::vector<std::string> label_list_os; // list of object state labels
-	mSmSI_t la_os; // list of object state labels
-	mSvvD_t transition_os; // transition between the object state
-	mSvvD_t transition_os_la;
-	mSvvD_t transition_la_os;
+	int label_os; 							// Object state label
+	std::vector<std::string> label_list_os;	// list of object state labels
+	mSmSI_t la_os; 							// list of object state labels
+	mSvvD_t transition_os;				// transition between the object state
+	mSvvD_t transition_os_la;	// transition between the object state and LA
+	mSvvD_t transition_la_os;	// transition between LA and the object state
 
 public:
 	COS();
 	virtual ~COS();
 
-	/*
-	 * current os label
-	 */
 	virtual int OSLabel() const
 	{
 		return label_os;
@@ -45,9 +46,6 @@ public:
 		label_os = x_;
 	}
 
-	/*
-	 * list of object state labels
-	 */
 	virtual std::vector<std::string> OSLabelList() const
 	{
 		return label_list_os;
@@ -58,9 +56,6 @@ public:
 		label_list_os = x_;
 	}
 
-	/*
-	 * list of LA object state correspondence
-	 */
 	virtual mSmSI_t LAOSMap() const
 	{
 		return la_os;
@@ -71,9 +66,7 @@ public:
 		la_os = x_;
 	}
 
-	/*
-	 * P(O_t|LA_t)
-	 */
+	/* P(O_t|LA_t) */
 	virtual mSvvD_t TransitionLAOS() const
 	{
 		return transition_la_os;
@@ -84,9 +77,7 @@ public:
 		transition_la_os = x_;
 	}
 
-	/*
-	 * P(LA_t|O_t)
-	 */
+	/* P(LA_t|O_t) */
 	virtual mSvvD_t TransitionOSLA() const
 	{
 		return transition_os_la;
@@ -97,9 +88,7 @@ public:
 		transition_os_la = x_;
 	}
 
-	/*
-	 * P(O_t|O_t-1)
-	 */
+	/* P(O_t|O_t-1) */
 	virtual mSvvD_t TransitionOS() const
 	{
 		return transition_os;

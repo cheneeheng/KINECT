@@ -54,13 +54,15 @@ static inline Eigen::Vector3d V4d3d(
 	return B;
 }
 
-template<typename T> static inline bool min_(
+template<typename T>
+static inline bool min_(
 		T x,
 		T y)
 {
 	return (x < y) ? true : false;
 }
-template<typename T> static inline bool max_(
+template<typename T>
+static inline bool max_(
 		T x,
 		T y)
 {
@@ -101,26 +103,6 @@ void arrayTovector(
 		B.push_back(i);
 	}
 }
-
-//template<typename T>
-//std::vector<T> addvector(
-//		std::vector<T> A,
-//		std::vector<T> B)
-//{
-//	std::vector<T> C;
-//	for(int i=0;i<A.size();i++) { C.push_back(A[i]+B[i]); }
-//	return C;
-//}
-//
-//template<typename T>
-//std::vector<T> minusvector(
-//		std::vector<T> A,
-//		std::vector<T> B)
-//{
-//	std::vector<T> C;
-//	for(int i=0;i<A.size();i++) { C.push_back(A[i]-B[i]); }
-//	return C;
-//}
 
 template<typename T>
 T l2Norm(

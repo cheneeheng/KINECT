@@ -9,7 +9,7 @@
 #include "CAS.h"
 
 CAS::CAS()
-		: grasp(0),
+		: grasp(GRAB::RELEASE),
 				label1(-1),
 				label2(-1),
 				obj(-1),

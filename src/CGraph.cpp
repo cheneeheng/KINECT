@@ -65,24 +65,24 @@ void CGraph::addEmptyEdgeForNewNode(
 	{
 		edge_list.resize(idx_ + 1);
 
-		for (auto &i : edge_list)
+		for (auto &edge : edge_list)
 		{
-			if (i.size() <= GetNumberOfNodes())
+			if (edge.size() <= GetNumberOfNodes())
 			{
-				i.resize(GetNumberOfNodes());
-				for (auto &ii : i)
+				edge.resize(GetNumberOfNodes());
+				for (auto &node : edge)
 				{
-					if (ii.size() == 0)
+					if (node.size() == 0)
 					{
-						ii.push_back(
+						node.push_back(
 						{ });
 					}
-					ii[0].tan.resize(LOC_INT);
-					ii[0].nor.resize(LOC_INT);
-					ii[0].loc_mid.resize(LOC_INT);
-					ii[0].loc_len.resize(LOC_INT);
-					ii[0].sector_map.resize(LOC_INT * SEC_INT);
-					ii[0].mov_const.resize(2);
+					node[0].tan.resize(LOC_INT);
+					node[0].nor.resize(LOC_INT);
+					node[0].loc_mid.resize(LOC_INT);
+					node[0].loc_len.resize(LOC_INT);
+					node[0].sector_map.resize(LOC_INT * SEC_INT);
+					node[0].mov_const.resize(2);
 				}
 			}
 		}

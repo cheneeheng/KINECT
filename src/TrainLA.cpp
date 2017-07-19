@@ -72,17 +72,16 @@ int TrainLA::LearnBoundary(
 
 		if (surfaces_flag[(int) p[3]] > 0)
 		{
-			// TODO : is it correct?
-			(*centroids_)[(int) p[3]] = V3d4d(
-					surfaces_mid[surfaces_flag[(int) p[3]] - 1]);
-			(*centroids_)[(int) p[3]][3] = 0.925;
+//			// TODO : is it correct?
+//			(*centroids_)[(int) p[3]] = V3d4d(
+//					surfaces_mid[surfaces_flag[(int) p[3]] - 1]);
+//			(*centroids_)[(int) p[3]][3] = 0.925;
 
 			{
 				Eigen::Vector4d point_rot, point_rot2;
 				Eigen::Matrix4d T;
-				T << surfaces_rot[surfaces_flag[(int) p[3]] - 1].row(0), 0, surfaces_rot[surfaces_flag[(int) p[3]]
-						- 1].row(1), 0, surfaces_rot[surfaces_flag[(int) p[3]]
-						- 1].row(2), 0, 0, 0, 0, 0;
+				auto tmp = surfaces_rot[surfaces_flag[(int) p[3]] - 1];
+				T << tmp.row(0), 0, tmp.row(1), 0, tmp.row(2), 0, 0, 0, 0, 0;
 
 				// Last element of T is zero because last std::vector element is used for labeling.
 				// Point transform to the coordinate system of the surface.
@@ -116,9 +115,8 @@ int TrainLA::ContactBoundary(
 			{
 				Eigen::Vector4d point_rot, point_rot2;
 				Eigen::Matrix4d T;
-				T << surfaces_rot[surfaces_flag[(int) p[3]] - 1].row(0), 0, surfaces_rot[surfaces_flag[(int) p[3]]
-						- 1].row(1), 0, surfaces_rot[surfaces_flag[(int) p[3]]
-						- 1].row(2), 0, 0, 0, 0, 0;
+				auto tmp = surfaces_rot[surfaces_flag[(int) p[3]] - 1];
+				T << tmp.row(0), 0, tmp.row(1), 0, tmp.row(2), 0, 0, 0, 0, 0;
 
 				// Last element of T is zero because last std::vector element is used for labeling.
 				// Point transform to the coordinate system of the surface.
@@ -132,20 +130,6 @@ int TrainLA::ContactBoundary(
 				p[3] = point_rot[3];
 			}
 		}
-
-//		if (points_avg[i].l < 0.0) { continue; }
-//
-//		if (surfaces_flag[points_avg[i].l] > 0)
-//		{
-//			if ( !decideSurface(
-//					centroids_[points_avg[i].l],
-//						surfaces_eq[surfaces_flag[points_avg[i].l]-1],
-//						surfaces_limit[surfaces_flag[points_avg[i].l]-1]))
-//			{
-//				points_avg[i].l = UNCLASSIFIED;
-//			}
-//		}
-
 	}
 	return EXIT_SUCCESS;
 }
@@ -164,9 +148,8 @@ int TrainLA::SurfaceContactCheck(
 			// surface already known
 			if (surfaces_flag[(int) p[3]] > 0)
 				continue;
-//			if (decideSurface(p, surfaces_eq[ii], surfaces_limit[ii]) &&
 			if ((surfaces_mid[ii] - V4d3d((*centroids_)[(int) p[3]])).norm()
-					< 0.15) // HACK: to prevent arbitrary surface detection
+					< 0.2) // HACK: to prevent arbitrary surface detection
 			{
 				surfaces_flag[(int) p[3]] = ii + 1;
 				break;
@@ -266,6 +249,39 @@ int TrainLA::BuildLocationArea(
 		reshapeVector(goal_action, locations->size());
 		printer(15);
 
+#ifdef DATA1
+
+		if (G_->GetObject() == std::string("CUP"))
+		{
+			goal_action[0] = "SHELF";
+			goal_action[1] = "DISPENSER";
+			goal_action[2] = "FACE";
+			goal_action[3] = "TABLE2";
+			goal_action[4] = "SINK";
+		}
+		else if (G_->GetObject() == std::string("ORG"))
+		{
+			goal_action[0] = "SHELF";
+			goal_action[1] = "FACE";
+			goal_action[2] = "TABLE2";
+			goal_action[3] = "BIN";
+		}
+		else if (G_->GetObject() == std::string("KNF"))
+		{
+			goal_action[0] = "SHELF";
+			goal_action[1] = "TABLE2";
+			goal_action[2] = "SINK";
+		}
+		else if (G_->GetObject() == std::string("SPG"))
+		{
+			goal_action[0] = "SHELF";
+			goal_action[1] = "TABLE2";
+			goal_action[2] = "SINK";
+		}
+		else
+
+#elif DATA2
+
 		if (G_->GetObject() == std::string("CUP"))
 		{
 			goal_action[0] = "SHELF";
@@ -278,7 +294,8 @@ int TrainLA::BuildLocationArea(
 		{
 			goal_action[0] = "BOWL";
 			goal_action[1] = "FACE";
-			goal_action[2] = "BIN";
+			goal_action[2] = "TABLE1";
+			goal_action[3] = "BIN";
 		}
 		else if (G_->GetObject() == std::string("SPG"))
 		{
@@ -286,6 +303,9 @@ int TrainLA::BuildLocationArea(
 			goal_action[1] = "TABLE1";
 		}
 		else
+
+#else
+#endif
 		{
 			auto VTK = std::make_shared<VTKExtra>(loc_int, sec_int);
 			auto al = kb_->AL();
@@ -338,6 +358,45 @@ int TrainLA::BuildLocationArea(
 		// when new label is present
 		if (flag_)
 		{
+
+#ifdef DATA1
+			if (G_->GetObject() == std::string("CUP"))
+			{
+				goal_action[0] = "SHELF";
+				goal_action[1] = "DISPENSER";
+				goal_action[2] = "TABLE2";
+				goal_action[3] = "SINK";
+			}
+			else if (G_->GetObject() == std::string("ORG"))
+			{
+				goal_action[0] = "SHELF";
+				goal_action[1] = "TABLE2";
+				goal_action[2] = "BIN";
+			}
+			else
+			{
+				if (G_->GetNumberOfNodes() == 3)
+				{
+					goal_action[0] = "SHELF";
+					goal_action[1] = "TABLE2";
+					goal_action[2] = "BIN";
+				}
+				if (G_->GetNumberOfNodes() == 4)
+				{
+					goal_action[0] = "SHELF";
+					goal_action[1] = "TABLE1";
+					goal_action[2] = "SINK";
+				}
+				if (G_->GetNumberOfNodes() == 5)
+				{
+					goal_action[0] = "SHELF";
+					goal_action[1] = "DISPENSER";
+					goal_action[2] = "SINK";
+				}
+			}
+
+#elif DATA2
+
 			if (G_->GetObject() == std::string("CUP"))
 			{
 				goal_action[0] = "SHELF";
@@ -349,7 +408,6 @@ int TrainLA::BuildLocationArea(
 			{
 				goal_action[0] = "BOWL";
 				goal_action[1] = "FACE";
-				goal_action[2] = "TABLE1";
 				goal_action[3] = "BIN";
 			}
 			else if (G_->GetObject() == std::string("SPG"))
@@ -358,6 +416,12 @@ int TrainLA::BuildLocationArea(
 				goal_action[1] = "SHELF";
 			}
 			else
+
+#else
+#endif
+
+#ifndef DATA1
+
 			{
 				auto VTK = std::make_shared<VTKExtra>(loc_int, sec_int);
 				auto al = kb_->AL();
@@ -370,7 +434,13 @@ int TrainLA::BuildLocationArea(
 				VTK->ShowData(*points_avg, goal_action, label_ref, loc_idx_zero,
 						color_code, true, true, false);
 			}
+
+#endif
+
 		}
+
+//		std::cout << locations->size() << std::endl;
+//		std::cout << locations_->size() << std::endl;
 
 		// add/adjust locations
 		for (int i = 0; i < locations_->size(); i++)
@@ -474,11 +544,7 @@ int TrainLA::BuildLocationArea(
 		}
 		c++;
 	}
-	/*	for(int i=0;i<pos_vel_acc_.size();i++)
-	 {
-	 pos_vel_acc_[i][0][3] = points_avg[i][3];
-	 }
-	 */printer(16);
+	printer(16);
 	printer(17);
 
 	// Visualize

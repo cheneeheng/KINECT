@@ -79,81 +79,85 @@ class VTKExtra
 
 private:
 
-int LOC_INT;
-int SEC_INT;
+	int LOC_INT;
+	int SEC_INT;
 
-void arrayTovector(
-		unsigned char *A,
-		int size,
-		std::vector<unsigned char> &B)
-{
-	//reshapeVector(B, std::extent<decltype(A)>::value);
-	B.clear();
-	for(int i=0;i<size;i++) { B.push_back(A[i]);}
-}
+	void arrayTovector(
+			unsigned char *A,
+			int size,
+			std::vector<unsigned char> &B)
+	{
+		//reshapeVector(B, std::extent<decltype(A)>::value);
+		B.clear();
+		for (int i = 0; i < size; i++)
+		{
+			B.push_back(A[i]);
+		}
+	}
 
 public:
 
-VTKExtra(
-		int loc_int_,
-		int sec_int_);
-virtual ~VTKExtra();
+	VTKExtra(
+			int loc_int_,
+			int sec_int_);
+	virtual ~VTKExtra();
 
-void ColorCode(std::vector<std::vector<unsigned char> > &container_);
+	void ColorCode(
+			std::vector<std::vector<unsigned char> > &container_);
 
-void ShowData(
-		std::vector<Eigen::Vector4d> points_,
-		std::vector<std::string> &labels_,
-		std::vector<std::string> labels_ref_,
-		std::vector<int> &loc_idx_,
-		std::vector<std::vector<unsigned char> > color_,
-		bool cluster_,
-		bool labeling_,
-		bool deleting_);
+	void ShowData(
+			std::vector<Eigen::Vector4d> points_,
+			std::vector<std::string> &labels_,
+			std::vector<std::string> labels_ref_,
+			std::vector<int> &loc_idx_,
+			std::vector<std::vector<unsigned char> > color_,
+			bool cluster_,
+			bool labeling_,
+			bool deleting_);
 
-void ShowConnectionOnly(
-		CGraph Graph_,
-		std::vector<std::vector<unsigned char> > color_);
+	void ShowConnectionOnly(
+			CGraph Graph_,
+			std::vector<std::vector<unsigned char> > color_);
 
-void ShowConnection(
-		CGraph *Graph_,
-		std::vector<Eigen::Vector4d> points_,
-		std::vector<std::string> &labels_,
-		std::vector<std::vector<unsigned char> > color_,
-		bool show_points);
+	void ShowConnection(
+			CGraph *Graph_,
+			std::vector<Eigen::Vector4d> points_,
+			std::vector<std::string> &labels_,
+			std::vector<std::vector<unsigned char> > color_,
+			bool show_points);
 
-void ShowConnectionTest(
-		CGraph *Graph_,
-		std::vector<Eigen::Vector4d> points_,
-		std::vector<std::string> &labels_,
-		std::vector<std::vector<unsigned char> > color_,
-		bool show_points);
+	void ShowConnectionTest(
+			CGraph *Graph_,
+			std::vector<Eigen::Vector4d> points_,
+			std::vector<std::string> &labels_,
+			std::vector<std::vector<unsigned char> > color_,
+			bool show_points);
 
-void PlotData(
-		std::vector<double> x,
-		std::vector<double> y);
+	void PlotData(
+			std::vector<double> x,
+			std::vector<double> y);
 
-void PlotData(
-		std::vector<double> x,
-		std::vector<double> y,
-		std::vector<double> x2,
-		std::vector<double> y2);
+	void PlotData(
+			std::vector<double> x,
+			std::vector<double> y,
+			std::vector<double> x2,
+			std::vector<double> y2);
 
-void PlotDatas(
-		std::vector<std::string> title,
-		std::vector<double> x,
-		std::vector<std::vector<std::vector<double> > > y);
+	void PlotDatas(
+			std::vector<std::string> title,
+			std::vector<double> x,
+			std::vector<std::vector<std::vector<double> > > y);
 
-void PlotDatasGeo(
-		std::vector<std::string> title,
-		std::vector<double> x,
-		std::vector<std::vector<std::vector<double> > > y);
+	void PlotDatasGeo(
+			std::vector<std::string> title,
+			std::vector<double> x,
+			std::vector<std::vector<std::vector<double> > > y);
 
-vtkSmartPointer<vtkPolyDataMapper> DataPoints(
-		std::vector<Eigen::Vector4d> points_,
-		int num_locations_,
-		std::vector<std::vector<unsigned char> > color_,
-		bool cluster_);
+	vtkSmartPointer<vtkPolyDataMapper> DataPoints(
+			std::vector<Eigen::Vector4d> points_,
+			int num_locations_,
+			std::vector<std::vector<unsigned char> > color_,
+			bool cluster_);
 };
 
 #endif /* VTKEXTRA_H_ */

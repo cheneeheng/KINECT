@@ -24,33 +24,54 @@
 
 class CData
 {
+
 public:
+
+	/**
+	 * Constructor of class CData.
+	 */
+	CData();
+
+	/**
+	 * Constructor of class CData.
+	 * @param object_ Object name for CGraph.
+	 * @param loc_int_ Trajectory interval parameter.
+	 * @param sec_int_ Sector interval parameter.
+	 */
 	CData(
 			const std::string &object_,
 			const int &loc_int_,
-			const int &sec_int_,
-			std::shared_ptr<CKB> KB_,
-			std::shared_ptr<COS> OS_);
+			const int &sec_int_);
 
-	virtual ~CData();
+	/**
+	 * Destructor of class CData.
+	 */
+	virtual ~CData()
+	{
+	}
+	;
 
-	/* Graph */
+	/* Graph class */
 	std::shared_ptr<CGraph> G;
 
-	/* Knowledge-base */
+	/* Knowledge-base class */
 	std::shared_ptr<CKB> KB;
 
-	/* Action State */
+	/* Action State class */
 	std::shared_ptr<CAS> AS;
 
-	/* Object State */
+	/* Object State class */
 	std::shared_ptr<COS> OS;
 
-	/* position-velocity-acceleration */
+	/* Dictionary of messages to be parsed */
+	std::shared_ptr<std::vector<std::string> > msg;
+
+	/* Position-Velocity-Acceleration */
 	std::shared_ptr<std::vector<Eigen::Vector4d> > pva;
 
 	/* Contact */
 	std::shared_ptr<int> contact;
+
 };
 
 #endif /* CONTAINERDATA_H_ */

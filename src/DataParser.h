@@ -20,14 +20,37 @@
 class DataParser
 {
 public:
+
+	/**
+	 * Constructor for DataParser class.
+	 */
 	DataParser();
+
+	/**
+	 * Destructor for DataParser class.
+	 */
 	virtual ~DataParser();
 
+	/**
+	 * Clears parser.
+	 */
 	void ClearParser();
 
+	/**
+	 * Parse data without known label.
+	 */
 	virtual int ParseDataNoLabel();
+
+	/**
+	 * Parse data with known label.
+	 */
 	virtual int ParseData();
 
+	/**
+	 * Resets parser.
+	 *
+	 * @param data_ Data used by parser.
+	 */
 	virtual void SetDataParser(
 			const std::vector<std::vector<std::string> > &data_);
 
@@ -53,11 +76,11 @@ public:
 	}
 
 protected:
-	Eigen::Vector4d face_parser;
-	std::vector<int> frames_parser;
-	std::vector<int> contact_parser;
-	std::vector<std::string> labels_parser;
-	std::vector<Eigen::Vector4d> points_parser;
+	Eigen::Vector4d face_parser;				// Parsed face position
+	std::vector<int> frames_parser;				// Parsed frame number
+	std::vector<int> contact_parser;			// Parsed contact flag
+	std::vector<std::string> labels_parser;		// Parsed labels
+	std::vector<Eigen::Vector4d> points_parser;	// Parsed trajectory point
 
 private:
 	std::vector<std::vector<std::string> > data_parser;

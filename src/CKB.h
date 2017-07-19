@@ -3,6 +3,7 @@
  *
  *  Created on: May 20, 2017
  *      Author: chen
+ *      Detail: Container for knowledge-base.
  */
 
 #ifndef CKB_H_
@@ -18,15 +19,58 @@
 
 #include <Eigen/Eigen>
 
+/*
+ * Container for information stored in knowledge-base.
+ * Member functions are used to retrieve or modify data.
+ */
 class CKB
 {
 
-	/*
-	 * Information stored in knowledge-base
-	 */
+private:
+	using msvvD_t = std::map<std::string, std::vector<std::vector<double> > >;
+	using msmss_t = std::map<std::string, std::map<std::string, std::string> >;
+	using mspII_t = std::map<std::string, std::pair<int, int> >;
+
+	// Surface equation
+	std::vector<Eigen::Vector4d> surface_eq;
+
+	// Surface plane midpoint
+	std::vector<Eigen::Vector3d> surface_mid;
+
+ 	// Surface plane minimum point
+	std::vector<Eigen::Vector3d> surface_min;
+
+ 	// Surface plane maximum point
+	std::vector<Eigen::Vector3d> surface_max;
+
+   // Surface rotation matrix to align to up vector
+	std::vector<Eigen::Matrix3d> surface_rot;
+
+ 	// Surface distance limit
+	std::vector<double> surface_lim;
+
+	// Action category
+	mspII_t ac; 			
+			
+	// Action labels	
+	std::vector<std::string> al; 	
+	
+	// Object labels	
+	msmss_t ol;
+
+	// Action transitions
+	msvvD_t transition_action;
 
 public:
+
+	/**
+	 * Constructor for CKB.
+	 */
 	CKB();
+
+	/**
+	 * Destructor for CKB.
+	 */
 	virtual ~CKB();
 
 	virtual std::vector<Eigen::Vector4d> SurfaceEquation() const
@@ -89,22 +133,12 @@ public:
 		surface_lim = x_;
 	}
 
-	virtual std::map<int, std::vector<std::string> > Label() const
-	{
-		return label;
-	}
-	virtual void Label(
-			std::map<int, std::vector<std::string> > x_)
-	{
-		label = x_;
-	}
-
-	virtual std::map<std::string, std::pair<int, int> > AC() const
+	virtual mspII_t AC() const
 	{
 		return ac;
 	}
 	virtual void AC(
-			std::map<std::string, std::pair<int, int> > x_)
+			mspII_t x_)
 	{
 		ac = x_;
 	}
@@ -119,38 +153,26 @@ public:
 		al = x_;
 	}
 
-	virtual std::map<std::string, std::map<std::string, std::string> > OL() const
+	virtual msmss_t OL() const
 	{
 		return ol;
 	}
 	virtual void OL(
-			std::map<std::string, std::map<std::string, std::string> > x_)
+			msmss_t x_)
 	{
 		ol = x_;
 	}
 
-	virtual std::map<std::string, std::vector<std::vector<double> > > TransitionLA() const
+	virtual msvvD_t TransitionLA() const
 	{
 		return transition_action;
 	}
 	virtual void TransitionLA(
-			std::map<std::string, std::vector<std::vector<double> > > x_)
+			msvvD_t x_)
 	{
 		transition_action = x_;
 	}
 
-private:
-	std::vector<Eigen::Vector4d> surface_eq;
-	std::vector<Eigen::Vector3d> surface_mid;
-	std::vector<Eigen::Vector3d> surface_min; // from mid
-	std::vector<Eigen::Vector3d> surface_max; // from mid
-	std::vector<Eigen::Matrix3d> surface_rot;
-	std::vector<double> surface_lim;
-	std::map<int, std::vector<std::string> > label;
-	std::map<std::string, std::pair<int, int> > ac;
-	std::vector<std::string> al;
-	std::map<std::string, std::map<std::string, std::string> > ol;
-	std::map<std::string, std::vector<std::vector<double> > > transition_action;
 };
 
 #endif /* CKB_H_ */

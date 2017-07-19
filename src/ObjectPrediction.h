@@ -16,8 +16,11 @@ public:
 	ObjectPrediction();
 	virtual ~ObjectPrediction();
 
-	/*
+	/**
 	 * P(O_t|O_t-1)
+	 *
+	 * @param OS_ Object state container.
+	 * @param obj_ Object name.
 	 */
 	virtual std::vector<double> GetOSTransition(
 			const COS &OS_,
@@ -26,8 +29,12 @@ public:
 		return OS_.TransitionOS()[obj_][OS_.OSLabel()];
 	}
 
-	/*
+	/**
 	 * P(LA_t|O_t)
+	 *
+	 * @param OS_ Object state container.
+	 * @param obj_ Object name.
+	 * @param os_ Object state.
 	 */
 	virtual std::vector<double> GetObjectLATransition(
 			const COS &OS_,
@@ -37,8 +44,12 @@ public:
 		return OS_.TransitionOSLA()[obj_][os_];
 	}
 
-	/*
+	/**
 	 * P(O_t|LA_t)
+	 *
+	 * @param OS_ Object state container.
+	 * @param obj_ Object name.
+	 * @param la_ LA.
 	 */
 	virtual std::vector<double> GetLAObjectTransition(
 			const COS &OS_,
@@ -48,8 +59,12 @@ public:
 		return OS_.TransitionLAOS()[obj_][la_];
 	}
 
-	/*
+	/**
 	 * Updates the current object state.
+	 *
+	 * @param OS_ Object state container.
+	 * @param obj_ Object name.
+	 * @param la_ LA.
 	 */
 	virtual int UpdateOS(
 			COS &OS_,

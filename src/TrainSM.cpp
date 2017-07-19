@@ -97,21 +97,20 @@ double TrainSM::DecideLocationIntervalExt(
 			loc_last_idx_, loc_offset_, loc_int, loc_init_);
 }
 
-int TrainSM::AdjustSectorMap(
+int TrainSM::FitSectorMapInit(
 		std::shared_ptr<CGraph::edge_t> edge_,
 		Eigen::Vector4d point_,
 		int &loc_last_idx_,
 		int &loc_curr_idx_,
-		double &delta_t_mem_,
 		bool &loc_init_,
 		int loc_offset_)
 {
-	Eigen::Vector3d delta_t, delta_t_zero;
+	Eigen::Vector3d delta_t, delta_t_0;
 	int sec_idx = -1;
 	int loc_idx = -1;
 	int loc_last_idx_mem = loc_last_idx_;
 	bool mem = loc_init_;
-	// to deal with cases where the beginning is out of the sectormap
+	// to deal with cases where the beginning is out of the sector-map
 	// required for the fitting part only
 	// also for the ending
 
@@ -137,36 +136,25 @@ int TrainSM::AdjustSectorMap(
 	double tmpmin = 10.0;
 	double tmpdeltatmin = 0.0;
 	int min_idx = 0;
+	auto mid = edge_->loc_mid[loc_idx];
 
 	if (loc_idx == loc_last_idx_)
 	{
 		min_idx = loc_idx * sec_int + sec_idx;
 		tmpdeltatmin = delta_t.norm();
-		tmpmin = V4d3d(
-				point_
-						- (edge_->loc_mid[loc_idx]
-								* (double) edge_->loc_mid[loc_idx][3])).norm();
+		tmpmin = V4d3d(point_ - (mid * (double) mid[3])).norm();
 	}
 	else if (loc_idx > loc_last_idx_)
 	{
 		for (int ll = loc_last_idx_ + 1; ll < loc_idx + 1; ll++)
 		{
-			this->DecideSectorIntervalExt(edge_, point_, delta_t_zero, sec_idx,
+			this->DecideSectorIntervalExt(edge_, point_, delta_t_0, sec_idx,
 					ll);
-			if (min_(
-					V4d3d(
-							point_
-									- (edge_->loc_mid[loc_idx]
-											* (double) edge_->loc_mid[loc_idx][3])).norm(),
-					tmpmin))
+			if (min_(V4d3d(point_ - (mid * (double) mid[3])).norm(), tmpmin))
 			{
 				min_idx = ll * sec_int + sec_idx;
-				tmpdeltatmin = delta_t_zero.norm();
-				tmpmin =
-						V4d3d(
-								point_
-										- (edge_->loc_mid[loc_idx]
-												* (double) edge_->loc_mid[loc_idx][3])).norm();
+				tmpdeltatmin = delta_t_0.norm();
+				tmpmin = V4d3d(point_ - (mid * (double) mid[3])).norm();
 			}
 		}
 	}
@@ -174,7 +162,6 @@ int TrainSM::AdjustSectorMap(
 	if (loc_init_)
 	{
 		// if point starts before curve
-
 		Eigen::Vector3d proj_dir_tmp = edge_->tan[0]
 				* (V4d3d(
 						point_
@@ -193,7 +180,6 @@ int TrainSM::AdjustSectorMap(
 			loc_init_ = false;
 			edge_->sector_map[min_idx] = std::max(edge_->sector_map[min_idx],
 					tmpdeltatmin);
-//					if (edge_->sector_map[min_idx]>0.3)  {return EXIT_FAILURE;}
 			loc_last_idx_ = min_idx / sec_int;
 			loc_curr_idx_ = min_idx / sec_int;
 			return EXIT_SUCCESS;
@@ -202,17 +188,15 @@ int TrainSM::AdjustSectorMap(
 
 	edge_->sector_map[min_idx] = std::max(edge_->sector_map[min_idx],
 			tmpdeltatmin);
-//			if (edge_->sector_map[min_idx]>0.3)  {return EXIT_FAILURE;}
 
 	if ((min_idx / sec_int) - loc_last_idx_ > 1)
 	{
 		for (int l = loc_last_idx_ + 1; l < (min_idx / sec_int); l++)
 		{
-			this->DecideSectorIntervalExt(edge_, point_, delta_t_zero, sec_idx,
-					l);
+			this->DecideSectorIntervalExt(edge_, point_, delta_t_0, sec_idx, l);
 			int tmp_idx = l * sec_int + sec_idx;
 			edge_->sector_map[tmp_idx] = std::max(edge_->sector_map[tmp_idx],
-					delta_t_zero.norm());
+					delta_t_0.norm());
 		}
 		loc_curr_idx_ = (min_idx / sec_int);
 	}
@@ -233,7 +217,7 @@ int TrainSM::AdjustCurve(
 		bool &loc_init_,
 		int loc_offset_)
 {
-	Eigen::Vector3d delta_t_zero;
+	Eigen::Vector3d delta_t_0;
 	int sec_idx = -1;
 	int loc_idx = -1;
 	int loc_last_idx_mem = loc_last_idx_;
@@ -258,26 +242,22 @@ int TrainSM::AdjustCurve(
 	}
 
 	// to fill up the line if loc_int is valid but tangent is not aligned to traj (at a curve)
-	decideSectorInterval(sec_idx, delta_t_zero, point_, edge_->loc_mid,
-			edge_->tan, edge_->nor, loc_idx, sec_int);
-//	this->DecideSectorIntervalExt(
-//			edge_, point_, delta_t_zero, sec_idx, loc_idx);
+	decideSectorInterval(sec_idx, delta_t_0, point_, edge_->loc_mid, edge_->tan,
+			edge_->nor, loc_idx, sec_int);
 
 	int tmp_idx = loc_idx * sec_int + sec_idx;
 	edge_->sector_map[tmp_idx] = std::max(edge_->sector_map[tmp_idx],
-			delta_t_zero.norm());
+			delta_t_0.norm());
 
 	if (loc_idx > 10)
 	{
 		for (int l = loc_idx - 2; l < loc_idx; l++)
 		{
-			decideSectorInterval(sec_idx, delta_t_zero, point_, edge_->loc_mid,
+			decideSectorInterval(sec_idx, delta_t_0, point_, edge_->loc_mid,
 					edge_->tan, edge_->nor, l, sec_int);
-//			this->DecideSectorIntervalExt(
-//					edge_, point_, delta_t_zero, sec_idx, l);
 			int tmp_idx = l * sec_int + sec_idx;
 			edge_->sector_map[tmp_idx] = std::max(edge_->sector_map[tmp_idx],
-					delta_t_zero.norm());
+					delta_t_0.norm());
 		}
 	}
 
@@ -299,9 +279,6 @@ int TrainSM::AdjustCurveExt(
 			G_->GetEdge(label1_sm, label2_sm, 0));
 
 	// [CURVE FIT]*************************************************************
-//	polyCurveLength(total_len, 0, integral_limit_, coeffs_);
-//	edge_tmp.total_len = total_len;
-
 	for (int i = 1; i < pos_ind_sm.size(); i++)
 	{
 		total_len += V4d3d(pos_ind_sm[i] - pos_ind_sm[i - 1]).norm();
@@ -426,9 +403,12 @@ int TrainSM::AdjustCurveExt(
 									+ node_tmp.centroid));
 
 			edge_tmp->loc_mid[l] = edge_tmp->loc_mid[l] - node_tmp.centroid;
+
 			tmp_len = V4d3d(edge_tmp->loc_mid[l]).norm();
+
 			edge_tmp->loc_mid[l] = V3d4d(
 					V4d3d(edge_tmp->loc_mid[l]).normalized());
+
 			edge_tmp->loc_mid[l][3] = tmp_len;
 
 			edge_tmp->loc_len[l] = (edge_tmp_mem->loc_len[l] * N / (N + 1))
@@ -436,6 +416,7 @@ int TrainSM::AdjustCurveExt(
 
 			edge_tmp->tan[l] = (edge_tmp_mem->tan[l] * N / (N + 1))
 					+ (edge_tmp->tan[l] * 1 / (N + 1));
+
 			edge_tmp->tan[l].normalize();
 
 			// for angles close to 0
@@ -454,7 +435,6 @@ int TrainSM::AdjustCurveExt(
 
 		// [SECTOR MAP]********************************************************
 		reshapeVector(edge_tmp->sector_map, loc_int * sec_int);
-		std::vector<double> delta_t_mem(3, 0.0);
 		Eigen::Vector3d tmpN;
 		Eigen::Vector4d p_old;
 		Eigen::AngleAxisd aa;
@@ -505,7 +485,7 @@ int TrainSM::FitSectorMap(
 {
 	int sec_idx = -1, loc_idx = -1, loc_last_idx_mem = loc_last_idx_;
 	bool mem_init = loc_init_;
-	Eigen::Vector3d delta_t, delta_t_zero;
+	Eigen::Vector3d delta_t, delta_t_0;
 
 	double tmp = this->DecideLocationIntervalExt(edge_, point_, loc_idx,
 			loc_last_idx_, loc_offset_, loc_init_);
@@ -557,11 +537,10 @@ int TrainSM::FitSectorMap(
 	{
 		for (int l = loc_last_idx_ + 1; l < (min_idx / sec_int); l++)
 		{
-			this->DecideSectorIntervalExt(edge_, point_, delta_t_zero, sec_idx,
-					l);
+			this->DecideSectorIntervalExt(edge_, point_, delta_t_0, sec_idx, l);
 			int tmp_idx = l * sec_int + sec_idx;
 			edge_->sector_map[tmp_idx] = std::max(edge_->sector_map[tmp_idx],
-					delta_t_zero.norm());
+					delta_t_0.norm());
 			if (edge_->sector_map[min_idx] > 0.9)
 			{
 				return EXIT_FAILURE;
@@ -577,16 +556,14 @@ int TrainSM::FitSectorMap(
 	// we do not consider going back for now
 
 	return EXIT_SUCCESS;
-
 }
 
-int TrainSM::FitSectorMapInit(
+int TrainSM::FitSectorMapInitExt(
 		std::shared_ptr<CGraph> G_,
 		std::vector<Eigen::Vector4d> &points_,
 		const int &loc_offset_)
 {
 	int loc_last_idx = 0, loc_curr_idx = 0, offset = loc_offset_;
-	double delta_t_mem = 0.0;
 	bool init = true;
 	std::size_t idx = 0;
 
@@ -610,8 +587,8 @@ int TrainSM::FitSectorMapInit(
 			offset = loc_offset_;
 		}
 
-		this->AdjustSectorMap(edge_tmp, p - G_->GetNode(label1_sm).centroid,
-				loc_last_idx, loc_curr_idx, delta_t_mem, init, offset);
+		this->FitSectorMapInit(edge_tmp, p - G_->GetNode(label1_sm).centroid,
+				loc_last_idx, loc_curr_idx, init, offset);
 
 		G_->SetEdge(label1_sm, label2_sm, 0, *edge_tmp);
 	}
@@ -697,7 +674,6 @@ int TrainSM::UpdateSectorMap(
 	{
 		this->FitCurve(points_est, coeffs);
 		this->AdjustCurveExt(G_, coeffs);
-//		this->FitSectorMapInit(G_, points_avg_, loc_int/2);
 		if (this->FitSectorMapExt(G_, loc_int / 2) == EXIT_FAILURE)
 		{
 			return EXIT_FAILURE;

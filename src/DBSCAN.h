@@ -16,7 +16,15 @@
 #include <memory>
 #include <Eigen/Eigen>
 
+// CLUSTER_LIMIT is used to control the proximity in which 2 clusters merge.
+#ifdef DATA1
+#define CLUSTER_LIMIT 0.20
+#elif DATA2
 #define CLUSTER_LIMIT 0.10
+#else
+#define CLUSTER_LIMIT 0.10
+#endif
+
 #define CONTACT_TRIGGER_RATIO 0.65
 
 #define UNCLASSIFIED 	-1
@@ -34,27 +42,60 @@ private:
 	struct point_d
 	{
 		double x, y, z, l;
+
+		point_d(
+				double x_ = 0.0,
+				double y_ = 0.0,
+				double z_ = 0.0,
+				double l_ = 0.0)
+				: x(x_),
+						y(y_),
+						z(z_),
+						l(l_)
+		{
+		}
+
+		point_d operator+(
+				const point_d &B)
+		{
+			return point_d(x + B.x, y + B.y, z + B.z, l);
+		}
+
+		point_d operator-(
+				const point_d &B)
+		{
+			return point_d(x - B.x, y - B.y, z - B.z, l);
+		}
+
+		point_d operator*(
+				const double &B)
+		{
+			return point_d(x * B, y * B, z * B, l);
+		}
 	};
+
 	struct node_t
 	{
 		unsigned int index;
 		DBSCAN::node_t *next;
 	};
+
 	struct epsilon_neighbours_t
 	{
 		unsigned int num_members;
 		DBSCAN::node_t *head, *tail;
 	};
 
-	virtual point_d AddPoint(
-			point_d A,
-			point_d B);
-	virtual point_d MinusPoint(
-			point_d A,
-			point_d B);
-	virtual point_d MultiPoint(
-			point_d A,
-			double B);
+//	virtual point_d AddPoint(
+//			point_d A,
+//			point_d B);
+//	virtual point_d MinusPoint(
+//			point_d A,
+//			point_d B);
+//	virtual point_d MultiPoint(
+//			point_d A,
+//			double B);
+
 	virtual double l2Norm(
 			point_d A);
 	virtual void vectorToArray(
@@ -73,6 +114,14 @@ public:
 
 	DBSCAN();
 	virtual ~DBSCAN();
+
+	virtual void test()
+	{
+		point_d A(1.0, 2.0, 3.0, 4.0);
+		point_d B(5.0, 6.0, 7.0, 1.0);
+		point_d C = A + B;
+		std::cout << C.x << C.y << C.z << C.l << std::endl;
+	}
 
 	virtual node_t *create_node(
 			unsigned int index);

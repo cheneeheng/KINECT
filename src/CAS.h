@@ -16,23 +16,72 @@
 #include <vector>
 #include <map>
 
+/**
+ * Grasp states.
+ *
+ * @key RELEASE Released state.
+ * @key GRABBED Grasped state.
+ * @key RELEASED_CLOSE Trigger for release.
+ * @key GRABBED_CLOSE Trigger for grasp.
+ */
+enum class GRAB
+{
+	RELEASE, GRABBED, RELEASED_CLOSE, GRABBED_CLOSE
+};
+
+/**
+ * Container for action states.
+ * Member functions are used to retrieve and modify action states.
+ */
 class CAS
 {
+private:
+	//typedef std::map<std::string,double> ms;
+	using msD_t = std::map<std::string,double>;
 
-	/*
-	 * Information needed for action state
-	 */
+	// Grasp state
+	GRAB grasp;
+
+	// Start node
+	int label1;
+
+	// Goal node
+	int label2;
+
+	// Object state, one hot vector based on dictionary.
+	int obj;
+
+	// Velocity
+	double vel;
+
+	// Highest goal probability
+	double pct_err;
+
+	// Which known surface that is currently being evaluated
+	int surface_flag;
+
+	// Surface label
+	std::string surface_name;
+
+	// Distance to surface
+	double surface_dist;
+
+	// Goal probabilities
+	msD_t goal;
+
+	// Maximum variances.
+	msD_t window;
 
 public:
 	CAS();
 	virtual ~CAS();
 
-	virtual int Grasp() const
+	virtual GRAB Grasp() const
 	{
 		return grasp;
 	}
 	virtual void Grasp(
-			int x_)
+			GRAB x_)
 	{
 		grasp = x_;
 	}
@@ -117,41 +166,25 @@ public:
 		surface_name = x_;
 	}
 
-	virtual std::map<std::string, double> Goal() const
+	virtual msD_t Goal() const
 	{
 		return goal;
 	}
 	virtual void Goal(
-			std::map<std::string, double> x_)
+			msD_t x_)
 	{
 		goal = x_;
 	}
 
-	virtual std::map<std::string, double> Window() const
+	virtual msD_t Window() const
 	{
 		return window;
 	}
 	virtual void Window(
-			std::map<std::string, double> x_)
+			msD_t x_)
 	{
 		window = x_;
 	}
-
-private:
-	//typedef std::map<std::string,double> ms;
-	using mS = std::map<std::string,double>;
-
-	int grasp;					// if it is grasped
-	int label1;					// last node
-	int label2;					// next node
-	int obj;					// object state
-	double vel;					// velocity
-	double pct_err;				// highest probability
-	int surface_flag;			// which surface
-	std::string surface_name;	// which surface
-	double surface_dist;		// surface distance
-	mS goal;	// probabilities
-	mS window;	// window radius
 };
 
 #endif /* CAS_H_ */

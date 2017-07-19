@@ -126,10 +126,12 @@ void gaussKernel(
 		}
 	}
 	for (auto &i : kernel_)
+	{
 		for (auto &j : i)
 		{
 			j /= sum;
 		}
+	}
 }
 
 void cal_tangent_normal(

@@ -24,35 +24,54 @@ class CGraph
 {
 
 public:
+
+	/**
+	 * Data structure for node.
+	 */
 	struct node_t
 	{
-		std::string name;
-		int index; // used to check for new nodes
-		int contact;
-		Eigen::Vector4d centroid; // Sphere
-		int surface_flag; // Surface
-		Eigen::Vector3d cuboid_max;
-		Eigen::Vector3d cuboid_min;
-	};
-	struct edge_t
-	{
-		std::string name;
-		unsigned int index1; //start node
-		unsigned int index2; // end node
-		std::vector<double> sector_map; // locations int * sectors int
-		std::vector<Eigen::Vector3d> tan; // locations int
-		std::vector<Eigen::Vector3d> nor; // locations int
-		std::vector<Eigen::Vector4d> loc_mid; // locations int
-		std::vector<double> loc_len; // locations int
-		double total_len;
-		int counter;
-		std::vector<int> mov_const; // 0/1 activation of the mov_const labels
-		std::vector<double> loc_mem; // to calculate d2(loc)
-		std::vector<double> sec_mem; // to calculate d2(sec)
-		std::vector<double> err_mem; // to calculate d2(err)
+		std::string name;			// Node name.
+		int index; 					// Used to check for new nodes
+		int contact;				// Contact check
+		Eigen::Vector4d centroid; 	// Sphere center point and radius
+		int surface_flag; 			// Surface label
+		Eigen::Vector3d cuboid_max; // OBB maximum point
+		Eigen::Vector3d cuboid_min; // OBB minimum point
 	};
 
+	/**
+	 * Data structure for Edge.
+	 */
+	struct edge_t
+	{
+		std::string name;						// Edge name.
+		unsigned int index1; 					// Start node
+		unsigned int index2; 					// Goal node
+		std::vector<double> sector_map; 		// locations int * sectors int
+		std::vector<Eigen::Vector3d> tan; 		// list of tangents
+		std::vector<Eigen::Vector3d> nor; 		// list of normals
+		std::vector<Eigen::Vector4d> loc_mid;	// list of midpoints
+		std::vector<double> loc_len; 			// interval length
+		double total_len;						// total length
+		int counter;							// number of observed trajectory
+		std::vector<int> mov_const; // 0/1 activation of the mov_const labels
+		std::vector<double> loc_mem; 			// to calculate d2(loc)
+		std::vector<double> sec_mem; 			// to calculate d2(sec)
+		std::vector<double> err_mem; 			// to calculate d2(err)
+	};
+
+	/**
+	 * Constructor for CGraph class.
+	 */
 	CGraph();
+
+	/**
+	 * Constructor for CGraph class.
+	 *
+	 * @param object_ Object name
+	 * @param loc_int_ Number of location interval
+	 * @param sec_int_ Number of sector interval
+	 */
 	CGraph(
 			const std::string &object_,
 			const int &loc_int_,
@@ -89,7 +108,7 @@ public:
 
 	/*******************************************************************************
 	 * Nodes
-	 *******************************************************************************/
+	 ******************************************************************************/
 
 	virtual node_t GetNode(
 			int idx_) const
@@ -130,8 +149,13 @@ public:
 
 	/*******************************************************************************
 	 * Edges
-	 *******************************************************************************/
+	 ******************************************************************************/
 
+	/**
+	 * Adds an empty edge for each new node added.
+	 *
+	 * @param idx_ Node number.
+	 */
 	virtual void addEmptyEdgeForNewNode(
 			int idx_);
 
@@ -283,9 +307,12 @@ public:
 	}
 
 private:
-	int LOC_INT;
-	int SEC_INT;
-	std::string OBJECT; // what kind of action Set is being evaluated
+
+	// Number of location and sector intervals.
+	int LOC_INT, SEC_INT;
+
+	// Object name
+	std::string OBJECT;
 
 	std::vector<node_t> node_list;
 	std::vector<std::vector<std::vector<edge_t> > > edge_list;

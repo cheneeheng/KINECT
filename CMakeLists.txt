@@ -48,6 +48,7 @@ add_definitions(
 	-DTW_NO_DIRECT3D
 	-DGLEW_STATIC
 	-D_CRT_SECURE_NO_WARNINGS
+	-DDATA2
 )
 
 include_directories( 
@@ -104,6 +105,7 @@ add_executable(HMAR
   	./src/ReadFile.cpp 
   	./src/WriteFile.cpp 
   	./src/DataParser.cpp 
+  	./src/NBayesClassifier.cpp 
   	./src/Test.cpp 
   	./src/Train.cpp 
   	./src/TrainLA.cpp 

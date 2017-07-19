@@ -20,11 +20,22 @@
 class Evaluate
 {
 public:
+
+	/**
+	 * Constructor for Evaluate class.
+	 */
 	Evaluate();
+
+	/**
+	 * Destructor for Evaluate class.
+	 */
 	virtual ~Evaluate();
 
 	/*
 	 * Update the action state at the node.
+	 *
+	 * @param G_ Graph of possible action in scene.
+	 * @param AS_ Action state
 	 */
 	virtual int UpdateStateNode(
 			const CGraph &G_,
@@ -32,6 +43,9 @@ public:
 
 	/*
 	 * Update the action state at the edge.
+	 *
+	 * @param G_ Graph of possible action in scene.
+	 * @param AS_ Action state
 	 */
 	virtual int UpdateStateEdge(
 			const CGraph &G_,

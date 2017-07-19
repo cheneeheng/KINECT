@@ -208,41 +208,41 @@ void DBSCAN::dbscan(
 	}
 }
 
-DBSCAN::point_d DBSCAN::AddPoint(
-		point_d A,
-		point_d B)
-{
-	point_d C;
-	C.x = A.x + B.x;
-	C.y = A.y + B.y;
-	C.z = A.z + B.z;
-	C.l = A.l;
-	return C;
-}
-
-DBSCAN::point_d DBSCAN::MinusPoint(
-		point_d A,
-		point_d B)
-{
-	point_d C;
-	C.x = A.x - B.x;
-	C.y = A.y - B.y;
-	C.z = A.z - B.z;
-	C.l = A.l;
-	return C;
-}
-
-DBSCAN::point_d DBSCAN::MultiPoint(
-		point_d A,
-		double B)
-{
-	point_d C;
-	C.x = A.x * B;
-	C.y = A.y * B;
-	C.z = A.z * B;
-	C.l = A.l;
-	return C;
-}
+//DBSCAN::point_d DBSCAN::AddPoint(
+//		point_d A,
+//		point_d B)
+//{
+//	point_d C;
+//	C.x = A.x + B.x;
+//	C.y = A.y + B.y;
+//	C.z = A.z + B.z;
+//	C.l = A.l;
+//	return C;
+//}
+//
+//DBSCAN::point_d DBSCAN::MinusPoint(
+//		point_d A,
+//		point_d B)
+//{
+//	point_d C;
+//	C.x = A.x - B.x;
+//	C.y = A.y - B.y;
+//	C.z = A.z - B.z;
+//	C.l = A.l;
+//	return C;
+//}
+//
+//DBSCAN::point_d DBSCAN::MultiPoint(
+//		point_d A,
+//		double B)
+//{
+//	point_d C;
+//	C.x = A.x * B;
+//	C.y = A.y * B;
+//	C.z = A.z * B;
+//	C.l = A.l;
+//	return C;
+//}
 
 double DBSCAN::l2Norm(
 		point_d A)
@@ -386,14 +386,16 @@ void DBSCAN::CombineNearCluster(
 	{
 		if (i.l >= 0)
 		{
-			p_tmp[(int) i.l] = this->AddPoint(p_tmp[(int) i.l], i);
+			p_tmp[(int) i.l] = p_tmp[(int) i.l] + i;
+			//p_tmp[(int) i.l] = this->AddPoint(p_tmp[(int) i.l], i);
 			p_tmp[(int) i.l].l += 1;
 		}
 	}
 
 	for (auto &i : p_tmp)
 	{
-		i = this->MultiPoint(i, 1 / i.l);
+		i = i * (1 / i.l);
+		//i = this->MultiPoint(i, 1 / i.l);
 		i.l = UNCLASSIFIED;
 	}
 
@@ -410,9 +412,11 @@ void DBSCAN::CombineNearCluster(
 				if (points_[ii].l == i && !limit)
 					for (int jj = 0; jj < num_points; jj++)
 						if (points_[jj].l == j)
+							//if (this->l2Norm(
+							//		this->MinusPoint(points_[ii],
+							//				points_[jj])) < CLUSTER_LIMIT)
 							if (this->l2Norm(
-									this->MinusPoint(points_[ii],
-											points_[jj])) < CLUSTER_LIMIT)
+									points_[ii] - points_[jj]) < CLUSTER_LIMIT)
 								limit = true;
 
 			if (limit)
@@ -544,7 +548,8 @@ void DBSCAN::CombineNearCluster(
 	{
 		if (i.l >= 0)
 		{
-			p_tmp[(int) i.l] = this->AddPoint(p_tmp[(int) i.l], i);
+			p_tmp[(int) i.l] = p_tmp[(int) i.l] + i;
+			//p_tmp[(int) i.l] = this->AddPoint(p_tmp[(int) i.l], i);
 			p_tmp[(int) i.l].l += 1;
 		}
 		//printf("Location %02d: %02d %02d\n", i, points_[i].l, p_center[points_[i].l].l );
@@ -552,7 +557,8 @@ void DBSCAN::CombineNearCluster(
 
 	for (auto &i : p_tmp)
 	{
-		i = this->MultiPoint(i, 1 / i.l);
+		i = i * (1 / i.l);
+		//i = this->MultiPoint(i, 1 / i.l);
 		i.l = 1.0; // boundary starts with 1.0 as no error and goes to zero for large distance boundary
 		//printf("Location %02d: %+.4f %+.4f %+.4f %d\n", i, p_center[i].x, p_center[i].y, p_center[i].z, p_center[i].l);
 	}

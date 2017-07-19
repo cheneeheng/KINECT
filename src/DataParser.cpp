@@ -50,7 +50,7 @@ int DataParser::ParseDataNoLabel()
 		points_parser[i][1] = atof(data_parser[i][3].c_str());
 		points_parser[i][2] = atof(data_parser[i][4].c_str());
 		points_parser[i][3] = -1;
-		if (i == 100)
+		if (i == 200)
 		{
 			face_parser[0] = atof(data_parser[i][5].c_str());
 			face_parser[1] = atof(data_parser[i][6].c_str());
@@ -73,7 +73,7 @@ int DataParser::ParseData()
 		points_parser[i][1] = atof(data_parser[i][3].c_str());
 		points_parser[i][2] = atof(data_parser[i][4].c_str());
 		points_parser[i][3] = -1;
-		if (i == 100)
+		if (i == 200)
 		{
 			face_parser[0] = atof(data_parser[i][5].c_str());
 			face_parser[1] = atof(data_parser[i][6].c_str());

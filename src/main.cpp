@@ -43,8 +43,10 @@ vec3 gPosition1;
 quat myQuat;
 
 // thread locks
-sem_t mutex_contactdetector, mutex_tracker, mutex_viewer, mutex_actionrecognition, mutex_tts;
-sem_t lock_contactdetector, lock_tracker, lock_viewer, lock_actionrecognition, lock_facedetector;
+sem_t mutex_contactdetector, mutex_tracker, mutex_viewer,
+		mutex_actionrecognition, mutex_facedetector, mutex_tts;
+sem_t lock_contactdetector, lock_tracker, lock_viewer, lock_actionrecognition,
+		lock_facedetector;
 
 std::string obj_model, obj_name;
 std::string phrase;
@@ -143,6 +145,7 @@ void* dbotthread(void* arg)
 		kinect.retrieve(img_depth,CV_CAP_OPENNI_DEPTH_MAP);
 		kinect.retrieve(img_cloud,CV_CAP_OPENNI_POINT_CLOUD_MAP);
 		frame_number_global = kinect.get(CV_CAP_OPENNI_IMAGE_GENERATOR+CV_CAP_PROP_POS_FRAMES);
+
 		img_rgb_global		= img_rgb.clone();
 		img_rgb_global_o	= img_rgb.clone();
 		img_rgb_global_h	= img_rgb.clone();
@@ -229,6 +232,7 @@ void* dbotthread(void* arg)
 			gPosition1.y = -(float)pp[1]*1.f;
 			gPosition1.z =  (float)pp[2]*1.f;
 
+			// The window of search for hand contact is fixed manually.
 			if (obj_name_ == "CUP")
 			{
 				z = 80;
@@ -246,13 +250,6 @@ void* dbotthread(void* arg)
 				if(col>480) 	 x = 15;
 				else if(col<160) x = 5;
 				else 			 x = 10;
-
-			/*	z = 60;
-				if(row>360) 	 y = 18;
-				else 			 y = 13;
-				if(col>480) 	 x = 13;
-				else if(col<160) x = 3;
-				else 			 x = 8;*/
 			}
 			else if (obj_name_ == "APP")
 			{
@@ -401,7 +398,7 @@ void* openglthread(void* arg)
 		
 if (!object_only)
 {
-		// [SCENE] *********************************************************
+		// [SCENE] *************************************************************
 		std::vector<glm::vec3> vertices2, verticesC;
 		for(int i=0;i<img_cloud_global.size().height;i++)
 		{
@@ -428,11 +425,13 @@ if (!object_only)
 
 		//FOR THE object
 		glBindBuffer(GL_ARRAY_BUFFER, vertexbufferscene);
-		glBufferData(GL_ARRAY_BUFFER, vertices2.size() * sizeof(glm::vec3), &vertices2[0], GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, vertices2.size() * sizeof(glm::vec3),
+				&vertices2[0], GL_STATIC_DRAW);
 
 		//For the Color
 		glBindBuffer(GL_ARRAY_BUFFER, colorbufferscene);
-		glBufferData(GL_ARRAY_BUFFER, verticesC.size() * sizeof(glm::vec3), &verticesC[0], GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, verticesC.size() * sizeof(glm::vec3),
+				&verticesC[0], GL_STATIC_DRAW);
 
 		// 1rst attribute buffer : vertices
 		glEnableVertexAttribArray(0);
@@ -454,10 +453,10 @@ if (!object_only)
 
 		// Draw the triangle !
 		glDrawArrays(GL_POINTS, 0, vertices2.size() );
-		// ********************************************************* [SCENE]
+		// ************************************************************* [SCENE]
 }
 
-		// [OBJ] ***********************************************************
+		// [OBJ] ***************************************************************
 		// 1rst attribute buffer : vertices
 		glEnableVertexAttribArray(0);
 		glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
@@ -480,9 +479,9 @@ if (!object_only)
 
 		// Draw the triangle !
 		glDrawArrays(GL_TRIANGLES, 0, vertices.size() );
-		// *********************************************************** [OBJ]
+		// *************************************************************** [OBJ]
 
-		// [LINE] **********************************************************
+		// [OBJ-AXIS] **********************************************************
 		// 1rst attribute buffer : vertices
 		glEnableVertexAttribArray(0);
 		glBindBuffer(GL_ARRAY_BUFFER, vertexbufferAxes);
@@ -495,7 +494,7 @@ if (!object_only)
 
 		glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
 		glDrawArrays(GL_LINES, 0, 6*3);
-		// ********************************************************** [LINE]
+		// ********************************************************** [OBJ-AXIS]
 
 		glDisableVertexAttribArray(0);
 		glDisableVertexAttribArray(1);
@@ -513,6 +512,7 @@ if (!object_only)
 // ============================================================================
 // OBJECT DETECTOR
 // ============================================================================
+/*
 void* objectDetector(void* arg)
 {
 	int hs[4]; // hue max/min, sat max/min
@@ -543,10 +543,12 @@ void* objectDetector(void* arg)
 
 	return 0;
 }
+*/
 
 // ============================================================================
 // HAND DETECTOR
 // ============================================================================
+/*
 void* handDetector(void* arg)
 { 
 	int hs[4]; // hue max/min, sat max/min
@@ -579,12 +581,13 @@ void* handDetector(void* arg)
 
 	return 0;
 }
-
+*/
 // ============================================================================
 // CONTACT DETECTOR
 // ============================================================================
 void* contactDetector(void* arg)
 {
+	// checks for hand presence in the box surrounding the object.
 	while(1)
 	{
 		sem_wait(&lock_contactdetector);
@@ -596,7 +599,7 @@ void* contactDetector(void* arg)
 		sem_post(&lock_tracker);
 	}
 
-
+/*
 	cv::Mat img_depth_def, mask_obj_def, img_sub, cloud_mask,cloud_mask2;
 	double contact_val;
 	bool flag_contact_init	= true;
@@ -657,7 +660,7 @@ void* contactDetector(void* arg)
 		sem_post(&mutex5);
 		sem_post(&lock1);
 	}
-
+*/
 	return 0;
 }
 
@@ -680,7 +683,7 @@ void* faceDetector(void* arg)
 	while(true)
 	{
 		sem_wait(&lock_facedetector);
-		sem_wait(&mutex6);
+		sem_wait(&mutex_facedetector);
 
 		// just to flush out some frames
 		if (frame_number_global < 50.0 || NANflag)
@@ -689,21 +692,25 @@ void* faceDetector(void* arg)
 			{	
 				img_tmp.release();
 				img_tmp = img_rgb_global_f.clone();
+
+				// detecting the face.
 				face = detectFaceAndEyes(img_rgb_global_f, face_cascade);
-				//[OBJECT POINT]***************************************************
-				img_cloud_global_c(face).copyTo(cloud_mask); // reducing the search area
+
+				// reducing the search area
+				img_cloud_global_c(face).copyTo(cloud_mask);
+
+				// getting the center point of face.
 				pointCloudTrajectory(cloud_mask, single_point_face_global);
 				NANflag = 
 					(isnan(single_point_face_global[0]) ||
 					 isnan(single_point_face_global[1]) ||
 					 isnan(single_point_face_global[2]));
 				cloud_mask.release(); 
-				// **************************************************[OBJECT POINT]
 			}
 		}
 		else continue;
 
-		sem_post(&mutex6);
+		sem_post(&mutex_facedetector);
 	}
 	return 0;
 }
@@ -714,10 +721,6 @@ void* faceDetector(void* arg)
 void* actionRecognition(void* arg)
 {
 	// [VARIABLE] **************************************************************
-	std::shared_ptr<CKB> KB = std::make_shared<CKB>();
-	std::shared_ptr<COS> OS = std::make_shared<COS>();
-	std::shared_ptr<std::vector<std::string> > message = std::make_shared<std::vector<std::string> >();
-
 	std::string phrase_now	= "";
 	std::string path;
 	std::string PARSED_RES;
@@ -748,44 +751,48 @@ void* actionRecognition(void* arg)
 	ReadFile RF;
 	// ************************************************************** [VARIABLE] 
 
+	// create a data container
+	auto cdata = std::make_shared<CData>(object, loc_int, sec_int);
+
 	/* Reading surface
 	 * Reading action labels
 	 * - reads the labels and initializes a zero list prediction/filter with the same length as the label
 	 * Reading object specific labels
 	 * - reads the object specific labels and saves them */
 	path = PARENT + "/" + KB_DIR + "/";
-	if (RF.ReadFileKB(path, KB)==EXIT_FAILURE)
+	if (RF.ReadFileKB(path, cdata->KB)==EXIT_FAILURE)
 	{return 0;}
 
 	/* read object state if needed */
 	path = PARENT + "/" + KB_DIR + "/";
-	if (RF.ReadFileOS(path, OS)==EXIT_FAILURE)
+	if (RF.ReadFileOS(path, cdata->OS)==EXIT_FAILURE)
 	{return 0;}
 
 	/* read parse message */
 	path = PARENT + "/" + KB_DIR + "/";
-	if (RF.ReadMsg(path, message)==EXIT_FAILURE)
+	if (RF.ReadMsg(path, cdata->msg)==EXIT_FAILURE)
 	{return 0;}
-
-	// directory to parsed message
-	path = PARENT + "/" + RESULT + "/" + object + "/";
-	directoryCheck(path);
-
-	auto T =
-			std::make_shared<Test>(
-					object, loc_int, sec_int, filter_w, KB, OS, message,
-					path, true);
 
 	// directory of learned data of a subject
 	std::string dir_s = PARENT + "/" + EVAL + "/" + object + "/0";
 
 	// read available location areas
 	path  = dir_s + "/location_area.txt";
-	if (T->ReadLA(path)==EXIT_FAILURE) {return 0;}
+	if (RF.ReadFileLA(path, cdata->KB->AL(), cdata->G) == EXIT_FAILURE)
+	{return 0;}
 
 	// read available sector map
 	path = 	dir_s + "/graph.txt";
-	if (T->ReadGraph(path)==EXIT_FAILURE) {return 0;}
+	if (RF.ReadFileGraph(path, cdata->G) == EXIT_FAILURE)
+	{return 0;}
+
+	// directory to parsed message
+	path = PARENT + "/" + RESULT + "/" + object + "/";
+	directoryCheck(path);
+
+	// create Test object
+	auto T = std::make_shared<Test>(object, loc_int, sec_int, filter_w,
+			cdata, path, true);
 
 	// apply gauss filter
 	if (gauss) { T->ApplyGauss(5,5); }
@@ -815,14 +822,20 @@ void* actionRecognition(void* arg)
 					 0.0);
 			//if (object=="CUP")
 			face_parser += Eigen::Vector4d(-0.1, 0, 0.1, -1);
-			T->TestFaceAdjust(face_parser);
+			T->LAAdjust("FACE", face_parser);
 			flag = false;
 		}
 
 		// 1. Filter
 		T->FilterData(
-				Eigen::Vector4d(-gPosition1.x, -gPosition1.y, gPosition1.z, -2.0),
-				(int)contact_obj);
+				Eigen::Vector4d(
+						-gPosition1.x,
+						-gPosition1.y,
+						 gPosition1.z,
+						-2.0),
+				*(cdata->pva),
+				(int)contact_obj,
+				*(cdata->contact));
 
 		// 2. Prediction
 		T->Predict();
@@ -933,6 +946,7 @@ int main(int argc, char *argv[])
 	sem_init(&mutex_viewer, 0, 1);
 	sem_init(&mutex_contactdetector, 0, 1);
 	sem_init(&mutex_actionrecognition, 0, 1);
+	sem_init(&mutex_facedetector, 0, 1);
 	sem_init(&mutex_tts, 0, 1);
 
 	pthread_t 	thread_dbot,
@@ -998,6 +1012,7 @@ int main(int argc, char *argv[])
 
 	return 0;
 }
+
 
 
 

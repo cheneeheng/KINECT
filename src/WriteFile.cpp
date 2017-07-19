@@ -96,10 +96,10 @@ void WriteFile::RewriteDataFileFilter(
 void WriteFile::RewriteDataFile(
 		std::string path_,
 		std::vector<std::vector<std::string> > data_,
-		std::vector<Vector4d> points_,
+		std::vector<Eigen::Vector4d> points_,
 		std::vector<int> contact_,
-		Vector4d face_,
-		std::vector<Vector3d> label_ref_write_,
+		Eigen::Vector4d face_,
+		std::vector<Eigen::Vector3d> label_ref_write_,
 		std::vector<std::string> label_ref_name_,
 		std::vector<std::string> label_list_)
 {
@@ -196,7 +196,7 @@ void WriteFile::RewriteDataFile(
 	 // Visualize
 	 if (0)
 	 {
-	 std::vector<Vector4d> point_zero = points_;
+	 std::vector<Eigen::Vector4d> point_zero = points_;
 	 for(int ii=0;ii<point_zero.size();ii++)
 	 {
 	 if (!strcmp(label[ii].c_str(),"MOVE"))
@@ -219,13 +219,13 @@ void WriteFile::RewriteDataFile(
 	{
 		if (strcmp(label_list_[i].c_str(), label_list_local[i].c_str()))
 		{
-			cout
+			std::cout
 					<< "*******************************************************************************"
-					<< endl;
-			cout << "File with inconsistent label sequence : " << path_ << endl;
-			cout
+					<< std::endl;
+			std::cout << "File with inconsistent label sequence : " << path_ << std::endl;
+			std::cout
 					<< "*******************************************************************************"
-					<< endl;
+					<< std::endl;
 			break;
 		}
 	}
@@ -324,6 +324,7 @@ void WriteFile::WriteFileLA(
 				<< "," << node_tmp[i].contact;
 		write_file << "\n";
 	}
+	int nth = 0;
 }
 
 void WriteFile::WriteFileGraph(
@@ -463,8 +464,8 @@ void WriteFile::WriteFilePrediction(
 		CKB *kb_,
 		std::string path_,
 		std::vector<std::string> labels_,
-		std::vector<map<std::string, double> > goals_,
-		std::vector<map<std::string, double> > windows_)
+		std::vector<std::map<std::string, double> > goals_,
+		std::vector<std::map<std::string, double> > windows_)
 {
 	if (std::ifstream(path_))
 	{
@@ -501,8 +502,8 @@ void WriteFile::WriteFilePrediction(
 		std::string path_,
 		std::vector<std::string> labels_,
 		std::vector<std::string> labels_predict_,
-		std::vector<map<std::string, double> > goals_,
-		std::vector<map<std::string, double> > windows_)
+		std::vector<std::map<std::string, double> > goals_,
+		std::vector<std::map<std::string, double> > windows_)
 {
 	if (std::ifstream(path_))
 	{
@@ -585,7 +586,7 @@ void WriteFile::WriteFileWindow(
 					max_val = 0.0;
 					for (int s = 0; s < Graph_->GetSecInt() / 2; s++)
 					{
-						max_val = max(
+						max_val = std::max(
 								sec[l * Graph_->GetSecInt() + s]
 										+ sec[l * Graph_->GetSecInt() + s
 												+ Graph_->GetSecInt() / 2],
@@ -605,7 +606,7 @@ void WriteFile::WriteFileWindow(
 					max_val = 0.0;
 					for (int s = 0; s < Graph_->GetSecInt() / 2; s++)
 					{
-						max_val = max(
+						max_val = std::max(
 								sec[l * Graph_->GetSecInt()
 										+ (((s + (Graph_->GetSecInt() / 4))
 												+ Graph_->GetSecInt())
@@ -635,11 +636,11 @@ void WriteFile::WriteFileWindow(
 
 void WriteFile::WriteFileSurface(
 		std::string path_,
-		std::vector<Matrix3d> rotation_,
-		std::vector<Vector4d> planeeq_,
-		std::vector<Vector3d> boxmin_,
-		std::vector<Vector3d> boxmid_,
-		std::vector<Vector3d> boxmax_)
+		std::vector<Eigen::Matrix3d> rotation_,
+		std::vector<Eigen::Vector4d> planeeq_,
+		std::vector<Eigen::Vector3d> boxmin_,
+		std::vector<Eigen::Vector3d> boxmid_,
+		std::vector<Eigen::Vector3d> boxmax_)
 {
 	if (std::ifstream(path_))
 	{
@@ -667,7 +668,7 @@ void WriteFile::WriteFileSurface(
 
 void WriteFile::WriteOSTransition(
 		std::string path_,
-		map<std::string, std::vector<std::vector<int> > > transition_)
+		std::map<std::string, std::vector<std::vector<int> > > transition_)
 {
 	if (std::ifstream(path_))
 	{

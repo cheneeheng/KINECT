@@ -15,8 +15,6 @@
 #include <string>
 #include <vector>
 
-//using namespace std;
-
 #define CRED "\x1B[31m"
 #define CGRN "\x1B[32m"
 #define CYEL "\x1B[33m"
