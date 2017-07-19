@@ -1,95 +1,14 @@
 cmake_minimum_required(VERSION 2.8)
 
-project(HMAR)
-
+################################################################################
+# Compiler option                                                              #
+################################################################################
 add_compile_options(-std=c++11)
 
-set(OpenCV_LIBS_DIR "/usr/local/src/opencv-3.1/build/lib")
-set(OpenCV_INCLUDE_DIR "/usr/local/include/opencv2")
-set(DBOT_INCLUDE_DIR "/home/chen/projects/tracking/src/dbot/source")
-set(DBOT_LIBS_DIR "/home/chen/projects/tracking/src/dbot/build")
-set(FL_INCLUDE_DIR "/home/chen/projects/tracking/src/fl/include")
-set(FL_LIBS_DIR "/home/chen/projects/tracking/src/fl/build")
-
-set(GCC_GDB_COMPILE_FLAGS "-g")
-set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${GCC_GDB_COMPILE_FLAGS}")
-
-find_package(VTK REQUIRED)
-include(${VTK_USE_FILE})
-
-find_package(OpenGL REQUIRED)
-
-# Compile external dependencies 
-add_subdirectory (external)
-
-# On Visual 2005 and above, this module can set the debug working directory
-cmake_policy(SET CMP0026 OLD)
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/external/rpavlik-cmake-modules-fe2273")
-include(CreateLaunchers)
-include(MSVCMultipleProcessCompile) # /MP
-
-if(INCLUDE_DISTRIB)
-	add_subdirectory(distrib)
-endif(INCLUDE_DISTRIB)
-
-include_directories(
-	external/AntTweakBar-1.16/include/
-	external/glfw-3.1.2/include/GLFW/
-	external/glm-0.9.7.1/
-	external/glew-1.13.0/include/
-	external/assimp-3.0.1270/include/
-	external/bullet-2.81-rev2613/src/
-	.
-)
-
-add_definitions(
-	-DTW_STATIC
-	-DTW_NO_LIB_PRAGMA
-	-DTW_NO_DIRECT3D
-	-DGLEW_STATIC
-	-D_CRT_SECURE_NO_WARNINGS
-	-DDATA2
-)
-
-include_directories( 
-	/usr/include/eigen3
-	/usr/local/src/XVision2/include 
-	/usr/local/intel/ipp/5.2/em64t/include 
-	/usr/local/src/OpenNI2/Include 
-	/home/chen/gsl/include
-	/home/chen/TTS/festival/src/include
-	/home/chen/TTS/speech_tools/include
-	${FL_INCLUDE_DIR}
-	${DBOT_INCLUDE_DIR}
-	${OpenCV_INCLUDE_DIR})
-
-link_directories( 
-	/home/chen/gsl/lib
-	/usr/lib64 
-	/usr/local/src/XVision2/lib 
-	/usr/local/intel/ipp/5.2/em64t/sharedlib 
-	/usr/local/src/OpenNI2/Bin/x64-Release 
-	/home/chen/TTS/festival/src/lib
-	/home/chen/TTS/speech_tools/lib
-	${FL_LIBS_DIR}
-	${DBOT_LIBS_DIR}
-	${OpenCV_LIBS_DIR})
-
-add_executable(HMAR
-	common/graphparser.hpp
-	common/graphparser.cpp
-	common/shader.cpp
-	common/shader.hpp
-	common/objectloader.cpp
-	common/objectloader.hpp
-	common/controls.hpp
-	common/controls.cpp
-	common/location_parser.cpp
-	common/location_parser.hpp
-	common/quaternion_utils.cpp
-	common/quaternion_utils.hpp
-	common/TransformVertexShader.vertexshader
-	common/ColorFragmentShader.fragmentshader
+################################################################################
+# Find source files                                                            #
+################################################################################
+file(GLOB HMAR_SOURCES 
   	./src/VTKExtra.cpp 
   	./src/COS.cpp 
   	./src/CKB.cpp 
@@ -117,25 +36,172 @@ add_executable(HMAR
 	./src/OpenGLViewer.cpp 
 	./src/PFTracker.cpp 
 	./src/ObjectDetection.cpp 
-	./src/main.cpp)
+  	)
 
-target_link_libraries( HMAR 
-	png Xext X11 pthread 
-	opencv_calib3d opencv_core opencv_videoio opencv_highgui opencv_imgproc
-	opencv_imgcodecs opencv_objdetect
-	XVSeg XVCons XVTrack XVDevs XVTools XVImages 
-	ippccem64t ippcvem64t ippiem64t 
-	OpenNI2
-	dbot_gpu dbot
-	${VTK_LIBRARIES}
-	gsl gslcblas
-	Festival estools estbase eststring ncurses
-	${OPENGL_LIBRARY} glfw GLEW_1130 ANTTWEAKBAR_116_OGLCORE_GLFW 
+file(GLOB COMMON_SOURCES 
+	common/graphparser.hpp
+	common/graphparser.cpp
+	common/shader.cpp
+	common/shader.hpp
+	common/objectloader.cpp
+	common/objectloader.hpp
+	common/controls.hpp
+	common/controls.cpp
+	common/location_parser.cpp
+	common/location_parser.hpp
+	common/quaternion_utils.cpp
+	common/quaternion_utils.hpp
+	common/TransformVertexShader.vertexshader
+	common/ColorFragmentShader.fragmentshader
+  	)
+
+
+################################################################################
+# Dependencies                                                                 #
+################################################################################
+
+set(HMAR_INCLUDE_DIRS 
+	/usr/include/eigen3
+	/usr/local/src/XVision2/include 
+	/usr/local/intel/ipp/5.2/em64t/include 
+	/usr/local/src/OpenNI2/Include # kinect
+	/home/chen/gsl/include
+	/home/chen/TTS/festival/src/include
+	/home/chen/TTS/speech_tools/include
+	/usr/local/include/opencv2
+	/home/chen/projects/tracking/src/dbot/source
+	/home/chen/projects/tracking/src/fl/include
 )
 
+set(HMAR_LIB_DIRS 
+	/home/chen/gsl/lib
+	/usr/lib64 
+	/usr/local/src/XVision2/lib 
+	/usr/local/intel/ipp/5.2/em64t/sharedlib 
+	/usr/local/src/OpenNI2/Bin/x64-Release 
+	/home/chen/TTS/festival/src/lib
+	/home/chen/TTS/speech_tools/lib
+	/usr/local/src/opencv-3.1/build/lib
+	/home/chen/projects/tracking/src/dbot/build
+	/home/chen/projects/tracking/src/fl/build
+)
 
-#message("CMAKE_CXX_FLAGS is ${CMAKE_CXX_FLAGS}")
-#message("CMAKE_CXX_FLAGS_DEBUG is ${CMAKE_CXX_FLAGS_DEBUG}")
-#message("CMAKE_CXX_FLAGS_RELEASE is ${CMAKE_CXX_FLAGS_RELEASE}")
-#message("CMAKE_CXX_FLAGS_RELWITHDEBINFO is ${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
-#message("CMAKE_CXX_FLAGS_MINSIZEREL is ${CMAKE_CXX_FLAGS_MINSIZEREL}")
+################################################################################
+# Libraries                                                                    #
+################################################################################
+
+set(OPENCV_LIBS 
+	opencv_calib3d
+	opencv_core
+	opencv_videoio
+	opencv_highgui
+	opencv_imgproc
+	opencv_imgcodecs
+	opencv_objdetect
+)
+
+set(XV_LIBS 
+	XVSeg
+	XVCons
+	XVTrack
+	XVDevs
+	XVTools
+	XVImages 
+)
+
+set(TTS_LIBS 
+	Festival
+	estools
+	estbase
+	eststring
+	ncurses
+)
+
+set(VIEWER_LIBS 
+	glfw
+	GLEW_1130
+	ANTTWEAKBAR_116_OGLCORE_GLFW 
+)
+
+set(IPPI_LIBS 
+	ippccem64t
+	ippcvem64t
+	ippiem64t 
+)
+
+set(HMAR_LIBS 
+	png Xext X11 pthread 
+	OpenNI2
+	gsl gslcblas
+	dbot dbot_gpu
+)
+list(APPEND HMAR_LIBS ${OPENCV_LIBS})
+list(APPEND HMAR_LIBS ${XV_LIBS})
+list(APPEND HMAR_LIBS ${TTS_LIBS})
+list(APPEND HMAR_LIBS ${VIEWER_LIBS})
+list(APPEND HMAR_LIBS ${IPPI_LIBS})
+
+################################################################################
+# Build project                                                                #
+################################################################################
+project(HMAR)
+
+set(GCC_GDB_COMPILE_FLAGS "-g")
+set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${GCC_GDB_COMPILE_FLAGS}")
+
+########################################
+# OPENGL based viewer library          #
+########################################
+find_package(OpenGL REQUIRED)
+
+# Compile external dependencies 
+add_subdirectory (external)
+
+# On Visual 2005 and above, this module can set the debug working directory
+cmake_policy(SET CMP0026 OLD)
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/external/rpavlik-cmake-modules-fe2273")
+include(CreateLaunchers)
+include(MSVCMultipleProcessCompile) # /MP
+
+include_directories(
+	external/AntTweakBar-1.16/include/
+	external/glfw-3.1.2/include/GLFW/
+	external/glm-0.9.7.1/
+	external/glew-1.13.0/include/
+	external/assimp-3.0.1270/include/
+	external/bullet-2.81-rev2613/src/
+	.
+)
+
+add_definitions(
+	-DTW_STATIC
+	-DTW_NO_LIB_PRAGMA
+	-DTW_NO_DIRECT3D
+	-DGLEW_STATIC
+	-D_CRT_SECURE_NO_WARNINGS
+)
+
+########################################
+# HMAR project                         #
+########################################
+add_definitions( -DDATA2 )
+
+find_package(VTK REQUIRED)
+include(${VTK_USE_FILE})
+
+include_directories( ${HMAR_INCLUDE_DIRS} )
+
+link_directories( ${HMAR_LIB_DIRS} )
+
+add_executable( HMAR
+    ${COMMON_SOURCES}
+    ${HMAR_SOURCES}
+	./src/main.cpp
+)
+
+target_link_libraries( HMAR
+	${HMAR_LIBS}
+	${VTK_LIBRARIES}
+	${OPENGL_LIBRARY} 
+)
+
